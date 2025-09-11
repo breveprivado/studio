@@ -261,7 +261,6 @@ export default function DashboardPage() {
     }
   }, [isDarkMode]);
   
-   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
    useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
 
   const filteredTrades = useMemo(() => {
@@ -312,7 +311,9 @@ export default function DashboardPage() {
   };
   
   const handleSelectClass = (className: string) => {
-      setPlayerStats(prev => ({...prev, class: className}));
+      const newPlayerStats = {...playerStats, class: className};
+      setPlayerStats(newPlayerStats);
+      localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
       toast({
         title: `¡Clase seleccionada: ${className}!`,
         description: "Tu leyenda como trader ha comenzado."
@@ -327,6 +328,9 @@ export default function DashboardPage() {
 
     if (trade.creatureId && trade.status === 'win') {
        const creature = creatures.find(c => c.id === trade.creatureId);
+       
+       let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
+       let xpGainedFromAchievement = 0;
        let achievementUnlocked = false;
 
        const updatedCreatures = creatures.map(c => {
@@ -337,7 +341,7 @@ export default function DashboardPage() {
            achievementTiers.forEach(tier => {
                if(oldEncounterCount < tier && newEncounters.length >= tier) {
                    achievementUnlocked = true;
-                   setPlayerStats(prev => ({...prev, xp: prev.xp + XP_PER_ACHIEVEMENT}));
+                   xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
                    toast({
                        title: `¡Logro Desbloqueado!`,
                        description: `Has cazado ${tier} ${c.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
@@ -357,11 +361,14 @@ export default function DashboardPage() {
         description: 'Has registrado tu encuentro en el bestiario.'
        });
        
-       const xpGained = (parseInt(trade.creatureId, 10) / 17) * 50 + 10; // Escala de XP
-       setPlayerStats(prev => ({ ...prev, xp: prev.xp + xpGained }));
+       const totalXpGained = xpGainedFromHunt + xpGainedFromAchievement;
+       const newPlayerStats = { ...playerStats, xp: playerStats.xp + totalXpGained };
+       setPlayerStats(newPlayerStats);
+       localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+       
        toast({
            title: '¡Experiencia Ganada!',
-           description: `Has ganado ${xpGained.toFixed(0)} XP.`,
+           description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
        });
 
        if (trade.profit > 0) {
