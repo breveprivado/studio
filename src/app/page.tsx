@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type TimeRange } from '@/lib/types';
+import { type Trade, type TimeRange, type Withdrawal } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -24,6 +24,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
+import CurrencyConverter from '@/components/dashboard/currency-converter';
+import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
+import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" fill="currentColor" {...props}>
@@ -138,8 +141,10 @@ const DisciplineDashboard = ({ trades }: { trades: Trade[] }) => {
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
+  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -153,6 +158,10 @@ export default function DashboardPage() {
     } else {
       setTrades(initialTrades);
     }
+    const storedWithdrawals = localStorage.getItem('withdrawals');
+    if (storedWithdrawals) {
+      setWithdrawals(JSON.parse(storedWithdrawals));
+    }
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         setIsDarkMode(true);
@@ -163,6 +172,10 @@ export default function DashboardPage() {
   useEffect(() => {
     localStorage.setItem('trades', JSON.stringify(trades));
   }, [trades]);
+  
+  useEffect(() => {
+    localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+  }, [withdrawals]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -191,16 +204,17 @@ export default function DashboardPage() {
     });
   }, [trades, timeRange]);
 
-  const { gains, losses, netProfit, winRate, totalTrades } = useMemo(() => {
+  const { gains, losses, netProfit, winRate, totalTrades, totalWithdrawals } = useMemo(() => {
     const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
     const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
     const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
-    const netProfit = gains + losses;
+    const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
+    const netProfit = gains + losses - totalWithdrawals;
     const winningTrades = tradesToAnalyze.filter(t => t.status === 'win').length;
     const totalTradable = tradesToAnalyze.length;
     const winRate = totalTradable > 0 ? (winningTrades / totalTradable) * 100 : 0;
-    return { gains, losses, netProfit, winRate, totalTrades: filteredTrades.length };
-  }, [filteredTrades]);
+    return { gains, losses, netProfit, winRate, totalTrades: filteredTrades.length, totalWithdrawals };
+  }, [filteredTrades, withdrawals]);
 
   const formatCurrency = (value: number) => {
     const formatted = new Intl.NumberFormat('es-ES', {
@@ -214,6 +228,15 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     setTrades(prevTrades => [newTrade, ...prevTrades]);
   };
+  
+  const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id'>) => {
+    const newWithdrawal = { ...withdrawal, id: crypto.randomUUID() };
+    setWithdrawals(prev => [newWithdrawal, ...prev]);
+    toast({
+        title: "Retiro Registrado",
+        description: "Tu retiro ha sido guardado exitosamente."
+    })
+  }
 
   const handleDeleteTrade = (id: string) => {
     setTrades(prevTrades => prevTrades.filter(t => t.id !== id));
@@ -311,6 +334,10 @@ export default function DashboardPage() {
                         {isAiLoading ? "Analizando..." : "Análisis IA"}
                     </Button>
                </div>
+              <Button onClick={() => setIsWithdrawalOpen(true)} className="bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
+                <Banknote className="h-5 w-5 mr-2" />
+                Registrar Retiro
+              </Button>
               <Button onClick={() => setIsNewTradeOpen(true)} className="bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
                 <Plus className="h-5 w-5 mr-2" />
                 Nueva Operación
@@ -356,11 +383,13 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
-            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass={winRate > 50 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
+            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
+            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass={winRate > 50 ? "text-yellow-500" : "text-red-600 dark:text-red-400"} />
           </div>
 
           <div className="space-y-8">
+            <CurrencyConverter />
+            <WithdrawalsDashboard withdrawals={withdrawals} formatCurrency={formatCurrency} />
             <DisciplineDashboard trades={filteredTrades} />
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
@@ -381,6 +410,7 @@ export default function DashboardPage() {
         </div>
       </footer>
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} />
+      <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
   );

@@ -15,3 +15,10 @@ export interface Trade {
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';
+
+export interface Withdrawal {
+  id: string;
+  amount: number;
+  date: string;
+  notes?: string;
+}
