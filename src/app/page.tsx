@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw, Users, Store } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw, Users, Store, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -589,8 +589,8 @@ export default function DashboardPage() {
                   <Link href="/misiones"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
                   <Link href="/obligatorio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
                   <Link href="/journal"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
-                  <Link href="/gremio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-cyan-500 hover:bg-cyan-600 text-white"><Users className="h-5 w-5 mr-2" />Gremio</Button></Link>
-                  <Link href="/tienda"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-emerald-500 hover:bg-emerald-600 text-white"><Store className="h-5 w-5 mr-2" />Tienda</Button></Link>
+                  <Link href="/gremio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-cyan-500 hover:bg-cyan-600 text-white"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
+                  <Link href="/tienda"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-emerald-500 hover:bg-emerald-600 text-white"><Trophy className="h-5 w-5 mr-2" />Tienda</Button></Link>
               </div>
               <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
                   <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
@@ -712,3 +712,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
