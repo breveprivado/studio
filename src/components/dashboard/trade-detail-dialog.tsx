@@ -89,22 +89,6 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               <EmotionIcon emotion={trade.emotion} />
             </div>
           )}
-           {trade.discipline != null && (
-             <div className="flex justify-between items-center">
-               <span className="text-sm text-muted-foreground">Disciplina</span>
-                <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                        <Star
-                            key={rating}
-                            className={cn(
-                                "h-5 w-5",
-                                trade.discipline! >= rating ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"
-                            )}
-                        />
-                    ))}
-                </div>
-             </div>
-           )}
           {trade.notes && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Notas de la Operación</h4>
