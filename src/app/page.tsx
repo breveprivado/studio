@@ -197,7 +197,12 @@ export default function DashboardPage() {
     setPlayerStats(storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 });
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
-    setCreatures(storedCreatures ? JSON.parse(storedCreatures) : initialCreatures);
+    if (storedCreatures) {
+      setCreatures(JSON.parse(storedCreatures));
+    } else {
+      setCreatures(initialCreatures);
+      localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
+    }
     
     const storedJournalEntries = localStorage.getItem('journalEntries');
     setJournalEntries(storedJournalEntries ? JSON.parse(storedJournalEntries) : []);
@@ -208,7 +213,9 @@ export default function DashboardPage() {
     const isDataInitialized = localStorage.getItem('data_initialized');
     if (!isDataInitialized) {
         setTrades(initialTrades);
+        localStorage.setItem('trades', JSON.stringify(initialTrades));
         setCreatures(initialCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
         localStorage.setItem('data_initialized', 'true');
     }
   };
@@ -705,5 +712,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
