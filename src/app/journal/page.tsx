@@ -218,17 +218,22 @@ export default function JournalPage() {
     }
   };
   
-  const checkSurvivalMissions = () => {
-    const allEntries: JournalEntry[] = JSON.parse(localStorage.getItem('journalEntries') || '[]');
-    const currentRatedDays = allEntries.filter(e => e.rating > 0).length;
+  const checkSurvivalMissions = (newEntriesList: JournalEntry[]) => {
+    const currentRatedDays = newEntriesList.filter(e => e.rating > 0).length;
 
-    let storedPlayerStats: PlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{}');
-    if (!storedPlayerStats.xp) storedPlayerStats.xp = 0;
+    let storedPlayerStats: PlayerStats;
+    try {
+      storedPlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{"xp":0}');
+      if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
+    } catch {
+      storedPlayerStats = { xp: 0, startDate: new Date().toISOString() };
+    }
 
     let xpGained = false;
 
-    Object.values(levelMilestones).forEach((milestone) => {
+    Object.entries(levelMilestones).forEach(([level, milestone]) => {
         const xpEarnedForMilestone = JSON.parse(localStorage.getItem(`xpEarned_${milestone}`) || 'false');
+
         if (currentRatedDays >= milestone && !xpEarnedForMilestone) {
             storedPlayerStats.xp += XP_PER_SURVIVAL_MISSION;
             localStorage.setItem(`xpEarned_${milestone}`, 'true');
@@ -279,7 +284,7 @@ export default function JournalPage() {
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
     if(currentRating > 0) {
-        checkSurvivalMissions();
+        checkSurvivalMissions(newEntries);
     }
     
     toast({
@@ -351,7 +356,7 @@ export default function JournalPage() {
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
     if (wasPreviouslyUnrated) {
-        checkSurvivalMissions();
+        checkSurvivalMissions(newEntries);
     }
 
 
