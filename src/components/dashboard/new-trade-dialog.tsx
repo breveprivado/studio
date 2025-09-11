@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Smile, Frown, Meh, Star } from 'lucide-react';
+import { CalendarIcon, Smile, Frown, Meh, Star, Check, ChevronsUpDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -25,8 +25,7 @@ import { Trade, Emotion } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { currencyPairs } from '@/lib/data';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida'),
@@ -132,18 +131,54 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Divisas</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una divisa" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currencyPairs.map(pair => (
-                            <SelectItem key={pair.value} value={pair.value}>{pair.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                    </Select>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                                )}
+                            >
+                                {field.value
+                                ? currencyPairs.find(
+                                    (pair) => pair.value === field.value
+                                    )?.label
+                                : "Selecciona una divisa"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                            <Command>
+                            <CommandInput placeholder="Busca una divisa o escribe una nueva..." />
+                            <CommandEmpty>No se encontró la divisa.</CommandEmpty>
+                            <CommandGroup>
+                                {currencyPairs.map((pair) => (
+                                <CommandItem
+                                    value={pair.label}
+                                    key={pair.value}
+                                    onSelect={() => {
+                                      form.setValue("pair", pair.value)
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        pair.value === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                    />
+                                    {pair.label}
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -327,6 +362,36 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         </Label>
                       </FormItem>
                     </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="discipline"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>¿Respetaste tu Stop Loss y tu plan?</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                            <Star
+                                key={rating}
+                                className={cn(
+                                    "h-7 w-7 cursor-pointer",
+                                    (disciplineRating || 0) >= rating
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-300 dark:text-gray-600"
+                                )}
+                                onClick={() => {
+                                    const newRating = rating === disciplineRating ? undefined : rating;
+                                    setDisciplineRating(newRating);
+                                    form.setValue("discipline", newRating);
+                                }}
+                            />
+                        ))}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

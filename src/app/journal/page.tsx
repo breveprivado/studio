@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 import { ArrowLeft, Edit, Save, XCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { isSameDay } from 'date-fns';
 
 
 interface JournalEntry {
@@ -57,6 +56,7 @@ export default function JournalPage() {
 
     setEntries(prevEntries => [newEntry, ...prevEntries]);
     setCurrentEntry('');
+    setSelectedDate(new Date(newEntry.date));
     toast({
       title: 'Entrada Guardada',
       description: 'Tu entrada en la bitácora ha sido guardada.',
@@ -106,9 +106,9 @@ export default function JournalPage() {
     });
   };
 
-  const entriesForSelectedDate = entries.filter(entry =>
-    isSameDay(new Date(entry.date), selectedDate)
-  );
+  const entriesForSelectedDate = entries
+    .filter(entry => isSameDay(new Date(entry.date), selectedDate))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
@@ -235,3 +235,5 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    
