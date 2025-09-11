@@ -22,6 +22,7 @@ const levelMilestones: { [key: number]: number } = {
     9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
 };
 const XP_PER_SURVIVAL_MISSION = 500;
+const XP_PER_SURVIVAL_DAY = 100;
 
 const RatingRules = () => (
     <Accordion type="single" collapsible className="w-full">
@@ -218,38 +219,46 @@ export default function JournalPage() {
     }
   };
   
-  const checkSurvivalMissions = (newEntriesList: JournalEntry[], newRating: number) => {
+ const checkSurvivalMissions = (newEntriesList: JournalEntry[], newRating: number) => {
     // Only proceed if the rating is valid for survival
     if (newRating !== 3 && newRating !== 5) return;
 
+    let totalXpGained = 0;
+    
+    // Get current player stats from storage
+    const statsStr = localStorage.getItem('playerStats');
+    const storedPlayerStats: PlayerStats = statsStr ? JSON.parse(statsStr) : { xp: 0, startDate: new Date().toISOString() };
+    if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
+
+    // --- 1. Grant XP for the single day of survival ---
+    storedPlayerStats.xp += XP_PER_SURVIVAL_DAY;
+    totalXpGained += XP_PER_SURVIVAL_DAY;
+    toast({
+        title: `¡Día Sobrevivido!`,
+        description: `Has ganado ${XP_PER_SURVIVAL_DAY} XP por tu disciplina de hoy.`
+    });
+
+    // --- 2. Check for milestone missions ---
     const currentRatedDays = newEntriesList.filter(e => e.rating === 3 || e.rating === 5).length;
-
-    let storedPlayerStats: PlayerStats;
-    try {
-        const statsStr = localStorage.getItem('playerStats');
-        storedPlayerStats = statsStr ? JSON.parse(statsStr) : { xp: 0, startDate: new Date().toISOString() };
-        if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
-    } catch {
-        storedPlayerStats = { xp: 0, startDate: new Date().toISOString() };
-    }
-
-    let xpGained = false;
+    let milestoneUnlocked = false;
 
     Object.entries(levelMilestones).forEach(([level, milestone]) => {
         const xpEarnedForMilestone = JSON.parse(localStorage.getItem(`xpEarned_${milestone}`) || 'false');
 
         if (currentRatedDays >= milestone && !xpEarnedForMilestone) {
             storedPlayerStats.xp += XP_PER_SURVIVAL_MISSION;
+            totalXpGained += XP_PER_SURVIVAL_MISSION;
             localStorage.setItem(`xpEarned_${milestone}`, 'true');
             toast({
                 title: `¡Misión de Supervivencia Completa!`,
                 description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
             });
-            xpGained = true;
+            milestoneUnlocked = true;
         }
     });
 
-    if (xpGained) {
+    // --- 3. Save updated stats and notify other components ---
+    if (totalXpGained > 0) {
         localStorage.setItem('playerStats', JSON.stringify(storedPlayerStats));
         // This is a simple way to trigger a storage event for other tabs/pages to listen to.
         localStorage.setItem('xp_updated', Date.now().toString());
@@ -356,6 +365,7 @@ export default function JournalPage() {
     setEntries(newEntries);
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
+    // If the entry was not previously rated for survival, check missions
     if (wasPreviouslyUnratedForSurvival) {
         checkSurvivalMissions(newEntries, editingRating);
     }
@@ -575,3 +585,5 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    

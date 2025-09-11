@@ -234,7 +234,7 @@ export default function DashboardPage() {
     if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
 
      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'xp_updated') {
+        if (e.key === 'xp_updated' || e.key === 'playerStats') {
             loadPlayerStats();
         }
     };
