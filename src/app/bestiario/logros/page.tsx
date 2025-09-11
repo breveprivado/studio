@@ -94,11 +94,9 @@ const AchievementsPage = () => {
                 <CardContent className="space-y-4">
                   {achievementTiers.map(tier => {
                     const isUnlocked = encounters >= tier;
-                    const progress = isUnlocked ? 100 : (encounters / tier) * 100;
-                    const nextTier = achievementTiers[achievementTiers.indexOf(tier)];
                     const prevTier = achievementTiers[achievementTiers.indexOf(tier) - 1] || 0;
                     const progressInTier = Math.max(0, encounters - prevTier);
-                    const neededForTier = nextTier - prevTier;
+                    const neededForTier = tier - prevTier;
                     const tierProgress = (progressInTier / neededForTier) * 100;
 
                     return(

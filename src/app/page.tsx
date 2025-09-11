@@ -29,7 +29,7 @@ import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { Progress } from '@/components/ui/progress';
-import { useLeveling, levelMilestones } from '@/hooks/use-leveling';
+import { useLeveling } from '@/hooks/use-leveling';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
