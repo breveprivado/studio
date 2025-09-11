@@ -346,7 +346,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
               name="emotion"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>¿Cómo te sentías?</FormLabel>
+                  <FormLabel>¿Qué tan seguro estabas de la operación?</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}

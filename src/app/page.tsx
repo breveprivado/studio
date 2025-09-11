@@ -23,6 +23,7 @@ import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -227,6 +228,12 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
             <div className="flex items-center gap-4">
+               <Link href="/journal">
+                 <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Bitácora
+                 </Button>
+               </Link>
                <div className="flex items-center space-x-2">
                  <Sun className="h-5 w-5" />
                  <Switch
