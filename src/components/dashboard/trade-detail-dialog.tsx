@@ -32,7 +32,7 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
         <DialogHeader>
           <DialogTitle className="truncate">{trade.pair}</DialogTitle>
           <DialogDescription>
-            {format(new Date(trade.date), "eeee, dd 'de' MMMM 'de' yyyy", { locale: es })}
+            {format(new Date(trade.date), "eeee, dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -48,13 +48,13 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               {isWin ? '+' : ''}{formatCurrency(trade.profit)}
             </span>
           </div>
-          {trade.pips && (
+          {trade.pips != null && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Pips</span>
               <span>{trade.pips}</span>
             </div>
           )}
-          {trade.lotSize && (
+          {trade.lotSize != null && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Lote</span>
               <span>{trade.lotSize}</span>
@@ -71,7 +71,7 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
           {trade.notes && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Notas de la Operación</h4>
-              <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border">
+              <p className="text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-3 rounded-md border dark:border-gray-700">
                 {trade.notes}
               </p>
             </div>

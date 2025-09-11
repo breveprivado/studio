@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import { Trade, TradeStatus } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencyPairs } from '@/lib/data';
 
 const formSchema = z.object({
@@ -123,50 +123,60 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     <FormLabel>Descripción</FormLabel>
                     <Popover>
                         <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                            )}
-                            >
-                            {field.value
-                                ? currencyPairs.find(
-                                    (pair) => pair.value === field.value
-                                )?.label
-                                : "Selecciona un par"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
-                        <Command>
-                            <CommandInput placeholder="Buscar par..." />
-                            <CommandEmpty>No se encontró el par.</CommandEmpty>
-                            <CommandGroup>
-                            {currencyPairs.map((pair) => (
-                                <CommandItem
-                                value={pair.label}
-                                key={pair.value}
-                                onSelect={() => {
-                                    form.setValue("pair", pair.value)
-                                }}
+                            <FormControl>
+                                <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                )}
                                 >
-                                <Check
-                                    className={cn(
-                                    "mr-2 h-4 w-4",
-                                    pair.value === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
+                                {field.value
+                                    ? currencyPairs.find(
+                                        (pair) => pair.value.toLowerCase() === field.value.toLowerCase()
+                                    )?.label ?? field.value
+                                    : "Selecciona o escribe un par"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command shouldFilter={false}>
+                                <CommandInput 
+                                    placeholder="Buscar o crear par..." 
+                                    onValueChange={(search) => {
+                                        const exists = currencyPairs.some(p => p.value.toLowerCase() === search.toLowerCase());
+                                        if (!exists) {
+                                            form.setValue('pair', search);
+                                        }
+                                    }}
                                 />
-                                {pair.label}
-                                </CommandItem>
-                            ))}
-                            </CommandGroup>
-                        </Command>
+                                <CommandList>
+                                <CommandEmpty>No se encontró el par. Puedes escribir uno nuevo.</CommandEmpty>
+                                <CommandGroup>
+                                {currencyPairs.map((pair) => (
+                                    <CommandItem
+                                        value={pair.value}
+                                        key={pair.value}
+                                        onSelect={(currentValue) => {
+                                            form.setValue("pair", currentValue === field.value ? "" : currentValue)
+                                        }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        pair.value === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                    />
+                                    {pair.label}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                                </CommandList>
+                            </Command>
                         </PopoverContent>
                     </Popover>
                     <FormMessage />

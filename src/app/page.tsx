@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, icons } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -18,15 +18,26 @@ import { Terminal } from 'lucide-react';
 import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import TradeDetailDialog from '@/components/dashboard/trade-detail-dialog';
 import TimezoneClock from '@/components/dashboard/timezone-clock';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import * as XLSX from 'xlsx';
+
+const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M21 7.5a2.5 2.5 0 0 1-2.5 2.5h-2.5v7.5a2.5 2.5 0 0 1-5 0V10a2.5 2.5 0 0 1 2.5-2.5h2.5V5a2.5 2.5 0 0 1 5 0v2.5z"></path>
+        <path d="M11 10a2.5 2.5 0 0 0-2.5-2.5H6v10a2.5 2.5 0 0 0 5 0V10z"></path>
+    </svg>
+);
+
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
-  const [isAiAnalysisOpen, setIsAiAnalysisOpen] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,11 +47,26 @@ export default function DashboardPage() {
     } else {
       setTrades(initialTrades);
     }
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('trades', JSON.stringify(trades));
   }, [trades]);
+  
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const filteredTrades = useMemo(() => {
     const now = new Date();
@@ -108,54 +134,56 @@ export default function DashboardPage() {
     }
   };
 
-  const exportToCsv = () => {
-    const headers = ['ID', 'Descripción', 'Estado', 'Pips', 'Lote', 'Beneficio', 'Fecha', 'Estrategia', 'Notas'];
-    const rows = trades.map(trade => [
-      trade.id,
-      `"${trade.pair.replace(/"/g, '""')}"`,
-      trade.status,
-      trade.pips ?? '',
-      trade.lotSize ?? '',
-      trade.profit,
-      new Date(trade.date).toLocaleString('es-ES'),
-      trade.strategy ?? '',
-      `"${trade.notes?.replace(/"/g, '""') ?? ''}"`
-    ].join(','));
+  const exportToXlsx = () => {
+    const dataToExport = trades.map(trade => ({
+        'ID': trade.id,
+        'Descripción': trade.pair,
+        'Resultado': trade.status === 'win' ? 'Ganada' : 'Perdida',
+        'Pips': trade.pips ?? '',
+        'Lote': trade.lotSize ?? '',
+        'Beneficio (US$)': trade.profit,
+        'Fecha': new Date(trade.date).toLocaleString('es-ES'),
+        'Estrategia': trade.strategy ?? '',
+        'Notas': trade.notes ?? '',
+    }));
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(',') + "\n" 
-      + rows.join("\n");
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Historial de Trades");
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "historial_trades.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    XLSX.writeFile(workbook, "historial_trades.xlsx");
 
     toast({
       title: "Exportación Completa",
-      description: "Tu historial de trades ha sido exportado a CSV.",
+      description: "Tu historial de trades ha sido exportado a un archivo XLSX.",
     });
   }
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 text-foreground">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
             <div className="mb-4 md:mb-0">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3" />
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3 rounded-full" />
                 Olimpo Trade Academy
               </h1>
-              <p className="text-gray-600 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
-            <div className="flex items-center gap-2">
-               <Button onClick={exportToCsv} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+            <div className="flex items-center gap-4">
+               <div className="flex items-center space-x-2">
+                 <Sun className="h-5 w-5" />
+                 <Switch
+                    id="dark-mode"
+                    checked={isDarkMode}
+                    onCheckedChange={setIsDarkMode}
+                  />
+                 <Moon className="h-5 w-5" />
+               </div>
+               <Button onClick={exportToXlsx} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
                 <FileDown className="h-5 w-5 mr-2"/>
-                Exportar CSV
+                Exportar XLSX
               </Button>
               <Button onClick={handleAiAnalysis} disabled={isAiLoading} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
                 <Bot className="h-5 w-5 mr-2"/>
@@ -169,16 +197,16 @@ export default function DashboardPage() {
           </header>
           
           {aiAnalysisResult && (
-             <Alert className="mb-6 bg-blue-50 border-blue-200">
+             <Alert className="mb-6 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
                <Terminal className="h-4 w-4" />
-               <AlertTitle className="text-blue-800 font-semibold">Análisis de Trading con IA</AlertTitle>
-               <AlertDescription className="text-blue-700 whitespace-pre-wrap">
+               <AlertTitle className="text-blue-800 dark:text-blue-300 font-semibold">Análisis de Trading con IA</AlertTitle>
+               <AlertDescription className="text-blue-700 dark:text-blue-400 whitespace-pre-wrap">
                  {aiAnalysisResult}
                </AlertDescription>
              </Alert>
           )}
 
-          <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6">
             {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
               const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
               return (
@@ -188,8 +216,8 @@ export default function DashboardPage() {
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
                     timeRange === rangeKey
-                      ? "bg-white shadow-sm text-primary"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                      ? "bg-white dark:bg-gray-900 shadow-sm text-primary"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50"
                   )}
                 >
                   {range === 'Diario' && <Calendar className="h-4 w-4 mr-2" />}
@@ -204,10 +232,10 @@ export default function DashboardPage() {
           <TimezoneClock />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
-            <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-50" valueColorClass="text-green-600" />
-            <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-50" valueColorClass="text-red-600" />
-            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-50" valueColorClass={netProfit >= 0 ? "text-green-600" : "text-red-600"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<BarChart3 className="h-6 w-6 text-accent-foreground" />} iconBgClass="bg-yellow-50" valueColorClass={winRate > 50 ? "text-green-600" : "text-red-600"} />
+            <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
+            <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
+            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
+            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<BarChart3 className="h-6 w-6 text-accent-foreground" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass={winRate > 50 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
           </div>
 
           <div className="space-y-8">
@@ -224,6 +252,7 @@ export default function DashboardPage() {
             <a href="https://instagram.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 hover:text-primary" /></a>
             <a href="https://youtube.com/@olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 hover:text-primary" /></a>
             <a href="https://facebook.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://tiktok.com/@olimpotradeacademy" target="_blank" rel="noopener noreferrer"><TikTokIcon className="h-5 w-5 hover:text-primary" /></a>
           </p>
         </div>
       </footer>

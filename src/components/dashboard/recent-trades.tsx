@@ -12,9 +12,9 @@ interface RecentTradesProps {
 
 const RecentTrades: React.FC<RecentTradesProps> = ({ trades, onDeleteTrade, onSelectTrade, formatCurrency }) => {
   return (
-    <Card className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <CardHeader className="p-0 mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Operaciones Recientes</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Operaciones Recientes</h3>
       </CardHeader>
       <CardContent className="p-0">
         <div className="space-y-3">

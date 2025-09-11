@@ -57,7 +57,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="p-2 bg-white border rounded-md shadow-md text-sm">
+        <div className="p-2 bg-background border rounded-md shadow-md text-sm text-foreground">
           <p className="font-bold">{`Fecha: ${label}`}</p>
           <p style={{ color: '#22c55e' }}>{`Ganancias: ${payload.find(p => p.dataKey === 'ganancias')?.value?.toFixed(2) || 0} US$`}</p>
           <p style={{ color: '#ef4444' }}>{`Pérdidas: ${payload.find(p => p.dataKey === 'perdidas')?.value?.toFixed(2) || 0} US$`}</p>
@@ -70,30 +70,30 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 
   return (
     <div className="space-y-8">
-      <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
         <CardHeader>
           <div className="flex items-center mb-4">
             <BarChart3 className="h-6 w-6 text-primary mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900">Análisis de Rendimiento Diario</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Análisis de Rendimiento Diario</h2>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Rendimiento de Trading</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento de Trading</h3>
         </CardHeader>
         <CardContent>
           {performanceData.length > 0 ? (
             <ResponsiveContainer width="100%" height={350}>
               <ComposedChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" fontSize={12} tick={{ fill: '#6b7280' }} />
-                <YAxis fontSize={12} tick={{ fill: '#6b7280' }} tickFormatter={(value) => `${value} US$`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(value) => `${value} US$`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend />
+                <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
                 <Bar dataKey="ganancias" fill="#22c55e" name="Ganancias" stackId="a" />
                 <Bar dataKey="perdidas" fill="#ef4444" name="Pérdidas" stackId="a" />
                 <Line type="monotone" dataKey="beneficio neto" stroke="#3b82f6" strokeWidth={3} name="Beneficio Neto" dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}/>
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
               <p>No hay datos de rendimiento para mostrar.</p>
             </div>
           )}
@@ -101,31 +101,31 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
       </Card>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <CardHeader>
-             <h3 className="text-lg font-semibold text-gray-900">Rendimiento por Tipo de Operación</h3>
+             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento por Tipo de Operación</h3>
           </CardHeader>
           <CardContent>
              {operationTypeData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
-                        <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                        <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label fill="hsl(var(--foreground))">
                             {operationTypeData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))'}}/>
+                        <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
                     </PieChart>
                 </ResponsiveContainer>
              ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500"><p>No hay datos de operaciones para mostrar</p></div>
+                <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de operaciones para mostrar</p></div>
              )}
           </CardContent>
         </Card>
-        <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <CardHeader>
-             <h3 className="text-lg font-semibold text-gray-900">Tasa de Éxito por Operación</h3>
+             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tasa de Éxito por Operación</h3>
           </CardHeader>
           <CardContent>
             {operationTypeData.length > 0 ? (
@@ -143,12 +143,12 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))'}} />
+                        <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>
                     </PieChart>
                 </ResponsiveContainer>
              ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500"><p>No hay datos de tasa de éxito para mostrar</p></div>
+                <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de tasa de éxito para mostrar</p></div>
              )}
           </CardContent>
         </Card>
