@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ interface JournalEntry {
   content: string;
   rating: number;
   ratingComment: string;
+  imageUrl?: string | null;
 }
 
 const RatingsDashboard = ({ entries }: { entries: JournalEntry[] }) => {
@@ -29,42 +30,83 @@ const RatingsDashboard = ({ entries }: { entries: JournalEntry[] }) => {
   const startOfThisMonth = startOfMonth(now);
   const endOfThisMonth = endOfMonth(now);
 
-  const { weeklyStars, monthlyStars } = useMemo(() => {
+  const { weeklyAvg, monthlyAvg, weeklyCount, monthlyCount } = useMemo(() => {
     let weeklyStars = 0;
+    let weeklyCount = 0;
     let monthlyStars = 0;
+    let monthlyCount = 0;
 
     entries.forEach(entry => {
       const entryDate = new Date(entry.date);
-      if (isWithinInterval(entryDate, { start: startOfThisWeek, end: endOfThisWeek })) {
-        weeklyStars += entry.rating;
-      }
-      if (isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth })) {
-        monthlyStars += entry.rating;
+      if (entry.rating > 0) {
+        if (isWithinInterval(entryDate, { start: startOfThisWeek, end: endOfThisWeek })) {
+          weeklyStars += entry.rating;
+          weeklyCount++;
+        }
+        if (isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth })) {
+          monthlyStars += entry.rating;
+          monthlyCount++;
+        }
       }
     });
+    
+    const weeklyAvg = weeklyCount > 0 ? weeklyStars / weeklyCount : 0;
+    const monthlyAvg = monthlyCount > 0 ? monthlyStars / monthlyCount : 0;
 
-    return { weeklyStars, monthlyStars };
+    return { weeklyAvg, monthlyAvg, weeklyCount, monthlyCount };
   }, [entries, startOfThisWeek, endOfThisWeek, startOfThisMonth, endOfThisMonth]);
+
+  const getFeedback = (average: number) => {
+    if (average >= 4.5) {
+      return { message: "¡Excelente!", description: "Mantienes una disciplina de hierro. Sigue así.", color: "text-green-500" };
+    }
+    if (average >= 3.5) {
+      return { message: "¡Buen trabajo!", description: "Tu consistencia está dando frutos. Hay pequeños detalles por pulir.", color: "text-blue-500" };
+    }
+    if (average >= 2.5) {
+      return { message: "Vas por buen camino.", description: "Hay días buenos y malos. Enfócate en tu plan.", color: "text-yellow-500" };
+    }
+    return { message: "¡Atención!", description: "Este no es el camino. Revisa tu plan, apégate a tus reglas y no dejes que las emociones te dominen.", color: "text-red-500" };
+  };
+
+  const weeklyFeedback = getFeedback(weeklyAvg);
+  const monthlyFeedback = getFeedback(monthlyAvg);
 
   return (
     <Card className="bg-white dark:bg-neutral-900">
       <CardHeader>
         <CardTitle>Dashboard de Calificaciones</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg">
-          <span className="font-medium">Total de Estrellas (Semana)</span>
-          <div className="flex items-center gap-1">
-            <Star className="h-5 w-5 text-yellow-400" />
-            <span className="font-bold text-lg">{weeklyStars}</span>
-          </div>
+      <CardContent className="space-y-6">
+        <div>
+            <h3 className="font-semibold mb-2">Rendimiento Semanal</h3>
+            <div className="p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                    <span className="font-medium">Promedio de Estrellas</span>
+                    <div className="flex items-center gap-1">
+                        <Star className="h-5 w-5 text-yellow-400" />
+                        <span className="font-bold text-lg">{weeklyAvg.toFixed(1)}</span>
+                    </div>
+                </div>
+                <p className={`text-sm font-semibold ${weeklyFeedback.color}`}>{weeklyFeedback.message}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{weeklyFeedback.description}</p>
+                 <p className="text-xs text-gray-400 dark:text-gray-500 pt-2">Basado en {weeklyCount} día(s) calificados.</p>
+            </div>
         </div>
-        <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg">
-          <span className="font-medium">Total de Estrellas (Mes)</span>
-          <div className="flex items-center gap-1">
-            <Star className="h-5 w-5 text-yellow-400" />
-            <span className="font-bold text-lg">{monthlyStars}</span>
-          </div>
+        <div>
+            <h3 className="font-semibold mb-2">Rendimiento Mensual</h3>
+            <div className="p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                    <span className="font-medium">Promedio de Estrellas</span>
+                    <div className="flex items-center gap-1">
+                        <Star className="h-5 w-5 text-yellow-400" />
+                        <span className="font-bold text-lg">{monthlyAvg.toFixed(1)}</span>
+                    </div>
+                </div>
+                 <p className={`text-sm font-semibold ${monthlyFeedback.color}`}>{monthlyFeedback.message}</p>
+                 <p className="text-xs text-gray-500 dark:text-gray-400">{monthlyFeedback.description}</p>
+                 <p className="text-xs text-gray-400 dark:text-gray-500 pt-2">Basado en {monthlyCount} día(s) calificados.</p>
+            </div>
         </div>
       </CardContent>
     </Card>
@@ -84,6 +126,10 @@ export default function JournalPage() {
   const [currentRatingComment, setCurrentRatingComment] = useState('');
   const [editingRating, setEditingRating] = useState(0);
   const [editingRatingComment, setEditingRatingComment] = useState('');
+  
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [editingImage, setEditingImage] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedEntries = localStorage.getItem('journalEntries');
@@ -105,13 +151,31 @@ export default function JournalPage() {
       setCurrentEntry(entryForSelectedDate.content);
       setCurrentRating(entryForSelectedDate.rating);
       setCurrentRatingComment(entryForSelectedDate.ratingComment);
+      setCurrentImage(entryForSelectedDate.imageUrl || null);
     } else {
       setCurrentEntry('');
       setCurrentRating(0);
       setCurrentRatingComment('');
+      setCurrentImage(null);
     }
     setEditingEntryId(null);
   }, [selectedDate, entryForSelectedDate]);
+  
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        if(editingEntryId) {
+            setEditingImage(result);
+        } else {
+            setCurrentImage(result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   const handleSaveEntry = () => {
@@ -144,6 +208,7 @@ export default function JournalPage() {
       content: currentEntry,
       rating: currentRating,
       ratingComment: currentRatingComment,
+      imageUrl: currentImage,
     };
 
     setEntries(prevEntries => [newEntry, ...prevEntries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -164,6 +229,7 @@ export default function JournalPage() {
     setCurrentEntry('');
     setCurrentRating(0);
     setCurrentRatingComment('');
+    setCurrentImage(null);
   };
 
   const handleEditEntry = (entry: JournalEntry) => {
@@ -171,6 +237,7 @@ export default function JournalPage() {
     setEditingContent(entry.content);
     setEditingRating(entry.rating || 0);
     setEditingRatingComment(entry.ratingComment || '');
+    setEditingImage(entry.imageUrl || null);
   };
 
   const handleCancelEdit = () => {
@@ -178,6 +245,7 @@ export default function JournalPage() {
     setEditingContent('');
     setEditingRating(0);
     setEditingRatingComment('');
+    setEditingImage(null);
   };
 
   const handleUpdateEntry = () => {
@@ -197,7 +265,8 @@ export default function JournalPage() {
               ...entry, 
               content: editingContent,
               rating: editingRating,
-              ratingComment: editingRatingComment 
+              ratingComment: editingRatingComment,
+              imageUrl: editingImage,
             }
           : entry
       )
@@ -207,6 +276,7 @@ export default function JournalPage() {
         setCurrentEntry(editingContent);
         setCurrentRating(editingRating);
         setCurrentRatingComment(editingRatingComment);
+        setCurrentImage(editingImage);
     }
 
 
@@ -285,6 +355,12 @@ export default function JournalPage() {
                                   rows={4}
                                   className="resize-none"
                               />
+                               {editingImage && (
+                                <div className="relative">
+                                    <Image src={editingImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditingImage(null)}><XCircle className="h-4 w-4"/></Button>
+                                </div>
+                               )}
                               <div className="space-y-2">
                                   <label className="text-sm font-medium">Calificación del día</label>
                                   <div className="flex items-center gap-1">
@@ -305,14 +381,21 @@ export default function JournalPage() {
                                   value={editingRatingComment}
                                   onChange={(e) => setEditingRatingComment(e.target.value)}
                               />
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 flex-wrap">
                                 <Button onClick={handleUpdateEntry}>Guardar Cambios</Button>
                                 <Button variant="ghost" onClick={handleCancelEdit}>Cancelar</Button>
+                                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    {editingImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                                </Button>
                               </div>
                             </>
                           ) : entryForSelectedDate ? (
                             // Display view
                             <div>
+                               {entryForSelectedDate.imageUrl && (
+                                 <Image src={entryForSelectedDate.imageUrl} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full mb-4" />
+                               )}
                                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">{entryForSelectedDate.content}</p>
                                 {entryForSelectedDate.rating > 0 && (
                                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -348,6 +431,12 @@ export default function JournalPage() {
                                   rows={4}
                                   className="resize-none"
                               />
+                               {currentImage && (
+                                <div className="relative">
+                                    <Image src={currentImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCurrentImage(null)}><XCircle className="h-4 w-4"/></Button>
+                                </div>
+                               )}
                               <div className="space-y-2">
                                   <label className="text-sm font-medium">Calificación del día</label>
                                   <div className="flex items-center gap-1">
@@ -368,7 +457,13 @@ export default function JournalPage() {
                                   value={currentRatingComment}
                                   onChange={(e) => setCurrentRatingComment(e.target.value)}
                               />
-                              <Button onClick={handleSaveEntry} className="w-full md:w-auto self-end">Guardar Entrada</Button>
+                              <div className="flex gap-2 flex-wrap">
+                                <Button onClick={handleSaveEntry} className="md:w-auto self-end">Guardar Entrada</Button>
+                                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    {currentImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                                </Button>
+                              </div>
                             </>
                           )}
                       </div>
@@ -377,6 +472,15 @@ export default function JournalPage() {
             </div>
         </div>
       </div>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleImageUpload} 
+        className="hidden" 
+        accept="image/*"
+      />
     </div>
   );
 }
+
+    
