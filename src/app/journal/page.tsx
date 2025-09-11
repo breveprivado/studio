@@ -152,7 +152,7 @@ export default function JournalPage() {
                     </CardTitle>
                   </div>
                   <div className='flex gap-2'>
-                    {editingEntryId !== entry.id && (
+                    {editingEntryId !== entry.id ? (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -161,12 +161,21 @@ export default function JournalPage() {
                       >
                         <Edit className='h-4 w-4' />
                       </Button>
+                    ) : (
+                       <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 hover:text-primary"
+                        onClick={handleUpdateEntry}
+                      >
+                        <Save className='h-4 w-4' />
+                      </Button>
                     )}
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-gray-500 hover:text-red-500"
-                      onClick={() => handleDeleteEntry(entry.id)}
+                      onClick={() => editingEntryId === entry.id ? handleCancelEdit() : handleDeleteEntry(entry.id)}
                     >
                       <XCircle className='h-4 w-4' />
                     </Button>
@@ -181,10 +190,6 @@ export default function JournalPage() {
                         rows={5}
                         className="resize-none"
                       />
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancelar</Button>
-                        <Button size="sm" onClick={handleUpdateEntry}><Save className='mr-2 h-4 w-4'/> Guardar</Button>
-                      </div>
                     </div>
                   ) : (
                     <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>

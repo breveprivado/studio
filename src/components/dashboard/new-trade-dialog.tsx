@@ -58,7 +58,6 @@ const strategyOptions = [
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
   const [openPairCombobox, setOpenPairCombobox] = useState(false);
-  const [openStrategyCombobox, setOpenStrategyCombobox] = useState(false);
   const [disciplineRating, setDisciplineRating] = useState<number | undefined>(undefined);
 
   const form = useForm<NewTradeFormValues>({
@@ -158,24 +157,38 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                            <Command
+                                filter={(value, search) => {
+                                  if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+                                  return 0;
+                                }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
-                                        if (form.getValues('pair')) {
-                                            setOpenPairCombobox(false);
+                                        const currentValue = form.getValues('pair');
+                                        if (currentValue && !currencyPairs.some(p => p.value.toLowerCase() === currentValue.toLowerCase())) {
+                                            field.onChange(currentValue);
                                         }
+                                        setOpenPairCombobox(false);
                                     }
                                 }}
                             >
                                 <CommandInput 
                                     placeholder="Buscar o crear par..." 
                                     onValueChange={(search) => {
-                                        if (currencyPairs.every(p => p.value.toLowerCase() !== search.toLowerCase())) {
-                                            field.onChange(search);
-                                        }
+                                      field.onChange(search);
                                     }}
                                 />
                                 <CommandList>
-                                <CommandEmpty>No se encontró el par.</CommandEmpty>
+                                <CommandEmpty>
+                                  <CommandItem
+                                      value={form.getValues('pair')}
+                                      onSelect={(currentValue) => {
+                                          form.setValue("pair", currentValue)
+                                          setOpenPairCombobox(false)
+                                      }}
+                                    >
+                                      Crear "{form.getValues('pair')}"
+                                    </CommandItem>
+                                </CommandEmpty>
                                 <CommandGroup>
                                 {currencyPairs.map((pair) => (
                                     <CommandItem
@@ -275,55 +288,20 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     control={form.control}
                     name="strategy"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                         <FormLabel>Etiqueta</FormLabel>
-                        <Popover open={openStrategyCombobox} onOpenChange={setOpenStrategyCombobox}>
-                            <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn(
-                                        "w-full justify-between",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value || "Selecciona una etiqueta"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput 
-                                        placeholder="Buscar etiqueta..."
-                                     />
-                                    <CommandList>
-                                    <CommandEmpty>No se encontró la etiqueta.</CommandEmpty>
-                                    <CommandGroup>
-                                    {strategyOptions.map((option) => (
-                                        <CommandItem
-                                            value={option}
-                                            key={option}
-                                            onSelect={(currentValue) => {
-                                                form.setValue("strategy", currentValue === field.value ? "" : currentValue)
-                                                setOpenStrategyCombobox(false)
-                                            }}
-                                        >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            option === field.value ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                        {option}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una etiqueta" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {strategyOptions.map((option) => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                         </FormItem>
                     )}
