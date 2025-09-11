@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Gamepad2, Star, Trophy, ShieldHalf } from 'lucide-react';
 import { type Creature } from '@/lib/types';
-import { levelMilestones, useLeveling } from '@/hooks/use-leveling';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
@@ -20,7 +19,13 @@ import {
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
 const totalBeastMissionStars = 17 * achievementTiers.length;
-const totalSurvivalMissionStars = Object.keys(levelMilestones).length;
+const totalSurvivalMissionStars = 15; // Hardcoded for now based on the old system
+
+const levelMilestones: { [key: number]: number } = {
+    1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
+    9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
+};
+
 
 const MissionsPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
@@ -122,7 +127,7 @@ const MissionsPage = () => {
                                     const isCompleted = journalDays >= days;
                                     return (
                                         <TableRow key={level} className={cn(isCompleted && "bg-green-50 dark:bg-green-900/20")}>
-                                            <TableCell className="font-medium">Nivel {level}</TableCell>
+                                            <TableCell className="font-medium">Hito {level}</TableCell>
                                             <TableCell>Sobrevive {days} día{days > 1 ? 's' : ''}</TableCell>
                                             <TableCell className="text-right">
                                                 {isCompleted ? (

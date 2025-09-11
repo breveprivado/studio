@@ -50,6 +50,7 @@ export interface Creature {
 export interface PlayerStats {
     startDate: string;
     class?: 'Invocador' | 'Arquero' | 'Espadachín' | undefined;
+    xp: number;
 }
 
 export interface JournalEntry {

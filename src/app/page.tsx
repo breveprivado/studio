@@ -82,11 +82,9 @@ const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) 
 }
 
 
-const LevelDashboard = ({ playerStats, ratedDaysCount }: { playerStats: PlayerStats; ratedDaysCount: number; }) => {
-    const { level, nextMilestone } = useLeveling(ratedDaysCount);
+const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
+    const { level, xpForNextLevel, progressPercentage } = useLeveling(playerStats.xp);
     
-    const progressPercentage = nextMilestone > 0 ? (ratedDaysCount / nextMilestone) * 100 : 100;
-
     return (
         <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <CardHeader>
@@ -102,11 +100,11 @@ const LevelDashboard = ({ playerStats, ratedDaysCount }: { playerStats: PlayerSt
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground text-sm">
                    <span>Progreso</span>
-                   <span>{ratedDaysCount} / {nextMilestone} Días</span>
+                   <span>{playerStats.xp.toFixed(0)} / {xpForNextLevel} XP</span>
                 </div>
                 <Progress value={progressPercentage} className="h-4" />
                 <p className="text-center text-xs text-muted-foreground mt-2">
-                    ¡Registra y califica tus días en la Bitácora para subir de nivel!
+                    ¡Asocia bestias a tus operaciones para ganar XP y subir de nivel!
                 </p>
             </CardContent>
         </Card>
@@ -117,7 +115,7 @@ export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined });
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
@@ -132,11 +130,7 @@ export default function DashboardPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
   
-  const ratedDaysCount = useMemo(() => {
-      return journalEntries.filter(entry => entry.rating > 0).length;
-  }, [journalEntries]);
-
-  const { level } = useLeveling(ratedDaysCount);
+  const { level } = useLeveling(playerStats.xp);
 
 
   useEffect(() => {
@@ -152,7 +146,7 @@ export default function DashboardPage() {
     
     const storedPlayerStats = localStorage.getItem('playerStats');
     if (storedPlayerStats) setPlayerStats(JSON.parse(storedPlayerStats));
-    else setPlayerStats({ startDate: new Date().toISOString(), class: undefined });
+    else setPlayerStats({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) setCreatures(JSON.parse(storedCreatures));
@@ -248,6 +242,7 @@ export default function DashboardPage() {
     setTrades(prevTrades => [newTrade, ...prevTrades]);
 
     if (trade.creatureId) {
+       const creature = creatures.find(c => c.id === trade.creatureId);
        setCreatures(creatures.map(c => {
          if (c.id === trade.creatureId) {
            const newEncounters = [...c.encounters, { id: crypto.randomUUID(), date: new Date().toISOString() }];
@@ -256,10 +251,17 @@ export default function DashboardPage() {
          return c;
        }));
        toast({
-        title: '¡Bestia Enfrentada!',
+        title: `¡Bestia ${creature?.name} Cazada!`,
         description: 'Has registrado tu encuentro en el bestiario.'
-       })
+       });
        
+       const xpGained = (parseInt(trade.creatureId, 10) / 17) * 50 + 10; // Escala de XP
+       setPlayerStats(prev => ({ ...prev, xp: prev.xp + xpGained }));
+       toast({
+           title: '¡Experiencia Ganada!',
+           description: `Has ganado ${xpGained.toFixed(0)} XP.`,
+       });
+
        if (trade.status === 'win' && trade.profit > 0) {
            setCompoundInterestBalance(prev => prev + trade.profit);
             toast({
@@ -514,7 +516,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8" id="level-dashboard">
-            <LevelDashboard playerStats={playerStats} ratedDaysCount={ratedDaysCount} />
+            <LevelDashboard playerStats={playerStats} />
             {level >= 10 && !playerStats.class && (
                 <ClassSelection onSelectClass={handleSelectClass} />
             )}

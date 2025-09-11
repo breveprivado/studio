@@ -17,35 +17,25 @@ import CompoundInterestTable from '@/components/bestiary/compound-interest-table
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DollarSign } from 'lucide-react';
 
-const initialCreatures: Creature[] = Array.from({ length: 17 }, (_, i) => {
-    const id = (i + 1).toString();
-    let name = `Criatura #${id}`;
-    if (id === '1') name = 'Sombra';
-    if (id === '2') name = 'Slimes';
-    if (id === '3') name = 'Goblins';
-    if (id === '4') name = 'Trolls';
-    if (id === '5') name = 'Orcos';
-    if (id === '6') name = 'Minotauros';
-    if (id === '7') name = 'Mujeres Lizzards';
-    if (id === '8') name = 'Hombres Lobos';
-    if (id === '9') name = 'Faunos';
-    if (id === '10') name = 'Sirenas';
-    if (id === '11') name = 'Hadas';
-    if (id === '12') name = 'Fenix';
-    if (id === '13') name = 'Basilisco';
-    if (id === '14') name = 'Kraken';
-    if (id === '15') name = 'Leviatan';
-    if (id === '16') name = 'Cthulhu';
-    if (id === '17') name = 'Un Dragón Ancestral';
-    
-    return {
-        id,
-        name,
-        description: `Una descripción de ${name}...`,
-        imageUrl: null,
-        encounters: [],
-    };
-});
+const initialCreatures: Creature[] = [
+    { id: '1', name: 'Sombra', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
+    { id: '2', name: 'Slimes', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
+    { id: '3', name: 'Goblins', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
+    { id: '4', name: 'Trolls', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
+    { id: '5', name: 'Orcos', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
+    { id: '6', name: 'Minotauros', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
+    { id: '7', name: 'Mujeres Lizzards', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
+    { id: '8', name: 'Hombres Lobos', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
+    { id: '9', name: 'Faunos', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
+    { id: '10', name: 'Sirenas', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
+    { id: '11', name: 'Hadas', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
+    { id: '12', name: 'Fenix', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
+    { id: '13', name: 'Basilisco', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
+    { id: '14', name: 'Kraken', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
+    { id: '15', name: 'Leviatan', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
+    { id: '16', name: 'Cthulhu', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
+    { id: '17', name: 'Un Dragón Ancestral', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
+];
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
     const [name, setName] = useState(creature.name);
@@ -116,23 +106,6 @@ const BestiaryPage = () => {
   useEffect(() => {
       localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
   }, [compoundInterestBalance]);
-
-
-  const handleEncounterChange = (id: string, change: 'add' | 'remove') => {
-    setCreatures(creatures.map(c => {
-      if (c.id === id) {
-        let newEncounters = [...c.encounters];
-        if (change === 'add') {
-          newEncounters.push({ id: crypto.randomUUID(), date: new Date().toISOString() });
-          toast({ title: '¡Encuentro Registrado!', description: 'Has añadido un nuevo encuentro a tu historial.'});
-        } else {
-          newEncounters.pop();
-        }
-        return { ...c, encounters: newEncounters };
-      }
-      return c;
-    }));
-  };
   
   const handleNameSave = (id: string, newName: string) => {
     setCreatures(creatures.map(c => c.id === id ? { ...c, name: newName } : c));
@@ -213,32 +186,23 @@ const BestiaryPage = () => {
 
         <Card>
             <CardHeader>
-                <CardTitle>Total de Encuentros</CardTitle>
+                <CardTitle>Listado de Bestias</CardTitle>
                 <CardDescription>Un resumen de todos los monstruos que has enfrentado.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     {creatures.sort((a, b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
-                        <div key={creature.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors">
+                        <div 
+                            key={creature.id} 
+                            className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+                            onClick={() => handleOpenSheet(creature)}
+                        >
                             <div className="flex-1">
                                <CreatureNameEditor creature={creature} onSave={handleNameSave} />
                                <p className="text-sm text-muted-foreground mt-1">Encuentros totales: {creature.encounters.length}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={() => handleEncounterChange(creature.id, 'remove')}>
-                                    <Minus className="h-4 w-4" />
-                                </Button>
-
-                                <div 
-                                    className="font-bold text-xl w-10 text-center cursor-pointer"
-                                    onClick={() => handleOpenSheet(creature)}
-                                >
-                                    {creature.encounters.length}
-                                </div>
-                                
-                                <Button variant="outline" size="icon" onClick={() => handleEncounterChange(creature.id, 'add')}>
-                                    <Plus className="h-4 w-4" />
-                                </Button>
+                            <div className="font-bold text-xl w-10 text-center">
+                                {creature.encounters.length}
                             </div>
                         </div>
                     ))}
