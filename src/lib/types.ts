@@ -32,3 +32,16 @@ export interface BalanceAddition {
 }
 
 export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'withdrawal' }) | (BalanceAddition & { type: 'balance' });
+
+export interface Encounter {
+  id: string;
+  date: string;
+}
+
+export interface Creature {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string | null;
+  encounters: Encounter[];
+}

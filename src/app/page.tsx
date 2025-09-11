@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -290,6 +290,12 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
                 <div className='flex gap-2'>
+                    <Link href="/bestiario">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
+                        <BookHeart className="h-5 w-5 mr-2" />
+                        Bestiario
+                        </Button>
+                    </Link>
                     <Link href="/obligatorio">
                         <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white">
                         <ClipboardCheck className="h-5 w-5 mr-2" />
