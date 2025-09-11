@@ -4,12 +4,13 @@ export interface Trade {
   id: string;
   pair: string;
   status: TradeStatus;
-  pips: number;
-  lotSize: number;
+  pips?: number;
+  lotSize?: number;
   profit: number;
   date: string;
   strategy?: string;
   strategyColor?: string;
+  notes?: string;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';

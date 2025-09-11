@@ -23,14 +23,16 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Trade, TradeStatus } from '@/lib/types';
 import { es } from 'date-fns/locale';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  pair: z.string().min(1, 'El par es requerido'),
+  pair: z.string().min(1, 'La descripción es requerida'),
   profit: z.coerce.number().refine(val => val !== 0, 'El beneficio no puede ser cero'),
-  pips: z.coerce.number(),
-  lotSize: z.coerce.number().positive('El lote debe ser positivo'),
+  pips: z.coerce.number().optional(),
+  lotSize: z.coerce.number().optional(),
   date: z.date({ required_error: 'La fecha es requerida' }),
   strategy: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -41,16 +43,20 @@ interface NewTradeDialogProps {
   onAddTrade: (trade: Omit<Trade, 'id'>) => void;
 }
 
+const strategyOptions = [
+    '1G', '2G', '3G', '4G', '5G',
+    '1C', '2C', '3C', '4C'
+];
+
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       pair: '',
       profit: 0,
-      pips: 0,
-      lotSize: 0.1,
       date: new Date(),
       strategy: '',
+      notes: '',
     },
   });
 
@@ -96,9 +102,9 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
               name="pair"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Par de Divisas</FormLabel>
+                  <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: EUR/USD Long" {...field} />
+                    <Input placeholder="Ej: EUR/USD Venta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -118,15 +124,24 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                   </FormItem>
                 )}
               />
-              <FormField
+               <FormField
                 control={form.control}
-                name="pips"
+                name="strategy"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pips</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
+                    <FormLabel>Etiqueta</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una etiqueta" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {strategyOptions.map(option => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -135,10 +150,23 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
+                name="pips"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pips (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+                <FormField
+                control={form.control}
                 name="lotSize"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Lote</FormLabel>
+                    <FormLabel>Lote (Opcional)</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -146,20 +174,20 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     </FormItem>
                 )}
                 />
-                <FormField
-                control={form.control}
-                name="strategy"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Etiqueta</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ej: 1G, 2C" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
             </div>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notas (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Añade detalles sobre la operación..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="date"

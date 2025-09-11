@@ -8,10 +8,11 @@ import { es } from 'date-fns/locale';
 interface TradeItemProps {
   trade: Trade;
   onDelete: (id: string) => void;
+  onSelect: (trade: Trade) => void;
   formatCurrency: (value: number) => string;
 }
 
-const TradeItem: React.FC<TradeItemProps> = ({ trade, onDelete, formatCurrency }) => {
+const TradeItem: React.FC<TradeItemProps> = ({ trade, onDelete, onSelect, formatCurrency }) => {
   const isWin = trade.status === 'win';
   const statusText = isWin ? 'GANADORA' : 'PERDEDORA';
   const statusColor = isWin ? 'text-green-600' : 'text-red-600';
@@ -19,8 +20,11 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, onDelete, formatCurrency }
   const profitColor = isWin ? 'text-green-600' : 'text-red-600';
   
   return (
-    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="flex items-center space-x-4 flex-1 min-w-0">
+    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group">
+      <div 
+        className="flex items-center space-x-4 flex-1 min-w-0 cursor-pointer"
+        onClick={() => onSelect(trade)}
+      >
         <div className={`p-2 rounded-full ${iconBgColor}`}>
           <TrendingUp className={`h-5 w-5 ${statusColor} ${!isWin && 'rotate-180'}`} />
         </div>
@@ -33,21 +37,19 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, onDelete, formatCurrency }
             )}
             <span className={`text-sm font-medium ${statusColor}`}>{statusText}</span>
           </div>
-          <p className="text-sm font-medium text-gray-900 truncate">{trade.pair}</p>
+          <p className="text-sm font-medium text-gray-900 truncate group-hover:underline">{trade.pair}</p>
           <div className="flex items-center space-x-3 text-xs text-gray-500 mt-1 flex-wrap">
-            <span>{format(new Date(trade.date), 'dd MMM', { locale: es })}</span>
-            <span>•</span>
-            <span>{trade.pips > 0 ? '+' : ''}{trade.pips} pips</span>
-            <span>•</span>
-            <span>Lote: {trade.lotSize}</span>
+            <span>{format(new Date(trade.date), 'dd MMM yyyy', { locale: es })}</span>
+            {trade.pips && <><span>•</span><span>{trade.pips > 0 ? '+' : ''}{trade.pips} pips</span></>}
+            {trade.lotSize && <><span>•</span><span>Lote: {trade.lotSize}</span></>}
           </div>
         </div>
       </div>
       <div className="flex items-center space-x-3 ml-4">
-        <div className="text-right">
+        <div className="text-right" onClick={() => onSelect(trade)} >
           <span className={`text-lg font-bold ${profitColor}`}>{isWin ? '+' : ''}{formatCurrency(Math.abs(trade.profit))}</span>
         </div>
-        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-600 transition-colors h-8 w-8" onClick={() => onDelete(trade.id)} title="Eliminar operación">
+        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-600 transition-colors h-8 w-8" onClick={(e) => {e.stopPropagation(); onDelete(trade.id)}} title="Eliminar operación">
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>

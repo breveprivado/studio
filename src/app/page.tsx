@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Target, BarChart3, TrendingUp, Calendar, Bot } from 'lucide-react';
+import { Plus, Target, BarChart3, TrendingUp, Calendar, Bot, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -14,6 +14,8 @@ import { analyzeTrades } from '@/ai/flows/ai-powered-trade-analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
+import StrategyPerformance from '@/components/dashboard/strategy-performance';
+import TradeDetailDialog from '@/components/dashboard/trade-detail-dialog';
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [isAiAnalysisOpen, setIsAiAnalysisOpen] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,6 +84,10 @@ export default function DashboardPage() {
   const handleDeleteTrade = (id: string) => {
     setTrades(prevTrades => prevTrades.filter(t => t.id !== id));
   };
+
+  const handleSelectTrade = (trade: Trade) => {
+    setSelectedTrade(trade);
+  }
   
   const handleAiAnalysis = async () => {
     setIsAiLoading(true);
@@ -99,6 +106,38 @@ export default function DashboardPage() {
     }
   };
 
+  const exportToCsv = () => {
+    const headers = ['ID', 'Descripción', 'Estado', 'Pips', 'Lote', 'Beneficio', 'Fecha', 'Estrategia', 'Notas'];
+    const rows = trades.map(trade => [
+      trade.id,
+      `"${trade.pair.replace(/"/g, '""')}"`,
+      trade.status,
+      trade.pips ?? '',
+      trade.lotSize ?? '',
+      trade.profit,
+      new Date(trade.date).toLocaleString('es-ES'),
+      trade.strategy ?? '',
+      `"${trade.notes?.replace(/"/g, '""') ?? ''}"`
+    ].join(','));
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(',') + "\n" 
+      + rows.join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "historial_trades.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Exportación Completa",
+      description: "Tu historial de trades ha sido exportado a CSV.",
+    });
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -111,7 +150,11 @@ export default function DashboardPage() {
               </h1>
               <p className="text-gray-600 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+               <Button onClick={exportToCsv} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+                <FileDown className="h-5 w-5 mr-2"/>
+                Exportar CSV
+              </Button>
               <Button onClick={handleAiAnalysis} disabled={isAiLoading} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
                 <Bot className="h-5 w-5 mr-2"/>
                 {isAiLoading ? "Analizando..." : "Análisis IA"}
@@ -126,8 +169,8 @@ export default function DashboardPage() {
           {aiAnalysisResult && (
              <Alert className="mb-6 bg-blue-50 border-blue-200">
                <Terminal className="h-4 w-4" />
-               <AlertTitle className="text-blue-800 font-semibold">AI Trade Analysis</AlertTitle>
-               <AlertDescription className="text-blue-700">
+               <AlertTitle className="text-blue-800 font-semibold">Análisis de Trading con IA</AlertTitle>
+               <AlertDescription className="text-blue-700 whitespace-pre-wrap">
                  {aiAnalysisResult}
                </AlertDescription>
              </Alert>
@@ -164,12 +207,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8">
+            <StrategyPerformance trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
-            <RecentTrades trades={trades} onDeleteTrade={handleDeleteTrade} formatCurrency={formatCurrency} />
+            <RecentTrades trades={trades} onDeleteTrade={handleDeleteTrade} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
           </div>
         </div>
       </div>
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} />
+      <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
   );
 }
