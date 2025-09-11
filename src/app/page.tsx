@@ -428,7 +428,7 @@ export default function DashboardPage() {
           <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4">
             <div className="mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                <Image src="/logo.png" alt="Olimpo Wallet Logo" width={40} height={40} className="mr-3 rounded-full" />
+                 <Shield className="h-8 w-8 mr-3 text-primary" />
                 Olimpo Wallet
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
