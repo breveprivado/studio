@@ -585,11 +585,11 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col items-end gap-4 w-full md:w-auto">
               <div className="w-full flex flex-wrap justify-end items-center gap-2">
-                  <Link href="/bestiario"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
-                  <Link href="/misiones"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
-                  <Link href="/obligatorio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
-                  <Link href="/journal"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
-                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
+                  <Link href="/bestiario"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
+                  <Link href="/misiones"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
+                  <Link href="/obligatorio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
+                  <Link href="/journal"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
+                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-cyan-500 text-foreground hover:bg-gray-100 dark:hover:bg-cyan-600"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
               </div>
               <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
                   <Link href="/tienda">
@@ -717,5 +717,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
