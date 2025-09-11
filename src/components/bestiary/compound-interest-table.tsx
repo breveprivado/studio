@@ -66,6 +66,9 @@ const CompoundInterestTable: React.FC = () => {
             switch(i) {
                 case 1: name = 'Sombra'; break;
                 case 2: name = 'Slimes'; break;
+                case 3: name = 'Goblins'; break;
+                case 4: name = 'Ogro'; break;
+                case 5: name = 'Orcos'; break;
                 default: name = i;
             }
 
