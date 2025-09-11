@@ -9,14 +9,17 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, XCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface JournalEntry {
   id: string;
   date: string;
   content: string;
+  rating: number;
+  ratingComment: string;
 }
 
 export default function JournalPage() {
@@ -26,6 +29,11 @@ export default function JournalPage() {
   const [editingContent, setEditingContent] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { toast } = useToast();
+
+  const [currentRating, setCurrentRating] = useState(0);
+  const [currentRatingComment, setCurrentRatingComment] = useState('');
+  const [editingRating, setEditingRating] = useState(0);
+  const [editingRatingComment, setEditingRatingComment] = useState('');
 
   useEffect(() => {
     const storedEntries = localStorage.getItem('journalEntries');
@@ -50,13 +58,17 @@ export default function JournalPage() {
 
     const newEntry: JournalEntry = {
       id: crypto.randomUUID(),
-      date: new Date().toISOString(),
+      date: selectedDate.toISOString(),
       content: currentEntry,
+      rating: currentRating,
+      ratingComment: currentRatingComment,
     };
 
-    setEntries(prevEntries => [newEntry, ...prevEntries]);
+    setEntries(prevEntries => [newEntry, ...prevEntries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCurrentEntry('');
-    setSelectedDate(new Date(newEntry.date));
+    setCurrentRating(0);
+    setCurrentRatingComment('');
+    
     toast({
       title: 'Entrada Guardada',
       description: 'Tu entrada en la bitácora ha sido guardada.',
@@ -74,11 +86,15 @@ export default function JournalPage() {
   const handleEditEntry = (entry: JournalEntry) => {
     setEditingEntryId(entry.id);
     setEditingContent(entry.content);
+    setEditingRating(entry.rating || 0);
+    setEditingRatingComment(entry.ratingComment || '');
   };
 
   const handleCancelEdit = () => {
     setEditingEntryId(null);
     setEditingContent('');
+    setEditingRating(0);
+    setEditingRatingComment('');
   };
 
   const handleUpdateEntry = () => {
@@ -94,7 +110,12 @@ export default function JournalPage() {
     setEntries(prevEntries =>
       prevEntries.map(entry =>
         entry.id === editingEntryId
-          ? { ...entry, content: editingContent }
+          ? { 
+              ...entry, 
+              content: editingContent,
+              rating: editingRating,
+              ratingComment: editingRatingComment 
+            }
           : entry
       )
     );
@@ -158,9 +179,29 @@ export default function JournalPage() {
                         placeholder="Escribe aquí tu entrada del día..."
                         value={currentEntry}
                         onChange={(e) => setCurrentEntry(e.target.value)}
-                        rows={6}
+                        rows={4}
                         className="resize-none"
                     />
+                     <div className="space-y-2">
+                        <label className="text-sm font-medium">Calificación del día</label>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <Star
+                              key={rating}
+                              className={cn(
+                                "h-6 w-6 cursor-pointer",
+                                currentRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                              )}
+                              onClick={() => setCurrentRating(rating)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <Input
+                        placeholder="Comentario sobre tu calificación..."
+                        value={currentRatingComment}
+                        onChange={(e) => setCurrentRatingComment(e.target.value)}
+                      />
                     <Button onClick={handleSaveEntry} className="w-full md:w-auto self-end">Guardar Entrada</Button>
                     </div>
                 </CardContent>
@@ -218,9 +259,46 @@ export default function JournalPage() {
                                     rows={5}
                                     className="resize-none"
                                 />
+                                 <div className="space-y-2">
+                                    <label className="text-sm font-medium">Calificación</label>
+                                    <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map((rating) => (
+                                        <Star
+                                        key={rating}
+                                        className={cn(
+                                            "h-6 w-6 cursor-pointer",
+                                            editingRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                                        )}
+                                        onClick={() => setEditingRating(rating)}
+                                        />
+                                    ))}
+                                    </div>
+                                </div>
+                                <Input
+                                    placeholder="Comentario sobre tu calificación..."
+                                    value={editingRatingComment}
+                                    onChange={(e) => setEditingRatingComment(e.target.value)}
+                                />
                                 </div>
                             ) : (
+                              <div>
                                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>
+                                {entry.rating > 0 && (
+                                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold">Calificación:</p>
+                                      <div className="flex">
+                                        {[1,2,3,4,5].map(star => (
+                                          <Star key={star} className={cn("h-5 w-5", entry.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {entry.ratingComment && (
+                                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">"{entry.ratingComment}"</p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             )}
                             </CardContent>
                         </Card>
@@ -235,5 +313,3 @@ export default function JournalPage() {
     </div>
   );
 }
-
-    
