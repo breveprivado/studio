@@ -231,10 +231,18 @@ export default function JournalPage() {
     }
   };
   
-  const checkSurvivalMissions = (currentRatedDays: number, newRatedDays: number) => {
+  const checkSurvivalMissions = () => {
+    const currentRatedDays = JSON.parse(localStorage.getItem('journalEntries') || '[]').filter((e: JournalEntry) => e.rating > 0).length;
+
     Object.values(levelMilestones).forEach((milestone) => {
-        if (currentRatedDays < milestone && newRatedDays >= milestone) {
-            setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
+        const storedPlayerStats: PlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{}');
+        const xpEarnedForMilestone = JSON.parse(localStorage.getItem(`xpEarned_${milestone}`) || 'false');
+
+        if (currentRatedDays >= milestone && !xpEarnedForMilestone) {
+             const updatedStats = { ...storedPlayerStats, xp: (storedPlayerStats.xp || 0) + XP_PER_SURVIVAL_MISSION };
+             setPlayerStats(updatedStats);
+             localStorage.setItem('playerStats', JSON.stringify(updatedStats));
+             localStorage.setItem(`xpEarned_${milestone}`, 'true');
             toast({
                 title: `¡Misión de Supervivencia Completa!`,
                 description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
@@ -274,10 +282,10 @@ export default function JournalPage() {
     
     const newEntries = [newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setEntries(newEntries);
-    
-    const newRatedDaysCount = newEntries.filter(e => e.rating > 0).length;
+    localStorage.setItem('journalEntries', JSON.stringify(newEntries));
+
     if(currentRating > 0) {
-        checkSurvivalMissions(ratedDaysCount, newRatedDaysCount);
+        checkSurvivalMissions();
     }
     
     toast({
@@ -287,16 +295,19 @@ export default function JournalPage() {
   };
 
   const handleDeleteEntry = (id: string) => {
-    setEntries(prevEntries => prevEntries.filter(entry => entry.id !== id));
+    const updatedEntries = entries.filter(entry => entry.id !== id);
+    setEntries(updatedEntries);
+    localStorage.setItem('journalEntries', JSON.stringify(updatedEntries));
     toast({
       title: 'Entrada Eliminada',
       description: 'La entrada de la bitácora ha sido eliminada.',
     });
-    // Reset fields after deleting
-    setCurrentEntry('');
-    setCurrentRating(0);
-    setCurrentRatingComment('');
-    setCurrentImage(null);
+    if (entryForSelectedDate && entryForSelectedDate.id === id) {
+        setCurrentEntry('');
+        setCurrentRating(0);
+        setCurrentRatingComment('');
+        setCurrentImage(null);
+    }
   };
 
   const handleEditEntry = (entry: JournalEntry) => {
@@ -343,10 +354,10 @@ export default function JournalPage() {
         : entry
     );
     setEntries(newEntries);
+    localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
-    if (wasPreviouslyUnrated) {
-        const newRatedDaysCount = newEntries.filter(e => e.rating > 0).length;
-        checkSurvivalMissions(ratedDaysCount, newRatedDaysCount);
+    if (wasPreviouslyUnrated || editingRating > 0) {
+        checkSurvivalMissions();
     }
 
 
