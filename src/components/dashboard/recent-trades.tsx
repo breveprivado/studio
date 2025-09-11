@@ -1,18 +1,20 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trade, Withdrawal, Activity } from '@/lib/types';
+import { Trade, Withdrawal, Activity, BalanceAddition } from '@/lib/types';
 import TradeItem from './trade-item';
 import WithdrawalItem from './withdrawal-item';
+import BalanceItem from './balance-item';
 
 interface RecentTradesProps {
   activities: Activity[];
   onDeleteTrade: (id: string) => void;
   onDeleteWithdrawal: (id: string) => void;
+  onDeleteBalance: (id: string) => void;
   onSelectTrade: (trade: Trade) => void;
   formatCurrency: (value: number) => string;
 }
 
-const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, onDeleteWithdrawal, onSelectTrade, formatCurrency }) => {
+const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
   return (
     <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <CardHeader className="p-0 mb-4">
@@ -23,14 +25,16 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, 
           {activities.length === 0 ? (
              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                <p>Aún no has registrado ninguna actividad.</p>
-               <p className="text-sm mt-1">Usa el botón "Nueva Operación" o "Registrar Retiro" para empezar.</p>
+               <p className="text-sm mt-1">Usa los botones de acción para empezar.</p>
              </div>
           ) : (
             activities.map(activity => {
               if (activity.type === 'trade') {
-                return <TradeItem key={activity.id} trade={activity} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+                return <TradeItem key={`trade-${activity.id}`} trade={activity} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+              } else if (activity.type === 'withdrawal') {
+                return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} formatCurrency={formatCurrency} />
               } else {
-                return <WithdrawalItem key={activity.id} withdrawal={activity} onDelete={onDeleteWithdrawal} formatCurrency={formatCurrency} />
+                 return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} formatCurrency={formatCurrency} />
               }
             })
           )}

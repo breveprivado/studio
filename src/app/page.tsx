@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -27,12 +27,19 @@ import CurrencyConverter from '@/components/dashboard/currency-converter';
 import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
 import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
+import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
+
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" fill="currentColor" {...props}>
-    <path d="M22.7,6.01c-0.08-0.01-0.16-0.01-0.24-0.02c-1.83-0.2-3.58-0.78-5.13-1.67c-0.12-0.07-0.25-0.15-0.38-0.23c-0.04-0.03-0.09-0.05-0.13-0.08c-0.56-0.37-1.07-0.8-1.52-1.28c-0.13-0.14-0.26-0.28-0.38-0.43C14.82,2.14,14.7,2,14.56,2c-0.1,0-0.2,0.07-0.26,0.16c-0.28,0.44-0.53,0.9-0.74,1.37c-0.02,0.05-0.05,0.1-0.07,0.15c-0.58,1.2-0.96,2.49-1.09,3.81c-0.01,0.06-0.01,0.12-0.02,0.18c-0.01,0.13-0.02,0.26-0.02,0.39v9.08c0,0.08,0,0.15,0.01,0.23c0.16,1.49,0.6,2.92,1.29,4.24c0.1,0.19,0.22,0.38,0.35,0.56c0.14,0.19,0.3,0.37,0.46,0.54c0.23,0.24,0.47,0.46,0.73,0.67c0.2,0.16,0.4,0.3,0.6,0.43c0.13,0.08,0.26,0.16,0.39,0.23c1.7,1.03,3.61,1.6,5.6,1.66c0.01,0,0.02,0,0.03,0c0.1,0,0.19-0.05,0.25-0.13c0.05-0.07,0.07-0.16,0.05-0.25c-0.07-0.43-0.15-0.85-0.24-1.28c-0.01-0.06-0.03-0.11-0.05-0.17c-0.44-1.12-0.66-2.29-0.66-3.48v-2.58c0-0.01,0-0.02,0-0.03c0.02-1.63,0.35-3.23,0.99-4.75c0.05-0.12,0.1-0.23,0.15-0.35c0.24-0.51,0.5-1,0.78-1.48c0.03-0.05,0.06-0.1,0.08-0.15c0.14-0.32,0.28-0.63,0.41-0.95c0.02-0.05,0.04-0.09,0.06-0.14c0.25-0.6,0.46-1.18,0.59-1.78c0.01-0.05,0.02-0.1,0.03-0.15c0.1-0.5,0.16-1,0.18-1.5c0-0.1-0.05-0.19-0.12-0.24c-0.05-0.03-0.1-0.05-0.15-0.05c-0.02,0-0.03,0-0.05,0l-2.73-0.01c-0.11,0-0.21,0.06-0.27,0.16c-0.1,0.17-0.21,0.34-0.32,0.51c-0.04,0.06-0.08,0.12-0.12,0.18c-0.78,1.15-1.84,2.1-3.09,2.78c-0.05,0.03-0.1,0.05-0.15,0.08c-0.5,0.28-1.02,0.52-1.56,0.71c-0.13,0.05-0.27,0.09-0.4,0.13c-1.3,0.41-2.65,0.62-4.01,0.62c-0.1,0-0.19-0.05,0.25-0.13c-0.05-0.07-0.07-0.16-0.05-0.24c0.03-0.19,0.07-0.39,0.11-0.58c0.01-0.03,0.02-0.05,0.03-0.08c0.19-0.8,0.47-1.58,0.82-2.33c0.1-0.22,0.21-0.43,0.32-0.65c0.18-0.35,0.38-0.69,0.58-1.03c0.03-0.05,0.06-0.1,0.09-0.15c0.39-0.65,0.82-1.27,1.29-1.86c0.06-0.08,0.12-0.15,0.18-0.22c0.3-0.32,0.61-0.62,0.93-0.91c0.02-0.02,0.03-0.03,0.05-0.05c0.16-0.15,0.32-0.29,0.48-0.43c0.04-0.03,0.07-0.06,0.11-0.09c0.4-0.35,0.82-0.67,1.25-0.97c0.23-0.16,0.46-0.31,0.7-0.45c0.15-0.09,0.3-0.17,0.45-0.25C18.42,7,19.26,6.57,20.13,6.2c0.08-0.03,0.15-0.07,0.23-0.1c0.5-0.19,1-0.34,1.5-0.45C22.25,5.52,22.5,5.5,22.75,5.5c0.11,0,0.2,0.06,0.26,0.16c0.04,0.08,0.05,0.16,0.01,0.24C22.9,5.95,22.8,5.98,22.7,6.01z"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21 7.4V12a4 4 0 0 1-4 4H8" />
+    <path d="M12 16V4a4 4 0 0 1 4 4v0" />
+    <path d="M4 12a4 4 0 0 0 4 4h0" />
+    <circle cx="8.5" cy="8.5" r="0.5" fill="currentColor" />
+    <circle cx="16.5" cy="4.5" r="0.5" fill="currentColor" />
   </svg>
 );
+
 
 const DisciplineDashboard = ({ trades }: { trades: Trade[] }) => {
   const { averageRating, totalRated } = useMemo(() => {
@@ -86,9 +93,11 @@ const DisciplineDashboard = ({ trades }: { trades: Trade[] }) => {
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
+  const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -106,6 +115,10 @@ export default function DashboardPage() {
     if (storedWithdrawals) {
       setWithdrawals(JSON.parse(storedWithdrawals));
     }
+     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
+    if (storedBalanceAdditions) {
+      setBalanceAdditions(JSON.parse(storedBalanceAdditions));
+    }
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         setIsDarkMode(true);
@@ -120,6 +133,10 @@ export default function DashboardPage() {
   useEffect(() => {
     localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
   }, [withdrawals]);
+  
+  useEffect(() => {
+    localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions));
+  }, [balanceAdditions]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -151,22 +168,24 @@ export default function DashboardPage() {
   const activities = useMemo((): Activity[] => {
     const combined = [
         ...trades.map(t => ({...t, type: 'trade'} as const)),
-        ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const))
+        ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const)),
+        ...balanceAdditions.map(b => ({...b, type: 'balance'} as const)),
     ];
     return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [trades, withdrawals]);
+  }, [trades, withdrawals, balanceAdditions]);
 
-  const { gains, losses, netProfit, winRate, totalTrades, totalWithdrawals } = useMemo(() => {
+  const { gains, losses, netProfit, winRate, totalTrades, totalWithdrawals, totalBalanceAdditions } = useMemo(() => {
     const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
     const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
     const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
     const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
-    const netProfit = gains + losses - totalWithdrawals;
+    const totalBalanceAdditions = balanceAdditions.reduce((acc, b) => acc + b.amount, 0);
+    const netProfit = totalBalanceAdditions + gains + losses - totalWithdrawals;
     const winningTrades = tradesToAnalyze.filter(t => t.status === 'win').length;
     const totalTradable = tradesToAnalyze.length;
     const winRate = totalTradable > 0 ? (winningTrades / totalTradable) * 100 : 0;
-    return { gains, losses, netProfit, winRate, totalTrades: filteredTrades.length, totalWithdrawals };
-  }, [filteredTrades, withdrawals]);
+    return { gains, losses, netProfit, winRate, totalTrades: filteredTrades.length, totalWithdrawals, totalBalanceAdditions };
+  }, [filteredTrades, withdrawals, balanceAdditions]);
 
   const formatCurrency = (value: number) => {
     const formatted = new Intl.NumberFormat('es-ES', {
@@ -190,12 +209,25 @@ export default function DashboardPage() {
     })
   }
 
+  const handleAddBalance = (balance: Omit<BalanceAddition, 'id' | 'date'>) => {
+    const newBalance = { ...balance, id: crypto.randomUUID(), date: new Date().toISOString() };
+    setBalanceAdditions(prev => [newBalance, ...prev]);
+    toast({
+        title: "Saldo Añadido",
+        description: "Tu nuevo saldo ha sido registrado exitosamente."
+    })
+  }
+
   const handleDeleteTrade = (id: string) => {
     setTrades(prevTrades => prevTrades.filter(t => t.id !== id));
   };
 
   const handleDeleteWithdrawal = (id: string) => {
     setWithdrawals(prev => prev.filter(w => w.id !== id));
+  }
+
+  const handleDeleteBalance = (id: string) => {
+    setBalanceAdditions(prev => prev.filter(b => b.id !== id));
   }
 
   const handleSelectTrade = (trade: Trade) => {
@@ -251,8 +283,8 @@ export default function DashboardPage() {
           <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4">
             <div className="mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3 rounded-full" />
-                Olimpo Trade Academy
+                <Image src="/logo.png" alt="Olimpo Wallet Logo" width={40} height={40} className="mr-3 rounded-full" />
+                Olimpo Wallet
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
@@ -290,6 +322,10 @@ export default function DashboardPage() {
                         {isAiLoading ? "Analizando..." : "Análisis IA"}
                     </Button>
                </div>
+              <Button onClick={() => setIsAddBalanceOpen(true)} className="bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
+                <Landmark className="h-5 w-5 mr-2" />
+                Añadir Saldo
+              </Button>
               <Button onClick={() => setIsWithdrawalOpen(true)} className="bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
                 <Banknote className="h-5 w-5 mr-2" />
                 Registrar Retiro
@@ -339,7 +375,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
-            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
+            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Depósitos: ${formatCurrency(totalBalanceAdditions)} | Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
             <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-400" />
           </div>
 
@@ -350,23 +386,24 @@ export default function DashboardPage() {
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
-            <RecentTrades activities={activities} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+            <RecentTrades activities={activities} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
           </div>
         </div>
       </div>
        <footer className="bg-gray-900 text-white py-4">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="flex items-center justify-center gap-4">
-            Síguenos en todas las redes como @olimpotradeacademy
-            <a href="https://instagram.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://youtube.com/@olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://facebook.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://tiktok.com/@olimpotradeacademy" target="_blank" rel="noopener noreferrer"><TikTokIcon className="h-5 w-5 hover:text-primary" /></a>
+            Síguenos en todas las redes como @olimpo.trading
+            <a href="https://instagram.com/olimpo.trading" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://youtube.com/@olimpo.trading" target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://facebook.com/olimpo.trading" target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://tiktok.com/@olimpo.trading" target="_blank" rel="noopener noreferrer"><TikTokIcon className="h-5 w-5 hover:text-primary" /></a>
           </p>
         </div>
       </footer>
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} />
+      <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
   );

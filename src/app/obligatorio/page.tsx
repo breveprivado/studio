@@ -241,7 +241,7 @@ export default function MandatoryPage() {
         <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div className="mb-4 md:mb-0">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-              <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3 rounded-full" />
+              <Image src="/logo.png" alt="Olimpo Wallet Logo" width={40} height={40} className="mr-3 rounded-full" />
               Reglas Obligatorias
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tus principios inquebrantables para el éxito.</p>
