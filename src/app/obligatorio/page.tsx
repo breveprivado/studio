@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, CheckCircle2, Edit, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Edit, Save, Upload, X, PlusCircle, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -68,25 +69,63 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
     localStorage.setItem(`mandatoryItems_${category}`, JSON.stringify(items));
   }, [items, category]);
 
-  const handleItemClick = (item: MandatoryRule) => {
+  const openEditDialog = (item: MandatoryRule) => {
     setSelectedItem(item);
     setEditText(item.text);
     setEditDescription(item.description);
     setEditImageUrl(item.imageUrl || null);
   };
   
-  const handleSaveDetails = () => {
-    if (!selectedItem) return;
-    setItems(items.map(item => 
-      item.id === selectedItem.id 
-        ? { ...item, text: editText, description: editDescription, imageUrl: editImageUrl }
-        : item
-    ));
+  const openNewDialog = () => {
+    setSelectedItem({ id: '', text: '', description: '', imageUrl: null }); // Temp object for new item
+    setEditText('');
+    setEditDescription('');
+    setEditImageUrl(null);
+  };
+
+  const closeDialog = () => {
     setSelectedItem(null);
+  };
+
+  const handleSave = () => {
+    if (!selectedItem) return;
+
+    if (selectedItem.id) { // Editing existing item
+      setItems(items.map(item => 
+        item.id === selectedItem.id 
+          ? { ...item, text: editText, description: editDescription, imageUrl: editImageUrl }
+          : item
+      ));
+      toast({
+        title: 'Principio Actualizado',
+        description: 'Los detalles de tu regla han sido guardados.',
+      });
+    } else { // Adding new item
+      const newItem: MandatoryRule = {
+        id: crypto.randomUUID(),
+        text: editText,
+        description: editDescription,
+        imageUrl: editImageUrl
+      };
+      setItems([...items, newItem]);
+       toast({
+        title: 'Principio Añadido',
+        description: 'Tu nueva regla ha sido guardada.',
+      });
+    }
+    closeDialog();
+  };
+
+  const handleDelete = () => {
+    if (!selectedItem || !selectedItem.id) return;
+
+    setItems(items.filter(item => item.id !== selectedItem.id));
     toast({
-      title: 'Principio Actualizado',
-      description: 'Los detalles de tu regla han sido guardados.',
+      title: 'Principio Eliminado',
+      description: 'La regla ha sido eliminada.',
+      variant: 'destructive',
     });
+    closeDialog();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +148,10 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
               <CardTitle>{category === 'trading' ? 'Principios de Trading' : 'Desarrollo de Personaje'}</CardTitle>
               <CardDescription>{category === 'trading' ? 'Las reglas que rigen cada una de tus operaciones.' : 'Las cualidades que forjan a un trader de élite.'}</CardDescription>
             </div>
-            {/* You can add an "Edit List" button here if needed */}
+             <Button onClick={openNewDialog} variant="outline">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Añadir Principio
+             </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -117,31 +159,37 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
             {items.map((item) => (
               <li 
                 key={item.id} 
-                className="flex items-start p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors"
-                onClick={() => handleItemClick(item)}
+                className="flex items-start p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors group"
+                onClick={() => openEditDialog(item)}
               >
                 <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
                 <span className="text-gray-700 dark:text-gray-300 flex-1">{item.text}</span>
                 <Edit className="h-4 w-4 text-gray-400 dark:text-gray-600 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
             ))}
+             {items.length === 0 && (
+                <p className="text-center text-gray-500 py-4">Aún no has añadido ningún principio. ¡Empieza ahora!</p>
+             )}
           </ul>
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar Principio</DialogTitle>
+            <DialogTitle>{selectedItem?.id ? 'Editar' : 'Nuevo'} Principio</DialogTitle>
+             <DialogDescription>
+                {selectedItem?.id ? 'Modifica los detalles de tu principio.' : 'Añade una nueva regla a tu lista.'}
+             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
               <div>
                   <label className="text-sm font-medium">Principio</label>
-                  <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="mt-1" />
+                  <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="mt-1" placeholder="Escribe tu principio aquí..." />
               </div>
               <div>
                   <label className="text-sm font-medium">Descripción</label>
-                  <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} className="mt-1" />
+                  <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} className="mt-1" placeholder="Añade una descripción detallada..." />
               </div>
               <div>
                 <label className="text-sm font-medium">Imagen</label>
@@ -151,18 +199,26 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
                         <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditImageUrl(null)}><X className="h-4 w-4"/></Button>
                     </div>
                 ) : (
-                    <Button variant="outline" className="w-full mt-2" onClick={() => fileInputRef.current?.click()}>
+                     <Button variant="outline" className="w-full mt-2" onClick={() => fileInputRef.current?.click()}>
                         <Upload className="h-4 w-4 mr-2" />
                         Subir Imagen
                     </Button>
                 )}
               </div>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button onClick={handleSaveDetails}>Guardar Cambios</Button>
+          <DialogFooter className="justify-between sm:justify-between">
+            {selectedItem?.id ? (
+                <Button variant="destructive" onClick={handleDelete} className="mr-auto">
+                    <Trash2 className="h-4 w-4 mr-2"/>
+                    Eliminar
+                </Button>
+            ) : <div />}
+            <div className="flex gap-2">
+              <DialogClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+              </DialogClose>
+              <Button onClick={handleSave}>Guardar Cambios</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -216,3 +272,5 @@ export default function MandatoryPage() {
     </div>
   );
 }
+
+    
