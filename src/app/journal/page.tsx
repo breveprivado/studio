@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 interface JournalEntry {
   id: string;
@@ -74,12 +76,18 @@ export default function JournalPage() {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Un espacio para tus reflexiones y análisis diarios.</p>
           </div>
+           <Link href="/">
+             <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+             </Button>
+            </Link>
         </header>
 
         <Card className="mb-8 bg-white dark:bg-neutral-900">
           <CardHeader>
-            <CardTitle>Nueva Entrada</CardTitle>
-            <CardDescription>¿Qué aprendiste hoy? ¿Cómo te sentiste? Anota tus pensamientos.</CardDescription>
+            <CardTitle>Hola,</CardTitle>
+            <CardDescription>¿Qué me vas a contar el día de hoy?</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
