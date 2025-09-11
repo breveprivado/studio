@@ -246,6 +246,7 @@ export default function DashboardPage() {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
+      localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
   
@@ -704,3 +705,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
