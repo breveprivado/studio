@@ -215,16 +215,7 @@ export default function DashboardPage() {
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-        const parsedCreatures = JSON.parse(storedCreatures);
-        if (parsedCreatures.length < 17) {
-            const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
-            const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
-            const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
-            setCreatures(creaturesToSet);
-            localStorage.setItem('bestiaryCreatures', JSON.stringify(creaturesToSet));
-        } else {
-            setCreatures(parsedCreatures);
-        }
+        setCreatures(JSON.parse(storedCreatures));
     } else if (!isDataInitialized) {
         setCreatures(initialCreatures);
         localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
@@ -271,7 +262,6 @@ export default function DashboardPage() {
   }, [isDarkMode]);
   
    useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
-   useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
    useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
 
   const filteredTrades = useMemo(() => {
@@ -518,13 +508,13 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
             <div className="flex flex-col items-end gap-4 w-full md:w-auto">
-              <div className="w-full flex flex-wrap justify-end items-center gap-2">
-                  <Link href="/bestiario" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
-                  <Link href="/misiones" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
-                  <Link href="/obligatorio" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
-                  <Link href="/journal" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
+              <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
+                  <Link href="/bestiario"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
+                  <Link href="/misiones"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
+                  <Link href="/obligatorio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
+                  <Link href="/journal"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
               </div>
-              <div className="w-full flex flex-wrap justify-end items-center gap-2">
+              <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
                   <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
                       <Landmark className="h-5 w-5 mr-2" />
                       Añadir Saldo
