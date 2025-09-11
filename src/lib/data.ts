@@ -61,4 +61,5 @@ export const currencyPairs = [
   { label: "EUR/CZK", value: "EUR/CZK" },
   { label: "GBP/NOK", value: "GBP/NOK" },
   { label: "GBP/SEK", value: "GBP/SEK" },
+  { label: "Otra", value: "Otra" },
 ];

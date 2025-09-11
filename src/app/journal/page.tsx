@@ -10,6 +10,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 import { ArrowLeft, Edit, Save, XCircle } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { isSameDay } from 'date-fns';
+
 
 interface JournalEntry {
   id: string;
@@ -22,6 +25,7 @@ export default function JournalPage() {
   const [currentEntry, setCurrentEntry] = useState('');
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,6 +106,10 @@ export default function JournalPage() {
     });
   };
 
+  const entriesForSelectedDate = entries.filter(entry =>
+    isSameDay(new Date(entry.date), selectedDate)
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -121,85 +129,107 @@ export default function JournalPage() {
             </Link>
         </header>
 
-        <Card className="mb-8 bg-white dark:bg-neutral-900">
-          <CardHeader>
-            <CardTitle>Hola,</CardTitle>
-            <CardDescription>¿Qué me vas a contar el día de hoy?</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <Textarea
-                placeholder="Escribe aquí tu entrada del día..."
-                value={currentEntry}
-                onChange={(e) => setCurrentEntry(e.target.value)}
-                rows={6}
-                className="resize-none"
-              />
-              <Button onClick={handleSaveEntry} className="w-full md:w-auto self-end">Guardar Entrada</Button>
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-1">
+                 <Card className="bg-white dark:bg-neutral-900">
+                    <CardHeader>
+                        <CardTitle>Calendario</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                        <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => date && setSelectedDate(date)}
+                            className="p-0"
+                            locale={es}
+                        />
+                    </CardContent>
+                </Card>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Historial de Entradas</h2>
-          {entries.length > 0 ? (
-            entries.map(entry => (
-              <Card key={entry.id} className="bg-white dark:bg-neutral-900">
-                <CardHeader className='flex-row items-start justify-between'>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {format(new Date(entry.date), "eeee, dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
-                    </CardTitle>
-                  </div>
-                  <div className='flex gap-2'>
-                    {editingEntryId !== entry.id ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-primary"
-                        onClick={() => handleEditEntry(entry)}
-                      >
-                        <Edit className='h-4 w-4' />
-                      </Button>
-                    ) : (
-                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-primary"
-                        onClick={handleUpdateEntry}
-                      >
-                        <Save className='h-4 w-4' />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-red-500"
-                      onClick={() => editingEntryId === entry.id ? handleCancelEdit() : handleDeleteEntry(entry.id)}
-                    >
-                      <XCircle className='h-4 w-4' />
-                    </Button>
-                  </div>
+            <div className="md:col-span-2 space-y-6">
+                <Card className="bg-white dark:bg-neutral-900">
+                <CardHeader>
+                    <CardTitle>Hola,</CardTitle>
+                    <CardDescription>¿Qué me vas a contar el día de hoy?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {editingEntryId === entry.id ? (
-                    <div className="space-y-4">
-                      <Textarea
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        rows={5}
+                    <div className="grid gap-4">
+                    <Textarea
+                        placeholder="Escribe aquí tu entrada del día..."
+                        value={currentEntry}
+                        onChange={(e) => setCurrentEntry(e.target.value)}
+                        rows={6}
                         className="resize-none"
-                      />
+                    />
+                    <Button onClick={handleSaveEntry} className="w-full md:w-auto self-end">Guardar Entrada</Button>
                     </div>
-                  ) : (
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>
-                  )}
                 </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-center text-gray-500 py-8">Aún no tienes entradas en tu bitácora.</p>
-          )}
+                </Card>
+
+                <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                        Entradas de {format(selectedDate, "PPP", { locale: es })}
+                    </h2>
+                     {entriesForSelectedDate.length > 0 ? (
+                        entriesForSelectedDate.map(entry => (
+                        <Card key={entry.id} className="bg-white dark:bg-neutral-900 mb-4">
+                            <CardHeader className='flex-row items-start justify-between'>
+                            <div>
+                                <CardTitle className="text-lg">
+                                {format(new Date(entry.date), "eeee, dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
+                                </CardTitle>
+                            </div>
+                            <div className='flex gap-2'>
+                                {editingEntryId !== entry.id ? (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-500 hover:text-primary"
+                                    onClick={() => handleEditEntry(entry)}
+                                >
+                                    <Edit className='h-4 w-4' />
+                                </Button>
+                                ) : (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-500 hover:text-primary"
+                                    onClick={handleUpdateEntry}
+                                >
+                                    <Save className='h-4 w-4' />
+                                </Button>
+                                )}
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-500 hover:text-red-500"
+                                onClick={() => editingEntryId === entry.id ? handleCancelEdit() : handleDeleteEntry(entry.id)}
+                                >
+                                <XCircle className='h-4 w-4' />
+                                </Button>
+                            </div>
+                            </CardHeader>
+                            <CardContent>
+                            {editingEntryId === entry.id ? (
+                                <div className="space-y-4">
+                                <Textarea
+                                    value={editingContent}
+                                    onChange={(e) => setEditingContent(e.target.value)}
+                                    rows={5}
+                                    className="resize-none"
+                                />
+                                </div>
+                            ) : (
+                                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>
+                            )}
+                            </CardContent>
+                        </Card>
+                        ))
+                    ) : (
+                        <p className="text-center text-gray-500 py-8">No tienes entradas para esta fecha.</p>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
     </div>

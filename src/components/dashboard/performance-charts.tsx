@@ -106,11 +106,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(value) => `${value} US$`} />
-                      <Tooltip contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                          color: 'hsl(var(--foreground))'
-                      }} />
+                      <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
                       <Bar dataKey="ganancias" fill="hsl(var(--chart-2))" name="Ganancias" stackId="a" />
                       <Bar dataKey="perdidas" fill="hsl(var(--chart-1))" name="Pérdidas" stackId="a" />
@@ -179,5 +175,3 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 };
 
 export default PerformanceCharts;
-
-    
