@@ -83,6 +83,22 @@ const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) 
 
 
 const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
+    if (!playerStats || playerStats.xp === undefined) {
+        return (
+            <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <CardHeader>
+                    <CardTitle className="flex items-center text-lg font-semibold">
+                        <Star className="h-5 w-5 mr-2 text-yellow-400" />
+                        Nivel del Trader
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-center text-muted-foreground">Cargando estadísticas...</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     const { level, xpForNextLevel, progressPercentage } = useLeveling(playerStats.xp);
     
     return (
