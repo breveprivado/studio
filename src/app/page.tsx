@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw, Users, Trophy } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, RotateCcw, Users, Trophy, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -11,11 +11,7 @@ import RecentTrades from '@/components/dashboard/recent-trades';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
 import { cn } from '@/lib/utils';
-import { analyzeTrades } from '@/ai/flows/ai-powered-trade-analysis';
-import { generateWeeklyReview } from '@/ai/flows/weekly-review-flow';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
 import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import TradeDetailDialog from '@/components/dashboard/trade-detail-dialog';
 import TimezoneClock from '@/components/dashboard/timezone-clock';
@@ -32,7 +28,6 @@ import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { Progress } from '@/components/ui/progress';
 import { useLeveling } from '@/hooks/use-leveling';
 import BestiaryDashboard from '@/components/dashboard/bestiary-dashboard';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +39,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { subDays } from 'date-fns';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -175,8 +169,6 @@ export default function DashboardPage() {
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
-  const [aiAnalysisResult, setAiAnalysisResult] = useState('');
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
@@ -493,48 +485,6 @@ export default function DashboardPage() {
   const handleSelectTrade = (trade: Trade) => {
     setSelectedTrade(trade);
   }
-  
-  const handleAiAnalysis = async () => {
-    setIsAiLoading(true);
-    setAiAnalysisResult('');
-    try {
-      const result = await analyzeTrades({ tradeData: JSON.stringify(trades) });
-      setAiAnalysisResult(result.analysis);
-    } catch (error) {
-      console.error("AI analysis failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Error de Análisis IA",
-        description: "No se pudo obtener el análisis. Inténtalo de nuevo.",
-      });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-  
-  const handleWeeklyReview = async () => {
-    setIsAiLoading(true);
-    setAiAnalysisResult('');
-    try {
-      const oneWeekAgo = subDays(new Date(), 7);
-      const weeklyTrades = trades.filter(t => new Date(t.date) > oneWeekAgo);
-      if (weeklyTrades.length === 0) {
-          setAiAnalysisResult("No hay operaciones registradas en la última semana para analizar.");
-          return;
-      }
-      const result = await generateWeeklyReview({ tradeData: JSON.stringify(weeklyTrades) });
-      setAiAnalysisResult(result.analysis);
-    } catch (error) {
-      console.error("AI weekly review failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Error de Análisis IA",
-        description: "No se pudo obtener la revisión semanal. Inténtalo de nuevo.",
-      });
-    } finally {
-        setIsAiLoading(false);
-    }
-  }
 
   const exportToXlsx = () => {
     const dataToExport = trades.map(trade => ({
@@ -589,7 +539,7 @@ export default function DashboardPage() {
                   <Link href="/misiones"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-600 text-foreground hover:bg-gray-100"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
                   <Link href="/obligatorio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 text-foreground hover:bg-gray-100"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
                   <Link href="/journal"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-yellow-500 dark:text-white dark:hover:bg-yellow-600 text-foreground hover:bg-gray-100"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
-                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-purple-600 dark:text-white dark:hover:bg-purple-700 text-foreground hover:bg-gray-100"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
+                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-purple-600 dark:text-white dark:hover:bg-purple-700 text-foreground hover:bg-gray-100"><Users className="h-5 w-5 mr-2" />Gremio</Button></Link>
               </div>
               <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
                   <Link href="/tienda">
@@ -625,33 +575,10 @@ export default function DashboardPage() {
                         <FileDown className="h-5 w-5 mr-2"/>
                         Exportar
                     </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" disabled={isAiLoading} className="transition-all transform hover:scale-105 shadow-lg">
-                                <Bot className="h-5 w-5 mr-2"/>
-                                {isAiLoading ? "Analizando..." : "Análisis IA"}
-                                <ChevronDown className="h-4 w-4 ml-2"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleAiAnalysis}>Análisis General</DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleWeeklyReview}>Revisión Semanal y Consejos</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
           </header>
           
-          {aiAnalysisResult && (
-             <Alert className="mb-6 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-               <Terminal className="h-4 w-4" />
-               <AlertTitle className="text-blue-800 dark:text-blue-300 font-semibold">Análisis de Trading con IA</AlertTitle>
-               <AlertDescription className="text-blue-700 dark:text-blue-400 whitespace-pre-wrap">
-                 {aiAnalysisResult}
-               </AlertDescription>
-             </Alert>
-          )}
-
           <div className="flex bg-gray-100 dark:bg-neutral-900 rounded-lg p-1 mb-6">
             {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
               const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
@@ -717,5 +644,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
