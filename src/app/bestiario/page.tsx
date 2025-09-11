@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Trash2, Eye, Award } from 'lucide-react';
-import { type Creature, type Encounter } from '@/lib/types';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award } from 'lucide-react';
+import { type Creature, type PlayerStats } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
@@ -61,6 +61,7 @@ const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: 
 
 const BestiaryPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0 });
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
@@ -77,11 +78,32 @@ const BestiaryPage = () => {
     } else {
       setCreatures(initialCreatures);
     }
+    const storedPlayerStats = localStorage.getItem('playerStats');
+    if (storedPlayerStats) {
+        setPlayerStats(JSON.parse(storedPlayerStats));
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
   }, [creatures]);
+
+  useEffect(() => {
+    localStorage.setItem('playerStats', JSON.stringify(playerStats));
+  }, [playerStats]);
+
+  const handleLevelUp = (newStats: PlayerStats) => {
+    let xpForNextLevel = Math.floor(100 * Math.pow(1.5, newStats.level - 1));
+    let updatedStats = { ...newStats };
+
+    while (updatedStats.xp >= xpForNextLevel) {
+        updatedStats.xp -= xpForNextLevel;
+        updatedStats.level += 1;
+        xpForNextLevel = Math.floor(100 * Math.pow(1.5, updatedStats.level - 1));
+        toast({ title: "¡Has subido de nivel!", description: `¡Felicidades! Has alcanzado el Nivel ${updatedStats.level}` });
+    }
+    return updatedStats;
+  }
 
   const handleEncounterChange = (id: string, change: 'add' | 'remove') => {
     setCreatures(creatures.map(c => {
@@ -89,6 +111,11 @@ const BestiaryPage = () => {
         let newEncounters = [...c.encounters];
         if (change === 'add') {
           newEncounters.push({ id: crypto.randomUUID(), date: new Date().toISOString() });
+          
+          setPlayerStats(prevStats => {
+              const newXp = prevStats.xp + 10; // Gain 10 XP per encounter
+              return handleLevelUp({ ...prevStats, xp: newXp });
+          });
         } else {
           newEncounters.pop();
         }
@@ -178,12 +205,16 @@ const BestiaryPage = () => {
                                 <Button variant="outline" size="icon" onClick={() => handleEncounterChange(creature.id, 'remove')}>
                                     <Minus className="h-4 w-4" />
                                 </Button>
-                                <span className="font-bold text-xl w-10 text-center">{creature.encounters.length}</span>
+
+                                <div 
+                                    className="font-bold text-xl w-10 text-center cursor-pointer"
+                                    onClick={() => handleOpenSheet(creature)}
+                                >
+                                    {creature.encounters.length}
+                                </div>
+                                
                                 <Button variant="outline" size="icon" onClick={() => handleEncounterChange(creature.id, 'add')}>
                                     <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button variant="secondary" size="icon" onClick={() => handleOpenSheet(creature)}>
-                                    <Eye className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>

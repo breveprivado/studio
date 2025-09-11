@@ -45,3 +45,8 @@ export interface Creature {
   imageUrl: string | null;
   encounters: Encounter[];
 }
+
+export interface PlayerStats {
+    level: number;
+    xp: number;
+}

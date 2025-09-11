@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -21,13 +21,14 @@ import TimezoneClock from '@/components/dashboard/timezone-clock';
 import { Switch } from '@/components/ui/switch';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import CurrencyConverter from '@/components/dashboard/currency-converter';
 import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
 import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
+import { Progress } from '@/components/ui/progress';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -41,59 +42,41 @@ const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-const DisciplineDashboard = ({ trades }: { trades: Trade[] }) => {
-  const { averageRating, totalRated } = useMemo(() => {
-    const ratedTrades = trades.filter(t => t.discipline != null && t.discipline > 0);
-    if (ratedTrades.length === 0) {
-      return { averageRating: 0, totalRated: 0 };
-    }
-    const totalRating = ratedTrades.reduce((acc, t) => acc + (t.discipline || 0), 0);
-    return {
-      averageRating: totalRating / ratedTrades.length,
-      totalRated: ratedTrades.length,
-    };
-  }, [trades]);
+const LevelDashboard = ({ stats }: { stats: PlayerStats }) => {
+    const xpForNextLevel = useMemo(() => {
+        return Math.floor(100 * Math.pow(1.5, stats.level - 1));
+    }, [stats.level]);
 
-  const getDisciplineMessage = (rating: number) => {
-    if (rating >= 4.5) return "¡Excelente! Mantén esa disciplina de hierro.";
-    if (rating >= 4) return "Muy bien. Sigues el plan de forma consistente.";
-    if (rating >= 3) return "Buen trabajo, pero hay espacio para mejorar la consistencia.";
-    if (rating >= 2) return "Atención. Revisa tus reglas y apégate a ellas.";
-    return "Necesitas un plan de acción. La disciplina es clave.";
-  };
+    const progressPercentage = (stats.xp / xpForNextLevel) * 100;
 
-  if (totalRated === 0) {
-    return null;
-  }
-
-  return (
-    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-      <AccordionItem value="item-1">
-        <AccordionTrigger>
-          <div className="flex items-center">
-            <Award className="h-6 w-6 text-primary mr-3" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Dashboard de Disciplina</h2>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent>
-          <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <CardContent className="pt-6 text-center">
-               <p className="text-sm text-muted-foreground mb-2">Tu calificación promedio de disciplina</p>
-               <div className="text-4xl font-bold text-primary mb-2">{averageRating.toFixed(1)} / 5</div>
-               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{getDisciplineMessage(averageRating)}</p>
-               <p className="text-xs text-muted-foreground mt-4">Basado en {totalRated} operaciones calificadas.</p>
+    return (
+        <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <CardHeader>
+                <CardTitle className="flex items-center text-lg font-semibold">
+                    <Star className="h-5 w-5 mr-2 text-yellow-400" />
+                    Nivel del Trader
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex justify-between items-center text-2xl font-bold">
+                    <span className="text-primary">Nivel {stats.level}</span>
+                    <span className="text-muted-foreground text-sm">{stats.xp} / {xpForNextLevel} XP</span>
+                </div>
+                <Progress value={progressPercentage} className="h-4" />
+                <p className="text-center text-xs text-muted-foreground mt-2">
+                    ¡Sigue cazando bestias para subir de nivel!
+                </p>
             </CardContent>
-          </Card>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
-};
+        </Card>
+    );
+}
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0 });
+
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
@@ -106,19 +89,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const storedTrades = localStorage.getItem('trades');
-    if (storedTrades) {
-      setTrades(JSON.parse(storedTrades));
-    } else {
-      setTrades(initialTrades);
-    }
+    if (storedTrades) setTrades(JSON.parse(storedTrades));
+    else setTrades(initialTrades);
+    
     const storedWithdrawals = localStorage.getItem('withdrawals');
-    if (storedWithdrawals) {
-      setWithdrawals(JSON.parse(storedWithdrawals));
-    }
-     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
-    if (storedBalanceAdditions) {
-      setBalanceAdditions(JSON.parse(storedBalanceAdditions));
-    }
+    if (storedWithdrawals) setWithdrawals(JSON.parse(storedWithdrawals));
+    
+    const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
+    if (storedBalanceAdditions) setBalanceAdditions(JSON.parse(storedBalanceAdditions));
+    
+    const storedPlayerStats = localStorage.getItem('playerStats');
+    if (storedPlayerStats) setPlayerStats(JSON.parse(storedPlayerStats));
+
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         setIsDarkMode(true);
@@ -126,17 +108,10 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('trades', JSON.stringify(trades));
-  }, [trades]);
-  
-  useEffect(() => {
-    localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
-  }, [withdrawals]);
-  
-  useEffect(() => {
-    localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions));
-  }, [balanceAdditions]);
+  useEffect(() => { localStorage.setItem('trades', JSON.stringify(trades)); }, [trades]);
+  useEffect(() => { localStorage.setItem('withdrawals', JSON.stringify(withdrawals)); }, [withdrawals]);
+  useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
+  useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -400,9 +375,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8">
+            <LevelDashboard stats={playerStats} />
             <CurrencyConverter />
             <WithdrawalsDashboard withdrawals={withdrawals} formatCurrency={formatCurrency} />
-            <DisciplineDashboard trades={filteredTrades} />
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
