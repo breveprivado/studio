@@ -29,7 +29,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida'),
-  status: z.enum(['win', 'loss'], { required_error: 'El resultado es requerido' }),
+  status: z.enum(['win', 'loss', 'doji'], { required_error: 'El resultado es requerido' }),
   profit: z.coerce.number(),
   pips: z.coerce.number().optional(),
   lotSize: z.coerce.number().optional(),
@@ -37,6 +37,7 @@ const formSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato de hora inválido (HH:MM)'),
   strategy: z.string().optional(),
   notes: z.string().optional(),
+  discipline: z.coerce.number().min(0).max(5).optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -64,9 +65,10 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
+      discipline: 0,
     },
   });
-
+  
   const stringToColor = (str: string) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -85,7 +87,12 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
     const tradeDate = new Date(data.date);
     tradeDate.setHours(parseInt(hours), parseInt(minutes));
 
-    const finalProfit = data.status === 'win' ? Math.abs(data.profit) : -Math.abs(data.profit);
+    let finalProfit = 0;
+    if (data.status === 'win') {
+      finalProfit = Math.abs(data.profit);
+    } else if (data.status === 'loss') {
+      finalProfit = -Math.abs(data.profit);
+    }
 
     const newTrade: Omit<Trade, 'id'> = {
       ...data,
@@ -102,8 +109,18 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
+      discipline: 0,
     });
     onOpenChange(false);
+  }
+  
+  const handleCommandKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      if (!currencyPairs.some(p => p.value.toLowerCase() === form.getValues('pair').toLowerCase())) {
+        e.preventDefault();
+        setOpenCombobox(false);
+      }
+    }
   }
 
   return (
@@ -135,18 +152,17 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                     )}
                                 >
                                     {field.value
-                                    ? currencyPairs.find(
-                                        (pair) => pair.value === field.value
-                                    )?.label
+                                    ? field.value
                                     : "Selecciona una divisa o escribe una nueva"}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                           <Command shouldFilter={false}>
+                           <Command onKeyDown={handleCommandKeyDown} shouldFilter={false}>
                             <CommandInput
                                 placeholder="Busca o crea una divisa..."
+                                value={field.value}
                                 onValueChange={(value) => {
                                     form.setValue('pair', value, { shouldValidate: true });
                                 }}
@@ -197,6 +213,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         <SelectContent>
                             <SelectItem value="win">Ganada</SelectItem>
                             <SelectItem value="loss">Perdida</SelectItem>
+                            <SelectItem value="doji">Empate/Doji</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -347,5 +364,3 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-
-    

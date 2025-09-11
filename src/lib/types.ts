@@ -1,4 +1,4 @@
-export type TradeStatus = 'win' | 'loss';
+export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
   id: string;

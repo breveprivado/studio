@@ -27,7 +27,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
       }
       if (trade.status === 'win') {
         dailyData[day].ganancias += trade.profit;
-      } else {
+      } else if (trade.status === 'loss'){
         dailyData[day].perdidas += Math.abs(trade.profit);
       }
     });
@@ -49,17 +49,20 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
   const operationTypeData = useMemo(() => {
     const wins = trades.filter(t => t.status === 'win').length;
     const losses = trades.filter(t => t.status === 'loss').length;
-    if (wins === 0 && losses === 0) return [];
-    return [
-      { name: 'Ganadoras', value: wins, color: 'hsl(var(--chart-2))' },
-      { name: 'Perdedoras', value: losses, color: 'hsl(var(--chart-1))' },
-    ];
+    const dojis = trades.filter(t => t.status === 'doji').length;
+
+    const data = [];
+    if (wins > 0) data.push({ name: 'Ganadoras', value: wins, color: 'hsl(var(--chart-2))' });
+    if (losses > 0) data.push({ name: 'Perdedoras', value: losses, color: 'hsl(var(--chart-1))' });
+    if (dojis > 0) data.push({ name: 'Empates', value: dojis, color: 'hsl(var(--chart-3))' });
+
+    return data;
   }, [trades]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="p-2 bg-background border rounded-md shadow-md text-sm text-foreground">
+        <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-md text-sm text-foreground">
           <p className="font-bold">{`Fecha: ${label}`}</p>
           <p className="text-green-500">{`Ganancias: ${payload.find(p => p.dataKey === 'ganancias')?.value?.toFixed(2) || 0} US$`}</p>
           <p className="text-red-500">{`Pérdidas: ${payload.find(p => p.dataKey === 'perdidas')?.value?.toFixed(2) || 0} US$`}</p>
@@ -72,6 +75,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }: any) => {
+    if (percent === 0) return null;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -106,7 +110,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(value) => `${value} US$`} />
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}} content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
                       <Bar dataKey="ganancias" fill="hsl(var(--chart-2))" name="Ganancias" stackId="a" />
                       <Bar dataKey="perdidas" fill="hsl(var(--chart-1))" name="Pérdidas" stackId="a" />

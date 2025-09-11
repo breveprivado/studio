@@ -18,9 +18,16 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ trades, onDeleteTrade, onSe
       </CardHeader>
       <CardContent className="p-0">
         <div className="space-y-3">
-          {trades.map(trade => (
-            <TradeItem key={trade.id} trade={trade} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
-          ))}
+          {trades.length === 0 ? (
+             <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+               <p>Aún no has registrado ninguna operación.</p>
+               <p className="text-sm mt-1">Usa el botón "Nueva Operación" para empezar.</p>
+             </div>
+          ) : (
+            trades.map(trade => (
+              <TradeItem key={trade.id} trade={trade} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
