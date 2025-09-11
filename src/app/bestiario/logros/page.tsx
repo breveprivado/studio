@@ -4,12 +4,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Award, BookHeart, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Award, BookHeart, ShieldCheck, Star } from 'lucide-react';
 import { type Creature } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
+const XP_PER_ACHIEVEMENT = 250;
 
 const AchievementsPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
@@ -104,9 +105,15 @@ const AchievementsPage = () => {
                         <div className="flex items-center gap-3">
                            <ShieldCheck className={cn("h-6 w-6 flex-shrink-0", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-600")} />
                            <div className="flex-1">
+                               <div className="flex justify-between items-center">
                                 <p className={cn("font-medium", isUnlocked ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
                                   Caza {tier} {creature.name}{tier > 1 ? 's' : ''}
                                 </p>
+                                <div className={cn("flex items-center gap-1 text-xs font-semibold", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-500")}>
+                                    <Star className="h-3 w-3" />
+                                    <span>+{XP_PER_ACHIEVEMENT} XP</span>
+                                </div>
+                               </div>
                                 <Progress value={isUnlocked ? 100 : tierProgress} className="h-2 mt-1" />
                            </div>
                         </div>
