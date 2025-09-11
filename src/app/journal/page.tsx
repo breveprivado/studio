@@ -159,7 +159,6 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [currentEntry, setCurrentEntry] = useState('');
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -180,19 +179,7 @@ export default function JournalPage() {
     if (storedEntries) {
       setEntries(JSON.parse(storedEntries));
     }
-    const storedPlayerStats = localStorage.getItem('playerStats');
-    if (storedPlayerStats) {
-      setPlayerStats(JSON.parse(storedPlayerStats));
-    }
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('journalEntries', JSON.stringify(entries));
-  }, [entries]);
-
-  useEffect(() => {
-    localStorage.setItem('playerStats', JSON.stringify(playerStats));
-  }, [playerStats]);
 
   const entryForSelectedDate = useMemo(() => {
     return entries.find(entry => isSameDay(new Date(entry.date), selectedDate));
@@ -232,23 +219,30 @@ export default function JournalPage() {
   };
   
   const checkSurvivalMissions = () => {
-    const currentRatedDays = JSON.parse(localStorage.getItem('journalEntries') || '[]').filter((e: JournalEntry) => e.rating > 0).length;
+    const allEntries: JournalEntry[] = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+    const currentRatedDays = allEntries.filter(e => e.rating > 0).length;
+
+    let storedPlayerStats: PlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{}');
+    if (!storedPlayerStats.xp) storedPlayerStats.xp = 0;
+
+    let xpGained = false;
 
     Object.values(levelMilestones).forEach((milestone) => {
-        const storedPlayerStats: PlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{}');
         const xpEarnedForMilestone = JSON.parse(localStorage.getItem(`xpEarned_${milestone}`) || 'false');
-
         if (currentRatedDays >= milestone && !xpEarnedForMilestone) {
-             const updatedStats = { ...storedPlayerStats, xp: (storedPlayerStats.xp || 0) + XP_PER_SURVIVAL_MISSION };
-             setPlayerStats(updatedStats);
-             localStorage.setItem('playerStats', JSON.stringify(updatedStats));
-             localStorage.setItem(`xpEarned_${milestone}`, 'true');
+            storedPlayerStats.xp += XP_PER_SURVIVAL_MISSION;
+            localStorage.setItem(`xpEarned_${milestone}`, 'true');
             toast({
                 title: `¡Misión de Supervivencia Completa!`,
                 description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
             });
+            xpGained = true;
         }
     });
+
+    if (xpGained) {
+        localStorage.setItem('playerStats', JSON.stringify(storedPlayerStats));
+    }
   }
 
 
@@ -356,7 +350,7 @@ export default function JournalPage() {
     setEntries(newEntries);
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
-    if (wasPreviouslyUnrated || editingRating > 0) {
+    if (wasPreviouslyUnrated) {
         checkSurvivalMissions();
     }
 
