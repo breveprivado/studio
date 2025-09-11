@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -372,10 +372,12 @@ export default function DashboardPage() {
                         Bitácora
                         </Button>
                     </Link>
-                    <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white" disabled>
-                        <Star className="h-5 w-5 mr-2" />
-                        Nivel
-                    </Button>
+                    <Link href="#level-dashboard">
+                      <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white">
+                          <Star className="h-5 w-5 mr-2" />
+                          Nivel
+                      </Button>
+                    </Link>
                      <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white" disabled>
                         <Gamepad2 className="h-5 w-5 mr-2" />
                         Misiones
@@ -457,7 +459,7 @@ export default function DashboardPage() {
             <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-500" />
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-8" id="level-dashboard">
             <LevelDashboard stats={playerStats} />
             {playerStats.level >= 10 && !playerStats.class && (
                 <ClassSelection onSelectClass={handleSelectClass} />

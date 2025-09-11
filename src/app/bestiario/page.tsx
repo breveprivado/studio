@@ -13,6 +13,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import CompoundInterestTable from '@/components/bestiary/compound-interest-table';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { DollarSign } from 'lucide-react';
 
 const initialCreatures: Creature[] = Array.from({ length: 17 }, (_, i) => {
     const id = (i + 1).toString();
@@ -187,6 +190,20 @@ const BestiaryPage = () => {
             </Link>
           </div>
         </header>
+
+         <Accordion type="single" collapsible className="w-full mb-8">
+            <AccordionItem value="item-1">
+                <AccordionTrigger>
+                    <div className="flex items-center">
+                        <DollarSign className="h-6 w-6 text-primary mr-3" />
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Tabla de Interés Compuesto</h2>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CompoundInterestTable />
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
 
         <Card>
             <CardHeader>
