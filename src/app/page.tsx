@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw, Users, Store, Trophy } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw, Users, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -584,16 +584,21 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
             <div className="flex flex-col items-end gap-4 w-full md:w-auto">
-              <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
-                  <Link href="/bestiario"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
-                  <Link href="/misiones"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
-                  <Link href="/obligatorio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
-                  <Link href="/journal"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
-                  <Link href="/gremio"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-cyan-500 hover:bg-cyan-600 text-white"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
-                  <Link href="/tienda"><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-emerald-500 hover:bg-emerald-600 text-white"><Trophy className="h-5 w-5 mr-2" />Tienda</Button></Link>
+              <div className="w-full flex flex-wrap justify-end items-center gap-2">
+                  <Link href="/bestiario"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
+                  <Link href="/misiones"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
+                  <Link href="/obligatorio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
+                  <Link href="/journal"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
+                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-gray-800 text-foreground"><BookOpen className="h-5 w-5 mr-2" />Gremio</Button></Link>
               </div>
               <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
-                  <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                  <Link href="/tienda">
+                      <Button className="w-full flex-grow md:flex-grow-0 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 rounded-xl hover:from-amber-500 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg px-6 py-3 font-bold">
+                          <Trophy className="h-5 w-5 mr-2" />
+                          Tienda
+                      </Button>
+                  </Link>
+                   <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
                       <Landmark className="h-5 w-5 mr-2" />
                       Añadir Saldo
                   </Button>
