@@ -262,14 +262,15 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
 
-    let finalPlayerStats = { ...playerStats };
+    // Create mutable copies for this operation
+    let currentXp = playerStats.xp;
     let finalCreatures = [...creatures];
     let finalCompoundInterestBalance = compoundInterestBalance;
 
     if (trade.creatureId && trade.status === 'win') {
         const creature = creatures.find(c => c.id === trade.creatureId);
-        let currentXp = finalPlayerStats.xp;
         
+        // XP from hunt
         let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
         currentXp += xpGainedFromHunt;
         
@@ -278,36 +279,41 @@ export default function DashboardPage() {
             description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
         });
 
+        // XP from achievements
         let xpGainedFromAchievement = 0;
+        const creatureIndex = finalCreatures.findIndex(c => c.id === trade.creatureId);
         
-        finalCreatures = creatures.map(c => {
-            if (c.id === trade.creatureId) {
-                const oldEncounterCount = c.encounters.length;
-                const newEncounters = [...c.encounters, { id: newTrade.id, date: new Date().toISOString() }];
-                
-                achievementTiers.forEach(tier => {
-                    if (oldEncounterCount < tier && newEncounters.length >= tier) {
-                        xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
-                        toast({
-                            title: `¡Logro Desbloqueado!`,
-                            description: `Has cazado ${tier} ${c.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
-                        });
-                    }
-                });
+        if (creatureIndex !== -1) {
+            const oldEncounterCount = finalCreatures[creatureIndex].encounters.length;
+            
+            // Create a new creature object with the new encounter
+            const updatedCreature = {
+                ...finalCreatures[creatureIndex],
+                encounters: [...finalCreatures[creatureIndex].encounters, { id: newTrade.id, date: new Date().toISOString() }]
+            };
 
-                return { ...c, encounters: newEncounters };
-            }
-            return c;
-        });
+            const newEncounterCount = updatedCreature.encounters.length;
 
+            achievementTiers.forEach(tier => {
+                if (oldEncounterCount < tier && newEncounterCount >= tier) {
+                    xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
+                    toast({
+                        title: `¡Logro Desbloqueado!`,
+                        description: `Has cazado ${tier} ${updatedCreature.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
+                    });
+                }
+            });
+
+            // Replace the old creature with the updated one in our mutable copy
+            finalCreatures[creatureIndex] = updatedCreature;
+
+             toast({
+                title: `¡Bestia ${creature?.name} Cazada!`,
+                description: 'Has registrado tu encuentro en el bestiario.'
+            });
+        }
+        
         currentXp += xpGainedFromAchievement;
-        
-        toast({
-            title: `¡Bestia ${creature?.name} Cazada!`,
-            description: 'Has registrado tu encuentro en el bestiario.'
-        });
-        
-        finalPlayerStats = { ...finalPlayerStats, xp: currentXp };
 
         if (trade.profit > 0) {
             finalCompoundInterestBalance += trade.profit;
@@ -317,16 +323,20 @@ export default function DashboardPage() {
             });
         }
     }
+    
+    const finalPlayerStats = { ...playerStats, xp: currentXp };
 
-    // Set all states and save to localStorage
+    // Set all states and save to localStorage ATOMICALLY
     setTrades(newTrades);
-    setCreatures(finalCreatures);
-    setPlayerStats(finalPlayerStats);
-    setCompoundInterestBalance(finalCompoundInterestBalance);
-
     localStorage.setItem('trades', JSON.stringify(newTrades));
-    localStorage.setItem('creatures', JSON.stringify(finalCreatures));
+
+    setCreatures(finalCreatures);
+    localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
+
+    setPlayerStats(finalPlayerStats);
     localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
+    
+    setCompoundInterestBalance(finalCompoundInterestBalance);
     localStorage.setItem('ci_initialBalance', finalCompoundInterestBalance.toString());
   };
 
