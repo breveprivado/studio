@@ -62,8 +62,16 @@ const CompoundInterestTable: React.FC = () => {
 
             const percentageSoFar = (accumulatedGain / balance) * 100;
             
+            let name;
+            switch(i) {
+                case 1: name = 'Sombra'; break;
+                case 2: name = 'Slimes'; break;
+                default: name = i;
+            }
+
             data.push({
                 level: i,
+                name: name,
                 percentage: `${percentageSoFar.toFixed(2)}%`,
                 rawGain: rawGain.toFixed(2),
                 totalGain: (balance + accumulatedGain).toFixed(2),
@@ -121,7 +129,7 @@ const CompoundInterestTable: React.FC = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="text-center">Total bestias</TableHead>
+                                <TableHead className="text-center">Nivel Bestia</TableHead>
                                 <TableHead className="text-center">Balance Total ($)</TableHead>
                                 <TableHead className="text-center">% Acumulado</TableHead>
                                 <TableHead className="text-center">Ganancia cruda ($)</TableHead>
@@ -132,7 +140,7 @@ const CompoundInterestTable: React.FC = () => {
                         <TableBody>
                             {interestData.map((row) => (
                                 <TableRow key={row.level} className={row.level <= 6 ? 'bg-amber-50 dark:bg-amber-950/50' : ''}>
-                                    <TableCell className="text-center font-medium">{row.level}</TableCell>
+                                    <TableCell className="text-center font-medium">{row.name}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.totalGain)}</TableCell>
                                     <TableCell className="text-center">{row.percentage}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.rawGain)}</TableCell>
