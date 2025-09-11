@@ -26,6 +26,8 @@ import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { currencyPairs } from '@/lib/data';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida'),
@@ -153,7 +155,19 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         </PopoverTrigger>
                         <PopoverContent className="w-full p-0">
                             <Command>
-                            <CommandInput placeholder="Busca una divisa o escribe una nueva..." />
+                            <CommandInput 
+                              placeholder="Busca una divisa o escribe una nueva..."
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && e.currentTarget.value) {
+                                  if (!currencyPairs.some(p => p.value.toLowerCase() === e.currentTarget.value.toLowerCase())) {
+                                    const newPair = { label: e.currentTarget.value.toUpperCase(), value: e.currentTarget.value.toUpperCase() };
+                                    currencyPairs.push(newPair);
+                                  }
+                                  form.setValue("pair", e.currentTarget.value.toUpperCase());
+                                  (document.activeElement as HTMLElement)?.blur();
+                                }
+                              }} 
+                            />
                             <CommandEmpty>No se encontró la divisa.</CommandEmpty>
                             <CommandGroup>
                                 {currencyPairs.map((pair) => (
@@ -421,5 +435,4 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-
     
