@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Gamepad2, Star, Trophy, ShieldHalf } from 'lucide-react';
-import { type Creature } from '@/lib/types';
+import { type Creature, type JournalEntry } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
@@ -21,7 +21,7 @@ const achievementTiers = [1, 5, 10, 25, 50, 100];
 const XP_PER_HUNTING_MISSION = 250;
 const XP_PER_SURVIVAL_MISSION = 500;
 const totalBeastMissionStars = 17 * achievementTiers.length;
-const totalSurvivalMissionStars = 15; // Hardcoded for now based on the old system
+const totalSurvivalMissionStars = 15;
 
 const levelMilestones: { [key: number]: number } = {
     1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
@@ -42,13 +42,14 @@ const MissionsPage = () => {
     }
     const storedJournal = localStorage.getItem('journalEntries');
     if (storedJournal) {
-        const entries = JSON.parse(storedJournal);
-        const ratedDaysCount = entries.filter((e: any) => e.rating > 0).length;
+        const entries: JournalEntry[] = JSON.parse(storedJournal);
+        const ratedDaysCount = entries.filter((e) => e.rating > 0).length;
         setJournalDays(ratedDaysCount);
     }
   }, []);
 
   const beastMissionProgress = useMemo(() => {
+    if (!isClient) return 0;
     let unlockedCount = 0;
     creatures.forEach(creature => {
       const encounters = creature.encounters.length;
@@ -59,9 +60,10 @@ const MissionsPage = () => {
       });
     });
     return unlockedCount;
-  }, [creatures]);
+  }, [creatures, isClient]);
 
   const survivalMissionProgress = useMemo(() => {
+    if (!isClient) return 0;
     let unlockedCount = 0;
     Object.values(levelMilestones).forEach(milestone => {
       if (journalDays >= milestone) {
@@ -69,7 +71,7 @@ const MissionsPage = () => {
       }
     });
     return unlockedCount;
-  }, [journalDays]);
+  }, [journalDays, isClient]);
   
   const totalStars = beastMissionProgress + survivalMissionProgress;
   const totalXp = (beastMissionProgress * XP_PER_HUNTING_MISSION) + (survivalMissionProgress * XP_PER_SURVIVAL_MISSION);
