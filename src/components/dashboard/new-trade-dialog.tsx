@@ -17,15 +17,16 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Smile, Frown, Meh } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Trade, TradeStatus } from '@/lib/types';
+import { Trade, Emotion } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencyPairs } from '@/lib/data';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La descripción es requerida'),
@@ -37,6 +38,7 @@ const formSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato de hora inválido (HH:MM)'),
   strategy: z.string().optional(),
   notes: z.string().optional(),
+  emotion: z.enum(['happy', 'neutral', 'sad']).optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -62,6 +64,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
+      emotion: 'neutral'
     },
   });
 
@@ -99,7 +102,8 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       date: new Date(),
       time: format(new Date(), 'HH:mm'),
       strategy: '',
-      notes: ''
+      notes: '',
+      emotion: 'neutral'
     });
     onOpenChange(false);
   }
@@ -142,7 +146,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command shouldFilter={false}>
+                            <Command shouldFilter={true}>
                                 <CommandInput 
                                     placeholder="Buscar o crear par..." 
                                     onValueChange={(search) => {
@@ -320,6 +324,48 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                   <FormLabel>Hora (HH:MM)</FormLabel>
                   <FormControl>
                     <Input type="time" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emotion"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>¿Cómo te sentías?</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex items-center space-x-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="happy" id="happy" className="sr-only" />
+                        </FormControl>
+                        <Label htmlFor="happy" className={cn("p-2 rounded-full cursor-pointer", field.value === 'happy' && 'bg-green-100 dark:bg-green-900/50')}>
+                           <Smile className={cn("h-7 w-7 text-gray-400", field.value === 'happy' && 'text-green-500')} />
+                        </Label>
+                      </FormItem>
+                       <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                           <RadioGroupItem value="neutral" id="neutral" className="sr-only" />
+                        </FormControl>
+                        <Label htmlFor="neutral" className={cn("p-2 rounded-full cursor-pointer", field.value === 'neutral' && 'bg-yellow-100 dark:bg-yellow-900/50')}>
+                          <Meh className={cn("h-7 w-7 text-gray-400", field.value === 'neutral' && 'text-yellow-500')} />
+                        </Label>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                           <RadioGroupItem value="sad" id="sad" className="sr-only" />
+                        </FormControl>
+                        <Label htmlFor="sad" className={cn("p-2 rounded-full cursor-pointer", field.value === 'sad' && 'bg-red-100 dark:bg-red-900/50')}>
+                           <Frown className={cn("h-7 w-7 text-gray-400", field.value === 'sad' && 'text-red-500')} />
+                        </Label>
+                      </FormItem>
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, icons } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, icons, Smile, Meh, Frown, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type TimeRange } from '@/lib/types';
+import { type Trade, type TimeRange, Emotion } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -21,6 +21,10 @@ import TimezoneClock from '@/components/dashboard/timezone-clock';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import * as XLSX from 'xlsx';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -29,6 +33,18 @@ const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const EmotionIcon = ({ emotion }: { emotion?: Emotion }) => {
+    switch (emotion) {
+        case 'happy':
+            return <Smile className="h-5 w-5 text-green-500" />;
+        case 'neutral':
+            return <Meh className="h-5 w-5 text-yellow-500" />;
+        case 'sad':
+            return <Frown className="h-5 w-5 text-red-500" />;
+        default:
+            return <Meh className="h-5 w-5 text-gray-400" />;
+    }
+}
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -48,9 +64,9 @@ export default function DashboardPage() {
       setTrades(initialTrades);
     }
     const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
+    if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
     }
   }, []);
 
@@ -161,7 +177,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 text-foreground">
+      <div className="min-h-screen bg-gray-50 dark:bg-black text-foreground">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
             <div className="mb-4 md:mb-0">
@@ -206,7 +222,7 @@ export default function DashboardPage() {
              </Alert>
           )}
 
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6">
+          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-1 mb-6">
             {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
               const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
               return (
@@ -216,7 +232,7 @@ export default function DashboardPage() {
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
                     timeRange === rangeKey
-                      ? "bg-white dark:bg-gray-900 shadow-sm text-primary"
+                      ? "bg-white dark:bg-black shadow-sm text-primary"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50"
                   )}
                 >
@@ -239,13 +255,44 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8">
+             <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                   <div className="flex items-center">
+                     <BookOpen className="h-6 w-6 text-primary mr-3" />
+                     <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Bitácora de Emociones</h2>
+                   </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <CardContent className="pt-6 max-h-96 overflow-y-auto">
+                         <div className="space-y-3">
+                           {filteredTrades.map(trade => (
+                            <div key={trade.id} className="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-800">
+                              <div className="flex items-center space-x-4">
+                                <EmotionIcon emotion={trade.emotion} />
+                                <div>
+                                  <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{trade.pair}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(trade.date), "dd MMM yyyy, HH:mm", { locale: es })}</p>
+                                </div>
+                              </div>
+                              <span className={cn('font-semibold text-sm', trade.status === 'win' ? 'text-green-600' : 'text-red-600')}>{formatCurrency(trade.profit)}</span>
+                            </div>
+                           ))}
+                           {filteredTrades.length === 0 && <p className="text-center text-gray-500 py-4">No hay operaciones en este rango.</p>}
+                         </div>
+                        </CardContent>
+                    </Card>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             <StrategyPerformance trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
             <RecentTrades trades={trades} onDeleteTrade={handleDeleteTrade} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
           </div>
         </div>
       </div>
-       <footer className="bg-gray-800 text-white py-4">
+       <footer className="bg-gray-900 text-white py-4">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="flex items-center justify-center gap-4">
             Síguenos en todas las redes como @olimpotradeacademy
@@ -261,3 +308,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    

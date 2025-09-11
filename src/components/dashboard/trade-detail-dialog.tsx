@@ -8,11 +8,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Trade } from '@/lib/types';
+import { Trade, Emotion } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { Smile, Meh, Frown } from 'lucide-react';
 
 interface TradeDetailDialogProps {
   isOpen: boolean;
@@ -20,6 +21,20 @@ interface TradeDetailDialogProps {
   trade: Trade | null;
   formatCurrency: (value: number) => string;
 }
+
+const EmotionIcon = ({ emotion }: { emotion?: Emotion }) => {
+    switch (emotion) {
+        case 'happy':
+            return <Smile className="h-5 w-5 text-green-500" />;
+        case 'neutral':
+            return <Meh className="h-5 w-5 text-yellow-500" />;
+        case 'sad':
+            return <Frown className="h-5 w-5 text-red-500" />;
+        default:
+            return null;
+    }
+}
+
 
 const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenChange, trade, formatCurrency }) => {
   if (!trade) return null;
@@ -66,6 +81,12 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: trade.strategyColor || 'gray' }}>
                 {trade.strategy}
               </span>
+            </div>
+          )}
+           {trade.emotion && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Estado Emocional</span>
+              <EmotionIcon emotion={trade.emotion} />
             </div>
           )}
           {trade.notes && (
