@@ -17,20 +17,19 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Check, ChevronsUpDown, Smile, Frown, Meh, Star } from 'lucide-react';
+import { CalendarIcon, Smile, Frown, Meh, Star } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Trade, Emotion } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencyPairs } from '@/lib/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
-  pair: z.string().min(1, 'La descripción es requerida'),
+  pair: z.string().min(1, 'La divisa es requerida'),
   status: z.enum(['win', 'loss'], { required_error: 'El resultado es requerido' }),
   profit: z.coerce.number(),
   pips: z.coerce.number().optional(),
@@ -57,7 +56,6 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
-  const [openPairCombobox, setOpenPairCombobox] = useState(false);
   const [disciplineRating, setDisciplineRating] = useState<number | undefined>(undefined);
 
   const form = useForm<NewTradeFormValues>({
@@ -132,91 +130,22 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 control={form.control}
                 name="pair"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Descripción</FormLabel>
-                    <Popover open={openPairCombobox} onOpenChange={setOpenPairCombobox}>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={openPairCombobox}
-                                className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value
-                                    ? currencyPairs.find(
-                                        (pair) => pair.value.toLowerCase() === field.value.toLowerCase()
-                                    )?.label ?? field.value
-                                    : "Selecciona o escribe un par"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                           <Command
-                                filter={(value, search) => {
-                                  if (value.toLowerCase().includes(search.toLowerCase())) return 1;
-                                  return 0;
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        const currentValue = form.getValues('pair');
-                                        if (currentValue && !currencyPairs.some(p => p.value.toLowerCase() === currentValue.toLowerCase())) {
-                                            field.onChange(currentValue);
-                                        }
-                                        setOpenPairCombobox(false);
-                                    }
-                                }}
-                            >
-                                <CommandInput 
-                                    placeholder="Buscar o crear par..." 
-                                    onValueChange={(search) => {
-                                      field.onChange(search);
-                                    }}
-                                />
-                                <CommandList>
-                                <CommandEmpty>
-                                  <CommandItem
-                                      value={form.getValues('pair')}
-                                      onSelect={(currentValue) => {
-                                          form.setValue("pair", currentValue)
-                                          setOpenPairCombobox(false)
-                                      }}
-                                    >
-                                      Crear "{form.getValues('pair')}"
-                                    </CommandItem>
-                                </CommandEmpty>
-                                <CommandGroup>
-                                {currencyPairs.map((pair) => (
-                                    <CommandItem
-                                        value={pair.value}
-                                        key={pair.value}
-                                        onSelect={(currentValue) => {
-                                            form.setValue("pair", currentValue === field.value ? "" : currentValue)
-                                            setOpenPairCombobox(false)
-                                        }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        pair.value.toLowerCase() === field.value.toLowerCase()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                    />
-                                    {pair.label}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                    <FormItem>
+                    <FormLabel>Divisas</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una divisa" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {currencyPairs.map(pair => (
+                            <SelectItem key={pair.value} value={pair.value}>{pair.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
                 />
             <div className="grid grid-cols-2 gap-4">
@@ -404,34 +333,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
               )}
             />
             <FormField
-                control={form.control}
-                name="discipline"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>¿Respetaste tu Stop Loss y tu plan?</FormLabel>
-                        <FormControl>
-                            <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map((rating) => (
-                                    <Star
-                                        key={rating}
-                                        className={cn(
-                                            "h-7 w-7 cursor-pointer text-gray-300 dark:text-gray-600",
-                                            (disciplineRating || 0) >= rating && "text-yellow-400"
-                                        )}
-                                        onClick={() => {
-                                            const newRating = rating === disciplineRating ? undefined : rating;
-                                            setDisciplineRating(newRating);
-                                            field.onChange(newRating);
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        </FormControl>
-                         <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
@@ -455,3 +356,5 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
+
+    
