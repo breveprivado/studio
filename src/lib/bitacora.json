@@ -1,0 +1,5 @@
+[
+  {"fecha":"2025-09-11","concepto":"Ingreso","monto":200000,"saldo":200000},
+  {"fecha":"2025-09-12","concepto":"Gasto","monto":50000,"saldo":150000},
+  {"fecha":"2025-09-13","concepto":"Ingreso","monto":100000,"saldo":250000}
+]
