@@ -21,10 +21,22 @@ const initialCreatures: Creature[] = Array.from({ length: 17 }, (_, i) => {
     const id = (i + 1).toString();
     let name = `Criatura #${id}`;
     if (id === '1') name = 'Sombra';
-    if (id === '2') name = 'Slime';
+    if (id === '2') name = 'Slimes';
     if (id === '3') name = 'Goblins';
-    if (id === '4') name = 'Orcos';
-    if (id === '5') name = 'Ogro';
+    if (id === '4') name = 'Trolls';
+    if (id === '5') name = 'Orcos';
+    if (id === '6') name = 'Minotauros';
+    if (id === '7') name = 'Mujeres Lizzards';
+    if (id === '8') name = 'Hombres Lobos';
+    if (id === '9') name = 'Faunos';
+    if (id === '10') name = 'Sirenas';
+    if (id === '11') name = 'Hadas';
+    if (id === '12') name = 'Fenix';
+    if (id === '13') name = 'Basilisco';
+    if (id === '14') name = 'Kraken';
+    if (id === '15') name = 'Leviatan';
+    if (id === '16') name = 'Cthulhu';
+    if (id === '17') name = 'Un Dragón Ancestral';
     
     return {
         id,
