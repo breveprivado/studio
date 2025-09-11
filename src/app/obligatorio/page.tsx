@@ -1,12 +1,31 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Edit, Save } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+
+const defaultMandatoryItems = {
+  trading: [
+    "Seguir el plan de trading sin desviaciones emocionales.",
+    "Respetar el Stop Loss una vez establecido. No moverlo en contra.",
+    "No sobre-apalancarse. Gestionar el riesgo en cada operación.",
+    "Analizar el mercado antes de entrar, no durante la operación.",
+    "Aceptar las pérdidas como parte del negocio y aprender de ellas.",
+  ],
+  personaje: [
+    "Mantener la disciplina dentro y fuera del mercado.",
+    "Estudiar constantemente y buscar la mejora continua.",
+    "Tener paciencia y esperar las oportunidades correctas.",
+    "Cuidar la salud física y mental para un rendimiento óptimo.",
+    "Ser humilde en las ganancias y resiliente en las pérdidas.",
+  ],
+};
 
 const MandatoryItem = ({ text }: { text: string }) => (
   <li className="flex items-start">
@@ -14,6 +33,79 @@ const MandatoryItem = ({ text }: { text: string }) => (
     <span className="text-gray-700 dark:text-gray-300">{text}</span>
   </li>
 );
+
+const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje' }) => {
+  const [items, setItems] = useState<string[]>([]);
+  const [editingText, setEditingText] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const storedItems = localStorage.getItem(`mandatoryItems_${category}`);
+    if (storedItems) {
+      setItems(JSON.parse(storedItems));
+    } else {
+      setItems(defaultMandatoryItems[category]);
+    }
+  }, [category]);
+
+  const handleSave = () => {
+    const newItems = editingText.split('\n').filter(item => item.trim() !== '');
+    setItems(newItems);
+    localStorage.setItem(`mandatoryItems_${category}`, JSON.stringify(newItems));
+    setIsEditing(false);
+    toast({
+      title: 'Reglas Guardadas',
+      description: `Tus reglas para "${category}" han sido actualizadas.`,
+    });
+  };
+
+  const handleEdit = () => {
+    setEditingText(items.join('\n'));
+    setIsEditing(true);
+  };
+
+  return (
+    <Card className="bg-white dark:bg-neutral-900 mt-6">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+            <div>
+                 <CardTitle>{category === 'trading' ? 'Principios de Trading' : 'Desarrollo de Personaje'}</CardTitle>
+                 <CardDescription>{category === 'trading' ? 'Las reglas que rigen cada una de tus operaciones.' : 'Las cualidades que forjan a un trader de élite.'}</CardDescription>
+            </div>
+             {isEditing ? (
+                 <Button onClick={handleSave} size="sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    Guardar
+                 </Button>
+             ) : (
+                <Button onClick={handleEdit} variant="outline" size="sm">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                </Button>
+             )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isEditing ? (
+          <Textarea
+            value={editingText}
+            onChange={(e) => setEditingText(e.target.value)}
+            rows={items.length + 2}
+            className="text-base"
+          />
+        ) : (
+          <ul className="space-y-4">
+            {items.map((item, index) => (
+              <MandatoryItem key={index} text={item} />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 
 export default function MandatoryPage() {
   return (
@@ -42,38 +134,10 @@ export default function MandatoryPage() {
               <TabsTrigger value="personaje">Personaje</TabsTrigger>
             </TabsList>
             <TabsContent value="trading">
-              <Card className="bg-white dark:bg-neutral-900 mt-6">
-                <CardHeader>
-                  <CardTitle>Principios de Trading</CardTitle>
-                  <CardDescription>Las reglas que rigen cada una de tus operaciones.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4">
-                    <MandatoryItem text="Seguir el plan de trading sin desviaciones emocionales." />
-                    <MandatoryItem text="Respetar el Stop Loss una vez establecido. No moverlo en contra." />
-                    <MandatoryItem text="No sobre-apalancarse. Gestionar el riesgo en cada operación." />
-                    <MandatoryItem text="Analizar el mercado antes de entrar, no durante la operación." />
-                    <MandatoryItem text="Aceptar las pérdidas como parte del negocio y aprender de ellas." />
-                  </ul>
-                </CardContent>
-              </Card>
+              <EditableMandatoryList category="trading" />
             </TabsContent>
             <TabsContent value="personaje">
-              <Card className="bg-white dark:bg-neutral-900 mt-6">
-                <CardHeader>
-                  <CardTitle>Desarrollo de Personaje</CardTitle>
-                  <CardDescription>Las cualidades que forjan a un trader de élite.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4">
-                    <MandatoryItem text="Mantener la disciplina dentro y fuera del mercado." />
-                    <MandatoryItem text="Estudiar constantemente y buscar la mejora continua." />
-                    <MandatoryItem text="Tener paciencia y esperar las oportunidades correctas." />
-                    <MandatoryItem text="Cuidar la salud física y mental para un rendimiento óptimo." />
-                    <MandatoryItem text="Ser humilde en las ganancias y resiliente en las pérdidas." />
-                  </ul>
-                </CardContent>
-              </Card>
+              <EditableMandatoryList category="personaje" />
             </TabsContent>
           </Tabs>
         </main>
@@ -81,3 +145,5 @@ export default function MandatoryPage() {
     </div>
   );
 }
+
+    

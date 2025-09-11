@@ -25,7 +25,7 @@ import { Trade } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { currencyPairs } from '@/lib/data';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida'),
@@ -53,6 +53,7 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
+  const [openCombobox, setOpenCombobox] = React.useState(false)
 
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
@@ -122,20 +123,60 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Divisas</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una divisa" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {currencyPairs.map((pair) => (
-                                <SelectItem key={pair.value} value={pair.value}>
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value
+                                    ? currencyPairs.find(
+                                        (pair) => pair.value === field.value
+                                    )?.label
+                                    : "Selecciona una divisa o escribe una nueva"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                           <Command shouldFilter={false}>
+                            <CommandInput
+                                placeholder="Busca o crea una divisa..."
+                                onValueChange={(value) => {
+                                    form.setValue('pair', value, { shouldValidate: true });
+                                }}
+                            />
+                            <CommandList>
+                                <CommandEmpty>No se encontró la divisa.</CommandEmpty>
+                                <CommandGroup>
+                                {currencyPairs.filter(pair => pair.value.toLowerCase().includes(form.getValues('pair').toLowerCase())).map((pair) => (
+                                    <CommandItem
+                                        value={pair.value}
+                                        key={pair.value}
+                                        onSelect={() => {
+                                            form.setValue("pair", pair.value)
+                                            setOpenCombobox(false)
+                                        }}
+                                        >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        pair.value === field.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
                                     {pair.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                             </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -306,3 +347,5 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
+
+    

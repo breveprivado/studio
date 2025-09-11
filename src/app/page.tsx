@@ -268,7 +268,7 @@ export default function DashboardPage() {
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
+          <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4">
             <div className="mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                 <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3 rounded-full" />
@@ -276,19 +276,21 @@ export default function DashboardPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
-            <div className="flex items-center gap-4 flex-wrap">
-               <Link href="/obligatorio">
-                 <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                    <ClipboardCheck className="h-5 w-5 mr-2" />
-                    Obligatorio
-                 </Button>
-               </Link>
-               <Link href="/journal">
-                 <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                    <BookOpen className="h-5 w-5 mr-2" />
-                    Bitácora
-                 </Button>
-               </Link>
+            <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
+                <div className='flex gap-2'>
+                    <Link href="/obligatorio">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white">
+                        <ClipboardCheck className="h-5 w-5 mr-2" />
+                        Obligatorio
+                        </Button>
+                    </Link>
+                    <Link href="/journal">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900">
+                        <BookOpen className="h-5 w-5 mr-2" />
+                        Bitácora
+                        </Button>
+                    </Link>
+                </div>
                <div className="flex items-center space-x-2">
                  <Sun className="h-5 w-5" />
                  <Switch
@@ -298,15 +300,17 @@ export default function DashboardPage() {
                   />
                  <Moon className="h-5 w-5" />
                </div>
-               <Button onClick={exportToXlsx} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                <FileDown className="h-5 w-5 mr-2"/>
-                Exportar XLSX
-              </Button>
-              <Button onClick={handleAiAnalysis} disabled={isAiLoading} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                <Bot className="h-5 w-5 mr-2"/>
-                {isAiLoading ? "Analizando..." : "Análisis IA"}
-              </Button>
-              <Button onClick={() => setIsNewTradeOpen(true)} className="bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+               <div className='flex gap-2'>
+                    <Button onClick={exportToXlsx} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+                        <FileDown className="h-5 w-5 mr-2"/>
+                        Exportar XLSX
+                    </Button>
+                    <Button onClick={handleAiAnalysis} disabled={isAiLoading} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+                        <Bot className="h-5 w-5 mr-2"/>
+                        {isAiLoading ? "Analizando..." : "Análisis IA"}
+                    </Button>
+               </div>
+              <Button onClick={() => setIsNewTradeOpen(true)} className="bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
                 <Plus className="h-5 w-5 mr-2" />
                 Nueva Operación
               </Button>
@@ -380,3 +384,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
