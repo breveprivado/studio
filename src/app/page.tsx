@@ -393,10 +393,12 @@ export default function DashboardPage() {
                           Nivel
                       </Button>
                     </Link>
-                     <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white" disabled>
-                        <Gamepad2 className="h-5 w-5 mr-2" />
-                        Misiones
-                    </Button>
+                     <Link href="/misiones">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white">
+                            <Gamepad2 className="h-5 w-5 mr-2" />
+                            Misiones
+                        </Button>
+                     </Link>
                 </div>
                <div className="flex items-center space-x-2">
                  <Sun className="h-5 w-5" />
