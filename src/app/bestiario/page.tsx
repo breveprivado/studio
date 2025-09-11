@@ -297,3 +297,5 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
+
+    
