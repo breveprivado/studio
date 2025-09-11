@@ -182,6 +182,15 @@ export default function DashboardPage() {
   const { toast } = useToast();
   
   const { level } = useLeveling(playerStats.xp);
+  
+  const loadPlayerStats = () => {
+    const storedPlayerStats = localStorage.getItem('playerStats');
+    if (storedPlayerStats) {
+      setPlayerStats(JSON.parse(storedPlayerStats));
+    } else {
+      setPlayerStats({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
+    }
+  };
 
 
   useEffect(() => {
@@ -195,9 +204,7 @@ export default function DashboardPage() {
     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
     if (storedBalanceAdditions) setBalanceAdditions(JSON.parse(storedBalanceAdditions));
     
-    const storedPlayerStats = localStorage.getItem('playerStats');
-    if (storedPlayerStats) setPlayerStats(JSON.parse(storedPlayerStats));
-    else setPlayerStats({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
+    loadPlayerStats();
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
@@ -225,6 +232,18 @@ export default function DashboardPage() {
 
     const storedCiBalance = localStorage.getItem('ci_initialBalance');
     if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
+
+     const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'xp_updated') {
+            loadPlayerStats();
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
 
   }, []);
 
@@ -453,7 +472,9 @@ export default function DashboardPage() {
   }
 
   const handleResetLevel = () => {
-    setPlayerStats(prev => ({...prev, xp: 0, class: undefined}));
+    const newPlayerStats = {...playerStats, xp: 0, class: undefined};
+    setPlayerStats(newPlayerStats);
+    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
     toast({
       title: "Nivel Reiniciado",
       description: "Tu experiencia y clase han sido restablecidas.",

@@ -43,7 +43,7 @@ const MissionsPage = () => {
     const storedJournal = localStorage.getItem('journalEntries');
     if (storedJournal) {
         const entries: JournalEntry[] = JSON.parse(storedJournal);
-        const ratedDaysCount = entries.filter((e) => e.rating > 0).length;
+        const ratedDaysCount = entries.filter((e) => e.rating === 3 || e.rating === 5).length;
         setJournalDays(ratedDaysCount);
     }
   }, []);

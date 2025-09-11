@@ -185,7 +185,7 @@ export default function JournalPage() {
     return entries.find(entry => isSameDay(new Date(entry.date), selectedDate));
   }, [entries, selectedDate]);
   
-  const ratedDaysCount = useMemo(() => entries.filter(e => e.rating > 0).length, [entries]);
+  const ratedDaysCount = useMemo(() => entries.filter(e => e.rating === 3 || e.rating === 5).length, [entries]);
 
   useEffect(() => {
     if (entryForSelectedDate) {
@@ -218,15 +218,19 @@ export default function JournalPage() {
     }
   };
   
-  const checkSurvivalMissions = (newEntriesList: JournalEntry[]) => {
-    const currentRatedDays = newEntriesList.filter(e => e.rating > 0).length;
+  const checkSurvivalMissions = (newEntriesList: JournalEntry[], newRating: number) => {
+    // Only proceed if the rating is valid for survival
+    if (newRating !== 3 && newRating !== 5) return;
+
+    const currentRatedDays = newEntriesList.filter(e => e.rating === 3 || e.rating === 5).length;
 
     let storedPlayerStats: PlayerStats;
     try {
-      storedPlayerStats = JSON.parse(localStorage.getItem('playerStats') || '{"xp":0}');
-      if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
+        const statsStr = localStorage.getItem('playerStats');
+        storedPlayerStats = statsStr ? JSON.parse(statsStr) : { xp: 0, startDate: new Date().toISOString() };
+        if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
     } catch {
-      storedPlayerStats = { xp: 0, startDate: new Date().toISOString() };
+        storedPlayerStats = { xp: 0, startDate: new Date().toISOString() };
     }
 
     let xpGained = false;
@@ -247,6 +251,8 @@ export default function JournalPage() {
 
     if (xpGained) {
         localStorage.setItem('playerStats', JSON.stringify(storedPlayerStats));
+        // This is a simple way to trigger a storage event for other tabs/pages to listen to.
+        localStorage.setItem('xp_updated', Date.now().toString());
     }
   }
 
@@ -283,9 +289,7 @@ export default function JournalPage() {
     setEntries(newEntries);
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
-    if(currentRating > 0) {
-        checkSurvivalMissions(newEntries);
-    }
+    checkSurvivalMissions(newEntries, newEntry.rating);
     
     toast({
       title: 'Entrada Guardada',
@@ -336,10 +340,7 @@ export default function JournalPage() {
     }
     
     const oldEntry = entries.find(e => e.id === editingEntryId);
-    let wasPreviouslyUnrated = false;
-    if (oldEntry && oldEntry.rating === 0 && editingRating > 0) {
-        wasPreviouslyUnrated = true;
-    }
+    const wasPreviouslyUnratedForSurvival = oldEntry && ![3, 5].includes(oldEntry.rating);
 
     const newEntries = entries.map(entry =>
       entry.id === editingEntryId
@@ -355,8 +356,8 @@ export default function JournalPage() {
     setEntries(newEntries);
     localStorage.setItem('journalEntries', JSON.stringify(newEntries));
 
-    if (wasPreviouslyUnrated) {
-        checkSurvivalMissions(newEntries);
+    if (wasPreviouslyUnratedForSurvival) {
+        checkSurvivalMissions(newEntries, editingRating);
     }
 
 
@@ -376,7 +377,7 @@ export default function JournalPage() {
     });
   };
   
-  const ratedDays = useMemo(() => entries.filter(e => e.rating > 0).map(e => new Date(e.date)), [entries]);
+  const ratedDays = useMemo(() => entries.filter(e => e.rating === 3 || e.rating === 5).map(e => new Date(e.date)), [entries]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
