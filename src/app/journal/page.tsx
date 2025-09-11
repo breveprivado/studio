@@ -14,15 +14,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { JournalEntry, PlayerStats } from '@/lib/types';
 
-interface JournalEntry {
-  id: string;
-  date: string;
-  content: string;
-  rating: number;
-  ratingComment: string;
-  imageUrl?: string | null;
-}
+const levelMilestones: { [key: number]: number } = {
+    1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
+    9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
+};
+const XP_PER_SURVIVAL_MISSION = 500;
+
 
 const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], viewDate: Date }) => {
   const startOfThisWeek = startOfWeek(viewDate, { locale: es });
@@ -137,6 +136,7 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [currentEntry, setCurrentEntry] = useState('');
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -157,11 +157,19 @@ export default function JournalPage() {
     if (storedEntries) {
       setEntries(JSON.parse(storedEntries));
     }
+    const storedPlayerStats = localStorage.getItem('playerStats');
+    if (storedPlayerStats) {
+      setPlayerStats(JSON.parse(storedPlayerStats));
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('journalEntries', JSON.stringify(entries));
   }, [entries]);
+
+  useEffect(() => {
+    localStorage.setItem('playerStats', JSON.stringify(playerStats));
+  }, [playerStats]);
 
   const entryForSelectedDate = useMemo(() => {
     return entries.find(entry => isSameDay(new Date(entry.date), selectedDate));
@@ -231,8 +239,23 @@ export default function JournalPage() {
       ratingComment: currentRatingComment,
       imageUrl: currentImage,
     };
-
-    setEntries(prevEntries => [newEntry, ...prevEntries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    
+    const oldRatedDaysCount = entries.filter(e => e.rating > 0).length;
+    const newEntries = [newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setEntries(newEntries);
+    
+    if (currentRating > 0) {
+        const newRatedDaysCount = oldRatedDaysCount + 1;
+        Object.values(levelMilestones).forEach((milestone, index) => {
+            if (oldRatedDaysCount < milestone && newRatedDaysCount >= milestone) {
+                setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
+                toast({
+                    title: `¡Misión de Supervivencia Completa!`,
+                    description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
+                });
+            }
+        });
+    }
     
     toast({
       title: 'Entrada Guardada',
@@ -279,6 +302,9 @@ export default function JournalPage() {
       return;
     }
 
+    const oldEntry = entries.find(e => e.id === editingEntryId);
+    const oldRatedDaysCount = entries.filter(e => e.rating > 0).length;
+    
     setEntries(prevEntries =>
       prevEntries.map(entry =>
         entry.id === editingEntryId
@@ -292,6 +318,21 @@ export default function JournalPage() {
           : entry
       )
     );
+
+    if (oldEntry && (oldEntry.rating === 0 && editingRating > 0)) {
+        const newRatedDaysCount = oldRatedDaysCount + 1;
+         Object.values(levelMilestones).forEach((milestone, index) => {
+            if (oldRatedDaysCount < milestone && newRatedDaysCount >= milestone) {
+                setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
+                toast({
+                    title: `¡Misión de Supervivencia Completa!`,
+                    description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
+                });
+            }
+        });
+    }
+
+
     const updatedEntry = entries.find(e => e.id === editingEntryId);
     if(updatedEntry && isSameDay(new Date(updatedEntry.date), selectedDate)) {
         setCurrentEntry(editingContent);
@@ -503,5 +544,7 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    
 
     

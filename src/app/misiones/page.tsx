@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table"
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
+const XP_PER_HUNTING_MISSION = 250;
+const XP_PER_SURVIVAL_MISSION = 500;
 const totalBeastMissionStars = 17 * achievementTiers.length;
 const totalSurvivalMissionStars = 15; // Hardcoded for now based on the old system
 
@@ -70,6 +72,7 @@ const MissionsPage = () => {
   }, [journalDays]);
   
   const totalStars = beastMissionProgress + survivalMissionProgress;
+  const totalXp = (beastMissionProgress * XP_PER_HUNTING_MISSION) + (survivalMissionProgress * XP_PER_SURVIVAL_MISSION);
 
   if (!isClient) {
     return null; // Or a loading spinner
@@ -97,7 +100,7 @@ const MissionsPage = () => {
         <Card className="mb-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
             <CardHeader>
                 <CardTitle>Progreso Total de Misiones</CardTitle>
-                <CardDescription className="text-purple-200">Has conseguido un total de {totalStars} Estrellas de Misión.</CardDescription>
+                <CardDescription className="text-purple-200">Has conseguido un total de {totalStars} Estrellas y {totalXp.toLocaleString()} XP a través de misiones.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center gap-4">
                 <Star className="h-10 w-10 text-amber-400" />
@@ -119,7 +122,7 @@ const MissionsPage = () => {
                                 <TableRow>
                                 <TableHead>Hito (Nivel)</TableHead>
                                 <TableHead>Requisito</TableHead>
-                                <TableHead className="text-right">Estado</TableHead>
+                                <TableHead className="text-right">Recompensa</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -131,9 +134,12 @@ const MissionsPage = () => {
                                             <TableCell>Sobrevive {days} día{days > 1 ? 's' : ''}</TableCell>
                                             <TableCell className="text-right">
                                                 {isCompleted ? (
-                                                    <span className="flex items-center justify-end gap-1 text-green-600 dark:text-green-400">
-                                                        <Star className="h-4 w-4" /> 1
-                                                    </span>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="flex items-center justify-end gap-1 text-green-600 dark:text-green-400 font-semibold">
+                                                            <Star className="h-4 w-4" /> 1
+                                                        </span>
+                                                         <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">+{XP_PER_SURVIVAL_MISSION} XP</span>
+                                                    </div>
                                                 ) : (
                                                      <span className="text-muted-foreground">{journalDays}/{days}</span>
                                                 )}
@@ -168,9 +174,12 @@ const MissionsPage = () => {
                                                     <p className="text-xs text-muted-foreground">{creature.encounters.length} / {tier} encuentros</p>
                                                 </div>
                                                 {isCompleted && (
-                                                     <span className="flex items-center justify-end gap-1 text-amber-600 dark:text-amber-400">
-                                                        <Star className="h-4 w-4" /> 1
-                                                    </span>
+                                                     <div className="flex flex-col items-end">
+                                                        <span className="flex items-center justify-end gap-1 text-amber-600 dark:text-amber-400 font-semibold">
+                                                            <Star className="h-4 w-4" /> 1
+                                                        </span>
+                                                        <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">+{XP_PER_HUNTING_MISSION} XP</span>
+                                                     </div>
                                                 )}
                                             </div>
                                             {!isCompleted && <Progress value={progress} className="h-2 mt-2"/>}
@@ -190,3 +199,5 @@ const MissionsPage = () => {
 };
 
 export default MissionsPage;
+
+    
