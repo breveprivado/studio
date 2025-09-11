@@ -13,6 +13,7 @@ export interface Trade {
   notes?: string;
   discipline?: number;
   emotion?: 'happy' | 'neutral' | 'sad';
+  creatureId?: string;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';
@@ -49,4 +50,5 @@ export interface Creature {
 export interface PlayerStats {
     level: number;
     xp: number;
+    class?: 'Invocador' | 'Arquero' | 'Espadachín' | undefined;
 }

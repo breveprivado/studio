@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -41,6 +41,41 @@ const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const classOptions = [
+    { name: 'Invocador', icon: '🔮', description: 'Maestro de la paciencia, espera el momento perfecto para que sus operaciones se materialicen.' },
+    { name: 'Arquero', icon: '🏹', description: 'Preciso y disciplinado, dispara únicamente a objetivos de alta probabilidad con una gestión de riesgo milimétrica.' },
+    { name: 'Espadachín', icon: '⚔️', description: 'Ágil y rápido, entra y sale del mercado con destreza, tomando ganancias en movimientos cortos y decisivos.' }
+]
+
+const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) => void }) => {
+    return (
+        <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white my-8">
+            <CardHeader>
+                <CardTitle className="text-2xl text-center">¡Has alcanzado el Nivel 10!</CardTitle>
+                <CardDescription className="text-center text-purple-200">Es hora de forjar tu leyenda. Elige tu clase de Trader.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-3 gap-6">
+                {classOptions.map(cls => (
+                    <Card key={cls.name} className="bg-white/10 backdrop-blur-sm border-white/20 text-center flex flex-col">
+                        <CardHeader>
+                            <CardTitle className="text-5xl mx-auto">{cls.icon}</CardTitle>
+                            <CardTitle>{cls.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                            <p className="text-sm text-purple-200">{cls.description}</p>
+                        </CardContent>
+                        <CardContent>
+                             <Button onClick={() => onSelectClass(cls.name)} className="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold">
+                                Elegir {cls.name}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))}
+            </CardContent>
+        </Card>
+    )
+}
+
 
 const LevelDashboard = ({ stats }: { stats: PlayerStats }) => {
     const xpForNextLevel = useMemo(() => {
@@ -58,9 +93,13 @@ const LevelDashboard = ({ stats }: { stats: PlayerStats }) => {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex justify-between items-center text-2xl font-bold">
+                 <div className="flex justify-between items-center text-2xl font-bold">
                     <span className="text-primary">Nivel {stats.level}</span>
-                    <span className="text-muted-foreground text-sm">{stats.xp} / {xpForNextLevel} XP</span>
+                    {stats.class && <span className="text-lg text-amber-500">{stats.class}</span>}
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground text-sm">
+                   <span>Progreso</span>
+                   <span>{stats.xp} / {xpForNextLevel} XP</span>
                 </div>
                 <Progress value={progressPercentage} className="h-4" />
                 <p className="text-center text-xs text-muted-foreground mt-2">
@@ -75,7 +114,8 @@ export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0 });
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0, class: undefined });
+  const [creatures, setCreatures] = useState<Creature[]>([]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
@@ -100,6 +140,9 @@ export default function DashboardPage() {
     
     const storedPlayerStats = localStorage.getItem('playerStats');
     if (storedPlayerStats) setPlayerStats(JSON.parse(storedPlayerStats));
+    
+    const storedCreatures = localStorage.getItem('bestiaryCreatures');
+    if (storedCreatures) setCreatures(JSON.parse(storedCreatures));
 
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -112,6 +155,7 @@ export default function DashboardPage() {
   useEffect(() => { localStorage.setItem('withdrawals', JSON.stringify(withdrawals)); }, [withdrawals]);
   useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
+  useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -169,10 +213,49 @@ export default function DashboardPage() {
     }).format(value);
     return `${formatted}\u00A0US$`;
   };
+  
+  const handleLevelUp = (newStats: PlayerStats) => {
+    let xpForNextLevel = Math.floor(100 * Math.pow(1.5, newStats.level - 1));
+    let updatedStats = { ...newStats };
+
+    while (updatedStats.xp >= xpForNextLevel) {
+        updatedStats.xp -= xpForNextLevel;
+        updatedStats.level += 1;
+        xpForNextLevel = Math.floor(100 * Math.pow(1.5, updatedStats.level - 1));
+        toast({ title: "¡Has subido de nivel!", description: `¡Felicidades! Has alcanzado el Nivel ${updatedStats.level}` });
+    }
+    return updatedStats;
+  }
+  
+  const handleSelectClass = (className: string) => {
+      setPlayerStats(prev => ({...prev, class: className}));
+      toast({
+        title: `¡Clase seleccionada: ${className}!`,
+        description: "Tu leyenda como trader ha comenzado."
+      })
+  }
 
   const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     setTrades(prevTrades => [newTrade, ...prevTrades]);
+
+    if (trade.creatureId) {
+       setCreatures(creatures.map(c => {
+         if (c.id === trade.creatureId) {
+           const newEncounters = [...c.encounters, { id: crypto.randomUUID(), date: new Date().toISOString() }];
+           return { ...c, encounters: newEncounters };
+         }
+         return c;
+       }));
+       setPlayerStats(prevStats => {
+           const newXp = prevStats.xp + 10; // Gain 10 XP per encounter
+           return handleLevelUp({ ...prevStats, xp: newXp });
+       });
+       toast({
+        title: '¡Bestia Cazada!',
+        description: 'Has ganado 10 XP por registrar tu encuentro.'
+       })
+    }
   };
   
   const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
@@ -371,11 +454,14 @@ export default function DashboardPage() {
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
             <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Depósitos: ${formatCurrency(totalBalanceAdditions)} | Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-600" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-500" />
+            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-500" />
           </div>
 
           <div className="space-y-8">
             <LevelDashboard stats={playerStats} />
+            {playerStats.level >= 10 && !playerStats.class && (
+                <ClassSelection onSelectClass={handleSelectClass} />
+            )}
             <CurrencyConverter />
             <WithdrawalsDashboard withdrawals={withdrawals} formatCurrency={formatCurrency} />
             <StrategyPerformance trades={filteredTrades} />
@@ -396,7 +482,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </footer>
-      <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} />
+      <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} />
       <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />

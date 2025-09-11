@@ -21,7 +21,7 @@ import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Trade } from '@/lib/types';
+import { Trade, Creature } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { currencyPairs } from '@/lib/data';
@@ -38,6 +38,7 @@ const formSchema = z.object({
   strategy: z.string().optional(),
   notes: z.string().optional(),
   discipline: z.coerce.number().min(0).max(5).optional(),
+  creatureId: z.string().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -46,6 +47,7 @@ interface NewTradeDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onAddTrade: (trade: Omit<Trade, 'id'>) => void;
+  creatures: Creature[];
 }
 
 const strategyOptions = [
@@ -53,7 +55,7 @@ const strategyOptions = [
     '1C', '2C', '3C', '4C'
 ];
 
-const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
+const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade, creatures }) => {
   const [openCombobox, setOpenCombobox] = React.useState(false)
 
   const form = useForm<NewTradeFormValues>({
@@ -66,6 +68,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       strategy: '',
       notes: '',
       discipline: 0,
+      creatureId: '',
     },
   });
   
@@ -110,6 +113,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       strategy: '',
       notes: '',
       discipline: 0,
+      creatureId: ''
     });
     onOpenChange(false);
   }
@@ -353,6 +357,29 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 </FormItem>
               )}
             />
+             <FormField
+                control={form.control}
+                name="creatureId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bestia Asociada (Opcional)</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una bestia del bestiario" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="">Ninguna</SelectItem>
+                            {creatures.map((creature) => (
+                                <SelectItem key={creature.id} value={creature.id}>{creature.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <DialogFooter>
               <Button type="submit">Guardar Operación</Button>
             </DialogFooter>
