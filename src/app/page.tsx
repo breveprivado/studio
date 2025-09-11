@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -242,7 +242,7 @@ export default function DashboardPage() {
   const exportToXlsx = () => {
     const dataToExport = trades.map(trade => ({
         'ID': trade.id,
-        'Descripción': trade.pair,
+        'Divisa': trade.pair,
         'Resultado': trade.status === 'win' ? 'Ganada' : 'Perdida',
         'Pips': trade.pips ?? '',
         'Lote': trade.lotSize ?? '',

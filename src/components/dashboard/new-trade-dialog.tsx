@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,17 +17,15 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Smile, Frown, Meh, Star, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Trade, Emotion } from '@/lib/types';
+import { Trade } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { currencyPairs } from '@/lib/data';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida'),
@@ -39,8 +37,6 @@ const formSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato de hora inválido (HH:MM)'),
   strategy: z.string().optional(),
   notes: z.string().optional(),
-  emotion: z.enum(['happy', 'neutral', 'sad']).optional(),
-  discipline: z.number().min(1).max(5).optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -57,7 +53,6 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
-  const [disciplineRating, setDisciplineRating] = useState<number | undefined>(undefined);
 
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
@@ -68,8 +63,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      emotion: 'neutral',
-      discipline: undefined,
     },
   });
 
@@ -99,7 +92,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       profit: finalProfit,
       status: data.status,
       strategyColor: data.strategy ? stringToColor(data.strategy) : undefined,
-      discipline: disciplineRating,
     };
     onAddTrade(newTrade);
     form.reset({
@@ -109,10 +101,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      emotion: 'neutral',
-      discipline: undefined,
     });
-    setDisciplineRating(undefined);
     onOpenChange(false);
   }
 
@@ -131,68 +120,22 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 control={form.control}
                 name="pair"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Divisas</FormLabel>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                            <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                "w-full justify-between",
-                                !field.value && "text-muted-foreground"
-                                )}
-                            >
-                                {field.value
-                                ? currencyPairs.find(
-                                    (pair) => pair.value === field.value
-                                    )?.label
-                                : "Selecciona una divisa"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
-                            <Command>
-                            <CommandInput 
-                              placeholder="Busca una divisa o escribe una nueva..."
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && e.currentTarget.value) {
-                                  if (!currencyPairs.some(p => p.value.toLowerCase() === e.currentTarget.value.toLowerCase())) {
-                                    const newPair = { label: e.currentTarget.value.toUpperCase(), value: e.currentTarget.value.toUpperCase() };
-                                    currencyPairs.push(newPair);
-                                  }
-                                  form.setValue("pair", e.currentTarget.value.toUpperCase());
-                                  (document.activeElement as HTMLElement)?.blur();
-                                }
-                              }} 
-                            />
-                            <CommandEmpty>No se encontró la divisa.</CommandEmpty>
-                            <CommandGroup>
-                                {currencyPairs.map((pair) => (
-                                <CommandItem
-                                    value={pair.label}
-                                    key={pair.value}
-                                    onSelect={() => {
-                                      form.setValue("pair", pair.value)
-                                    }}
-                                >
-                                    <Check
-                                    className={cn(
-                                        "mr-2 h-4 w-4",
-                                        pair.value === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                    />
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una divisa" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {currencyPairs.map((pair) => (
+                                <SelectItem key={pair.value} value={pair.value}>
                                     {pair.label}
-                                </CommandItem>
-                                ))}
-                            </CommandGroup>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -267,11 +210,11 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     name="strategy"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Etiqueta</FormLabel>
+                        <FormLabel>Estrategia</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona una etiqueta" />
+                                    <SelectValue placeholder="Selecciona una estrategia" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -341,78 +284,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
             />
             <FormField
               control={form.control}
-              name="emotion"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>¿Qué tan seguro estabas de la operación?</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex items-center space-x-4"
-                    >
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="happy" id="happy" className="sr-only" />
-                        </FormControl>
-                        <Label htmlFor="happy" className={cn("p-2 rounded-full cursor-pointer", field.value === 'happy' && 'bg-green-100 dark:bg-green-900/50')}>
-                           <Smile className={cn("h-7 w-7 text-gray-400", field.value === 'happy' && 'text-green-500')} />
-                        </Label>
-                      </FormItem>
-                       <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                           <RadioGroupItem value="neutral" id="neutral" className="sr-only" />
-                        </FormControl>
-                        <Label htmlFor="neutral" className={cn("p-2 rounded-full cursor-pointer", field.value === 'neutral' && 'bg-yellow-100 dark:bg-yellow-900/50')}>
-                          <Meh className={cn("h-7 w-7 text-gray-400", field.value === 'neutral' && 'text-yellow-500')} />
-                        </Label>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                           <RadioGroupItem value="sad" id="sad" className="sr-only" />
-                        </FormControl>
-                        <Label htmlFor="sad" className={cn("p-2 rounded-full cursor-pointer", field.value === 'sad' && 'bg-red-100 dark:bg-red-900/50')}>
-                           <Frown className={cn("h-7 w-7 text-gray-400", field.value === 'sad' && 'text-red-500')} />
-                        </Label>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="discipline"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>¿Respetaste tu Stop Loss y tu plan?</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                            <Star
-                                key={rating}
-                                className={cn(
-                                    "h-7 w-7 cursor-pointer",
-                                    (disciplineRating || 0) >= rating
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-300 dark:text-gray-600"
-                                )}
-                                onClick={() => {
-                                    const newRating = rating === disciplineRating ? undefined : rating;
-                                    setDisciplineRating(newRating);
-                                    form.setValue("discipline", newRating);
-                                }}
-                            />
-                        ))}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
@@ -435,4 +306,3 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-    

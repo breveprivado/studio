@@ -1,5 +1,4 @@
 export type TradeStatus = 'win' | 'loss';
-export type Emotion = 'happy' | 'neutral' | 'sad';
 
 export interface Trade {
   id: string;
@@ -12,7 +11,6 @@ export interface Trade {
   strategy?: string;
   strategyColor?: string;
   notes?: string;
-  emotion?: Emotion;
   discipline?: number;
 }
 
