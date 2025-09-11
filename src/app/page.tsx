@@ -433,64 +433,40 @@ export default function DashboardPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
-                <div className='flex gap-2 flex-wrap justify-center'>
-                     <Link href="/bestiario">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
-                        <BookHeart className="h-5 w-5 mr-2" />
-                        Bestiario
-                        </Button>
-                    </Link>
-                     <Link href="#bestiary-dashboard">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
-                        <Shield className="h-5 w-5 mr-2" />
-                        Bestias
-                        </Button>
-                    </Link>
-                    <Link href="/bestiario/logros">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-amber-500 hover:bg-amber-600 text-white">
-                        <Award className="h-5 w-5 mr-2" />
-                        Logros
-                        </Button>
-                    </Link>
-                    <Link href="/obligatorio">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white">
-                        <ClipboardCheck className="h-5 w-5 mr-2" />
-                        Obligatorio
-                        </Button>
-                    </Link>
-                    <Link href="/journal">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900">
-                        <BookOpen className="h-5 w-5 mr-2" />
-                        Bitácora
-                        </Button>
-                    </Link>
-                    <Link href="#level-dashboard">
-                      <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white">
-                          <Star className="h-5 w-5 mr-2" />
-                          Nivel
-                      </Button>
-                    </Link>
-                     <Link href="/misiones">
-                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white">
-                            <Gamepad2 className="h-5 w-5 mr-2" />
-                            Misiones
-                        </Button>
-                     </Link>
-                </div>
-               <div className="flex items-center space-x-2">
-                 <Sun className="h-5 w-5" />
-                 <Switch
-                    id="dark-mode"
-                    checked={isDarkMode}
-                    onCheckedChange={setIsDarkMode}
-                  />
-                 <Moon className="h-5 w-5" />
-               </div>
-               <div className='flex gap-2'>
+            <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+              <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
+                  <Link href="/bestiario" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
+                  <Link href="/misiones" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
+                  <Link href="/obligatorio" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
+                  <Link href="/journal" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
+              </div>
+              <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
+                  <Button onClick={() => setIsAddBalanceOpen(true)} className="w-full bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                      <Landmark className="h-5 w-5 mr-2" />
+                      Añadir Saldo
+                  </Button>
+                  <Button onClick={() => setIsWithdrawalOpen(true)} className="w-full bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                      <Banknote className="h-5 w-5 mr-2" />
+                      Registrar Retiro
+                  </Button>
+                  <Button onClick={() => setIsNewTradeOpen(true)} className="w-full bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                      <Plus className="h-5 w-5 mr-2" />
+                      Nueva Operación
+                  </Button>
+              </div>
+               <div className='flex items-center justify-end gap-2 w-full'>
+                    <div className="flex items-center space-x-2">
+                      <Sun className="h-5 w-5" />
+                      <Switch
+                          id="dark-mode"
+                          checked={isDarkMode}
+                          onCheckedChange={setIsDarkMode}
+                        />
+                      <Moon className="h-5 w-5" />
+                    </div>
                     <Button onClick={exportToXlsx} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
                         <FileDown className="h-5 w-5 mr-2"/>
-                        Exportar XLSX
+                        Exportar
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -505,19 +481,7 @@ export default function DashboardPage() {
                             <DropdownMenuItem onClick={handleWeeklyReview}>Revisión Semanal y Consejos</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-               </div>
-              <Button onClick={() => setIsAddBalanceOpen(true)} className="bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
-                <Landmark className="h-5 w-5 mr-2" />
-                Añadir Saldo
-              </Button>
-              <Button onClick={() => setIsWithdrawalOpen(true)} className="bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
-                <Banknote className="h-5 w-5 mr-2" />
-                Registrar Retiro
-              </Button>
-              <Button onClick={() => setIsNewTradeOpen(true)} className="bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
-                <Plus className="h-5 w-5 mr-2" />
-                Nueva Operación
-              </Button>
+                </div>
             </div>
           </header>
           
@@ -539,7 +503,7 @@ export default function DashboardPage() {
                   key={range}
                   onClick={() => setTimeRange(rangeKey)}
                   className={cn(
-                    "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all",
+                    "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all w-full justify-center",
                     timeRange === rangeKey
                       ? "bg-white dark:bg-black shadow-sm text-primary"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-neutral-800/50"
