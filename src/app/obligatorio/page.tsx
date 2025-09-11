@@ -146,7 +146,7 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>{category === 'trading' ? 'Principios de Trading' : 'Desarrollo de Personaje'}</CardTitle>
-              <CardDescription>{category === 'trading' ? 'Las reglas que rigen cada una de tus operaciones.' : 'Las cualidades que forjan a un trader de élite.'}</CardDescription>
+              <CardDescription>{category === 'trading' ? 'esto es lo que no cumple el 99.99% de traders y por eso nunca seran rentables ni hoy ni mañana ni ayer porque esto es por su seguridad y protección' : 'Las cualidades que forjan a un trader de élite.'}</CardDescription>
             </div>
              <Button onClick={openNewDialog} variant="outline">
                 <PlusCircle className="h-4 w-4 mr-2" />
@@ -272,5 +272,3 @@ export default function MandatoryPage() {
     </div>
   );
 }
-
-    
