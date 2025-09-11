@@ -169,7 +169,16 @@ export default function DashboardPage() {
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-      setCreatures(JSON.parse(storedCreatures));
+      const parsedCreatures = JSON.parse(storedCreatures);
+      // Ensure we have 17 creatures, adding missing ones if necessary.
+      if (parsedCreatures.length < 17) {
+          const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
+          const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
+          const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
+          setCreatures(creaturesToSet);
+      } else {
+          setCreatures(parsedCreatures);
+      }
     } else {
       setCreatures(initialCreatures);
     }
