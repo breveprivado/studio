@@ -52,6 +52,9 @@ const classOptions = [
     { name: 'Espadachín', icon: '⚔️', description: 'Ágil y rápido, entra y sale del mercado con destreza, tomando ganancias en movimientos cortos y decisivos.' }
 ]
 
+const achievementTiers = [1, 5, 10, 25, 50, 100];
+const XP_PER_ACHIEVEMENT = 250;
+
 const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) => void }) => {
     return (
         <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white my-8">
@@ -83,7 +86,7 @@ const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) 
 
 
 const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
-    if (!playerStats || playerStats.xp === undefined) {
+    if (playerStats?.xp === undefined) {
         return (
             <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <CardHeader>
@@ -259,13 +262,29 @@ export default function DashboardPage() {
 
     if (trade.creatureId) {
        const creature = creatures.find(c => c.id === trade.creatureId);
+       let achievementUnlocked = false;
+
        setCreatures(creatures.map(c => {
          if (c.id === trade.creatureId) {
+           const oldEncounterCount = c.encounters.length;
            const newEncounters = [...c.encounters, { id: crypto.randomUUID(), date: new Date().toISOString() }];
+           
+           achievementTiers.forEach(tier => {
+               if(oldEncounterCount < tier && newEncounters.length >= tier) {
+                   achievementUnlocked = true;
+                   setPlayerStats(prev => ({...prev, xp: prev.xp + XP_PER_ACHIEVEMENT}));
+                   toast({
+                       title: `¡Logro Desbloqueado!`,
+                       description: `Has cazado ${tier} ${c.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
+                   })
+               }
+           });
+
            return { ...c, encounters: newEncounters };
          }
          return c;
        }));
+       
        toast({
         title: `¡Bestia ${creature?.name} Cazada!`,
         description: 'Has registrado tu encuentro en el bestiario.'
