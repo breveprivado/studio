@@ -38,7 +38,6 @@ const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: 
 
     return (
         <div className="flex items-center gap-2 group">
-            <span className="text-xl mr-2">{creature.icon}</span>
             <span className="font-semibold text-lg">{creature.name}</span>
             <Button onClick={() => setIsEditing(true)} size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100">
                 <Pencil className="h-4 w-4" />
@@ -218,7 +217,6 @@ const BestiaryPage = () => {
                     <>
                     <SheetHeader>
                         <SheetTitle className="flex items-center gap-3">
-                            <span className="text-3xl">{selectedCreature.icon}</span>
                             {selectedCreature.name}
                         </SheetTitle>
                         <SheetDescription>Edita los detalles de esta criatura y revisa su historial.</SheetDescription>

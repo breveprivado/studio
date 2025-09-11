@@ -42,7 +42,6 @@ export interface Encounter {
 export interface Creature {
   id: string;
   name: string;
-  icon: string;
   description: string;
   imageUrl: string | null;
   encounters: Encounter[];

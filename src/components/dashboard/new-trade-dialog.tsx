@@ -372,7 +372,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                             {creatures.sort((a,b) => parseInt(a.id) - parseInt(b.id)).map((creature) => (
                                 <SelectItem key={creature.id} value={creature.id}>
                                     <div className="flex items-center gap-2">
-                                        <span>{creature.icon}</span>
                                         <span>{creature.name}</span>
                                     </div>
                                 </SelectItem>
@@ -394,5 +393,3 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-
-    
