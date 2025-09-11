@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -12,6 +12,7 @@ import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
 import { cn } from '@/lib/utils';
 import { analyzeTrades } from '@/ai/flows/ai-powered-trade-analysis';
+import { generateWeeklyReview } from '@/ai/flows/weekly-review-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
@@ -31,6 +32,8 @@ import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { Progress } from '@/components/ui/progress';
 import { useLeveling } from '@/hooks/use-leveling';
 import BestiaryDashboard from '@/components/dashboard/bestiary-dashboard';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { subDays } from 'date-fns';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -303,6 +306,7 @@ export default function DashboardPage() {
   
   const handleAiAnalysis = async () => {
     setIsAiLoading(true);
+    setAiAnalysisResult('');
     try {
       const result = await analyzeTrades({ tradeData: JSON.stringify(trades) });
       setAiAnalysisResult(result.analysis);
@@ -317,6 +321,30 @@ export default function DashboardPage() {
       setIsAiLoading(false);
     }
   };
+  
+  const handleWeeklyReview = async () => {
+    setIsAiLoading(true);
+    setAiAnalysisResult('');
+    try {
+      const oneWeekAgo = subDays(new Date(), 7);
+      const weeklyTrades = trades.filter(t => new Date(t.date) > oneWeekAgo);
+      if (weeklyTrades.length === 0) {
+          setAiAnalysisResult("No hay operaciones registradas en la última semana para analizar.");
+          return;
+      }
+      const result = await generateWeeklyReview({ tradeData: JSON.stringify(weeklyTrades) });
+      setAiAnalysisResult(result.analysis);
+    } catch (error) {
+      console.error("AI weekly review failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Error de Análisis IA",
+        description: "No se pudo obtener la revisión semanal. Inténtalo de nuevo.",
+      });
+    } finally {
+        setIsAiLoading(false);
+    }
+  }
 
   const exportToXlsx = () => {
     const dataToExport = trades.map(trade => ({
@@ -414,10 +442,19 @@ export default function DashboardPage() {
                         <FileDown className="h-5 w-5 mr-2"/>
                         Exportar XLSX
                     </Button>
-                    <Button onClick={handleAiAnalysis} disabled={isAiLoading} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                        <Bot className="h-5 w-5 mr-2"/>
-                        {isAiLoading ? "Analizando..." : "Análisis IA"}
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" disabled={isAiLoading} className="transition-all transform hover:scale-105 shadow-lg">
+                                <Bot className="h-5 w-5 mr-2"/>
+                                {isAiLoading ? "Analizando..." : "Análisis IA"}
+                                <ChevronDown className="h-4 w-4 ml-2"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={handleAiAnalysis}>Análisis General</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleWeeklyReview}>Revisión Semanal y Consejos</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                </div>
               <Button onClick={() => setIsAddBalanceOpen(true)} className="bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3 w-full sm:w-auto">
                 <Landmark className="h-5 w-5 mr-2" />
