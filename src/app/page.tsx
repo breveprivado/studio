@@ -188,7 +188,7 @@ export default function DashboardPage() {
   useEffect(() => { localStorage.setItem('withdrawals', JSON.stringify(withdrawals)); }, [withdrawals]);
   useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
-  useEffect(() => { localStorage.setItem('creatures', JSON.stringify(creatures)); }, [creatures]);
+  useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
   useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
   
   useEffect(() => {
