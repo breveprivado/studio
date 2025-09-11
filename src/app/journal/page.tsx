@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface JournalEntry {
   id: string;
@@ -23,12 +24,11 @@ interface JournalEntry {
   imageUrl?: string | null;
 }
 
-const RatingsDashboard = ({ entries }: { entries: JournalEntry[] }) => {
-  const now = new Date();
-  const startOfThisWeek = startOfWeek(now, { locale: es });
-  const endOfThisWeek = endOfWeek(now, { locale: es });
-  const startOfThisMonth = startOfMonth(now);
-  const endOfThisMonth = endOfMonth(now);
+const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], viewDate: Date }) => {
+  const startOfThisWeek = startOfWeek(viewDate, { locale: es });
+  const endOfThisWeek = endOfWeek(viewDate, { locale: es });
+  const startOfThisMonth = startOfMonth(viewDate);
+  const endOfThisMonth = endOfMonth(viewDate);
 
   const { weeklyAvg, monthlyAvg, weeklyCount, monthlyCount } = useMemo(() => {
     let weeklyStars = 0;
@@ -71,15 +71,36 @@ const RatingsDashboard = ({ entries }: { entries: JournalEntry[] }) => {
 
   const weeklyFeedback = getFeedback(weeklyAvg);
   const monthlyFeedback = getFeedback(monthlyAvg);
+  
+  const [selectedYear, setSelectedYear] = useState(getYear(viewDate));
+  const [selectedMonth, setSelectedMonth] = useState(getMonth(viewDate));
+  
+  const years = useMemo(() => {
+    const allYears = entries.map(e => getYear(new Date(e.date)));
+    const uniqueYears = [...new Set(allYears), getYear(new Date())];
+    return uniqueYears.sort((a,b) => b-a);
+  }, [entries]);
+
+  const months = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  
+  const handleDateChange = (year: number, month: number) => {
+      const newDate = setMonth(setYear(new Date(), year), month);
+      // This part is tricky as we can't directly set the state of the parent.
+      // The parent will handle the date change and pass the new `viewDate` prop.
+  }
 
   return (
     <Card className="bg-white dark:bg-neutral-900">
       <CardHeader>
         <CardTitle>Dashboard de Calificaciones</CardTitle>
+        <CardDescription>Revisa tu rendimiento pasado.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-            <h3 className="font-semibold mb-2">Rendimiento Semanal</h3>
+            <h3 className="font-semibold mb-2">Rendimiento Semanal <span className="text-sm text-gray-500">({format(startOfThisWeek, 'dd MMM')} - {format(endOfThisWeek, 'dd MMM')})</span></h3>
             <div className="p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg space-y-2">
                 <div className="flex justify-between items-center">
                     <span className="font-medium">Promedio de Estrellas</span>
@@ -94,7 +115,7 @@ const RatingsDashboard = ({ entries }: { entries: JournalEntry[] }) => {
             </div>
         </div>
         <div>
-            <h3 className="font-semibold mb-2">Rendimiento Mensual</h3>
+            <h3 className="font-semibold mb-2">Rendimiento Mensual <span className="text-sm text-gray-500">({format(startOfThisMonth, 'MMMM yyyy', { locale: es })})</span></h3>
             <div className="p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg space-y-2">
                 <div className="flex justify-between items-center">
                     <span className="font-medium">Promedio de Estrellas</span>
@@ -332,7 +353,7 @@ export default function JournalPage() {
                         />
                     </CardContent>
                 </Card>
-                <RatingsDashboard entries={entries} />
+                <RatingsDashboard entries={entries} viewDate={selectedDate} />
             </div>
             <div className="md:col-span-2 space-y-6">
                 <Card className="bg-white dark:bg-neutral-900">
