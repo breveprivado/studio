@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, PieChart, Pie, Cell, LegendProps } from 'recharts';
+import { BarChart as BarChartIcon, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, BarChart } from 'recharts';
 import { Trade } from '@/lib/types';
 import { format } from 'date-fns';
 import { BarChart3 } from 'lucide-react';
@@ -45,18 +45,22 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
     });
 
   }, [trades]);
-
-  const operationTypeData = useMemo(() => {
+  
+  const winLossData = useMemo(() => {
     const wins = trades.filter(t => t.status === 'win').length;
     const losses = trades.filter(t => t.status === 'loss').length;
     const dojis = trades.filter(t => t.status === 'doji').length;
 
-    const data = [];
-    if (wins > 0) data.push({ name: 'Ganadoras', value: wins, color: 'hsl(var(--chart-2))' });
-    if (losses > 0) data.push({ name: 'Perdedoras', value: losses, color: 'hsl(var(--chart-1))' });
-    if (dojis > 0) data.push({ name: 'Empates', value: dojis, color: 'hsl(var(--chart-3))' });
+    if (wins === 0 && losses === 0 && dojis === 0) {
+      return [];
+    }
 
-    return data;
+    return [{
+      name: 'Resultados',
+      Ganadas: wins,
+      Perdidas: losses,
+      Empates: dojis,
+    }];
   }, [trades]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -72,52 +76,19 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
     }
     return null;
   };
-
-  const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }: any) => {
-    if (percent < 0.05) return null;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold pointer-events-none">
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
   
-  const CustomPieTooltip = ({ active, payload, label }: any) => {
+  const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-md text-sm text-foreground">
-          <p className="font-bold" style={{color: payload[0].payload.color}}>{payload[0].name}</p>
-          <p>{`Operaciones: ${payload[0].value}`}</p>
-          <p>{`Porcentaje: ${(payload[0].payload.percent * 100).toFixed(1)}%`}</p>
+          {payload.map((pld: any) => (
+             <p key={pld.dataKey} style={{ color: pld.fill }}>{`${pld.name}: ${pld.value}`}</p>
+          ))}
         </div>
       );
     }
     return null;
   };
-  
-  const CustomLegend = (props: LegendProps) => {
-    const { payload } = props;
-    const total = payload?.reduce((sum, entry) => sum + (typeof entry.payload?.value === 'number' ? entry.payload.value : 0), 0) || 0;
-    
-    return (
-      <ul className="flex flex-col gap-2">
-        {payload?.map((entry, index) => (
-          <li key={`item-${index}`} className="flex items-center gap-2 text-sm">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}></span>
-            <span className="text-muted-foreground">{entry.value}:</span>
-            <span className="font-medium text-foreground">{entry.payload?.value}</span>
-            <span className="text-muted-foreground/70">({total > 0 ? ((entry.payload?.value || 0) / total * 100).toFixed(1) : 0}%)</span>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
 
   return (
     <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
@@ -158,23 +129,22 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
             
             <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Distribución de Operaciones</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center"><BarChartIcon className="h-5 w-5 mr-2" />Ganadas Vs Perdidas</CardTitle>
               </CardHeader>
               <CardContent>
-                  {operationTypeData.length > 0 ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                      <ResponsiveContainer width="100%" height={250}>
-                          <PieChart>
-                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={renderCustomizedLabel}>
-                                  {operationTypeData.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} />
-                                  ))}
-                              </Pie>
-                              <Tooltip content={<CustomPieTooltip />} />
-                          </PieChart>
-                      </ResponsiveContainer>
-                      <CustomLegend payload={operationTypeData.map(d => ({value: d.name, color: d.color, type: 'square', payload: { value: d.value }}))} />
-                    </div>
+                  {winLossData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                       <BarChart data={winLossData} layout="vertical" barSize={40}>
+                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                         <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} fontSize={12} />
+                         <YAxis type="category" dataKey="name" hide />
+                         <Tooltip content={<CustomBarTooltip />} cursor={{fill: 'hsl(var(--muted))'}} />
+                         <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
+                         <Bar dataKey="Ganadas" fill="hsl(var(--chart-2))" />
+                         <Bar dataKey="Perdidas" fill="hsl(var(--chart-1))" />
+                         <Bar dataKey="Empates" fill="hsl(var(--chart-3))" />
+                       </BarChart>
+                    </ResponsiveContainer>
                   ) : (
                       <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de operaciones para mostrar</p></div>
                   )}
@@ -188,5 +158,3 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 };
 
 export default PerformanceCharts;
-
-    

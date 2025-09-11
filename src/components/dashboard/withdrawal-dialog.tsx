@@ -43,12 +43,8 @@ const WithdrawalDialog: React.FC<WithdrawalDialogProps> = ({ isOpen, onOpenChang
   });
 
   function onSubmit(data: WithdrawalFormValues) {
-    const newWithdrawal = {
-      ...data,
-      date: new Date().toISOString(),
-    };
-    onAddWithdrawal(newWithdrawal);
-    form.reset();
+    onAddWithdrawal(data);
+    form.reset({ amount: 0, notes: '' });
     onOpenChange(false);
   }
   

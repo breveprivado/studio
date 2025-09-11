@@ -23,3 +23,5 @@ export interface Withdrawal {
   date: string;
   notes?: string;
 }
+
+export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'withdrawal' });

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type TimeRange, type Withdrawal } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -22,7 +22,6 @@ import { Switch } from '@/components/ui/switch';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 import CurrencyConverter from '@/components/dashboard/currency-converter';
 import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
@@ -149,6 +148,14 @@ export default function DashboardPage() {
     });
   }, [trades, timeRange]);
 
+  const activities = useMemo((): Activity[] => {
+    const combined = [
+        ...trades.map(t => ({...t, type: 'trade'} as const)),
+        ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const))
+    ];
+    return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [trades, withdrawals]);
+
   const { gains, losses, netProfit, winRate, totalTrades, totalWithdrawals } = useMemo(() => {
     const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
     const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
@@ -174,8 +181,8 @@ export default function DashboardPage() {
     setTrades(prevTrades => [newTrade, ...prevTrades]);
   };
   
-  const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id'>) => {
-    const newWithdrawal = { ...withdrawal, id: crypto.randomUUID() };
+  const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
+    const newWithdrawal = { ...withdrawal, id: crypto.randomUUID(), date: new Date().toISOString() };
     setWithdrawals(prev => [newWithdrawal, ...prev]);
     toast({
         title: "Retiro Registrado",
@@ -186,6 +193,10 @@ export default function DashboardPage() {
   const handleDeleteTrade = (id: string) => {
     setTrades(prevTrades => prevTrades.filter(t => t.id !== id));
   };
+
+  const handleDeleteWithdrawal = (id: string) => {
+    setWithdrawals(prev => prev.filter(w => w.id !== id));
+  }
 
   const handleSelectTrade = (trade: Trade) => {
     setSelectedTrade(trade);
@@ -329,7 +340,7 @@ export default function DashboardPage() {
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
             <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-500" />
+            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-400" />
           </div>
 
           <div className="space-y-8">
@@ -339,7 +350,7 @@ export default function DashboardPage() {
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
-            <RecentTrades trades={trades} onDeleteTrade={handleDeleteTrade} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+            <RecentTrades activities={activities} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
           </div>
         </div>
       </div>
