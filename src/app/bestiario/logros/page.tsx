@@ -22,7 +22,7 @@ const achievementData = [
   { id: '10', name: 'Campeón de la Humildad', description: 'Reconoces que el mercado es el maestro y tú un eterno aprendiz. Tu ego está bajo control.' },
   { id: '11', name: 'Sabio de la Bitácora', description: 'Cada operación es una página en tu libro de sabiduría. Aprendes y evolucionas sin cesar.' },
   { id: '12', name: 'Titán del Backtesting', description: 'Confías en tus datos, no en la esperanza. Tu estrategia ha sido probada en el fuego.' },
-  { id astounding', name: 'Paladín del Proceso', description: 'Te enamoraste del proceso, no del resultado. La excelencia es tu camino.' },
+  { id: '13', name: 'Paladín del Proceso', description: 'Te enamoraste del proceso, no del resultado. La excelencia es tu camino.' },
   { id: '14', name: 'Vigilante Nocturno', description: 'Descansas cuando debes, sabiendo que un guerrero fatigado es un guerrero vulnerable.' },
   { id: '15', name: 'Explorador de Mercados', description: 'Tu curiosidad es tu mapa. Siempre buscas nuevas tierras y oportunidades que conquistar.' },
   { id: '16', name: 'Oráculo de la Tendencia', description: 'Ves más allá del ruido, identificando el flujo real del mercado. La corriente es tu aliada.' },
