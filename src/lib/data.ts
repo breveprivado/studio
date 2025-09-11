@@ -1,4 +1,4 @@
-import { Trade } from '@/lib/types';
+import { Creature, Trade } from '@/lib/types';
 
 export const initialTrades: Trade[] = [
   { id: '1', pair: 'EUR/GBP', status: 'win', pips: 44, lotSize: 0.1, profit: 220, date: '2024-03-27T10:00:00Z', strategy: '3G', strategyColor: 'rgb(4, 120, 87)', notes: 'Buena entrada siguiendo la tendencia principal.' },
@@ -11,6 +11,26 @@ export const initialTrades: Trade[] = [
   { id: '8', pair: 'EUR/JPY', status: 'win', pips: 28, lotSize: 0.1, profit: 140, date: '2024-02-29T10:00:00Z', strategy: '2C', strategyColor: 'rgb(29, 78, 216)' },
   { id: '9', pair: 'USD/CHF', status: 'win', pips: 50, lotSize: 0.2, profit: 320, date: '2024-02-11T10:00:00Z', strategy: '1G', strategyColor: 'rgb(16, 185, 129)' },
   { id: '10', pair: 'GBP/JPY', status: 'loss', pips: -12, lotSize: 0.05, profit: -60, date: '2024-02-07T10:00:00Z', strategy: '4C', strategyColor: 'rgb(30, 58, 138)', notes: 'Stop loss ajustado demasiado pronto.' }
+];
+
+export const initialCreatures: Creature[] = [
+    { id: '1', name: 'Sombra', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
+    { id: '2', name: 'Slimes', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
+    { id: '3', name: 'Goblins', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
+    { id: '4', name: 'Trolls', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
+    { id: '5', name: 'Orcos', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
+    { id: '6', name: 'Minotauros', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
+    { id: '7', name: 'Mujeres Lizzards', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
+    { id: '8', name: 'Hombres Lobos', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
+    { id: '9', name: 'Faunos', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
+    { id: '10', name: 'Sirenas', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
+    { id: '11', name: 'Hadas', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
+    { id: '12', name: 'Fenix', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
+    { id: '13', name: 'Basilisco', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
+    { id: '14', name: 'Kraken', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
+    { id: '15', name: 'Leviatan', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
+    { id: '16', name: 'Cthulhu', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
+    { id: '17', name: 'Un Dragón Ancestral', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
 ];
 
 export const currencyPairs = [

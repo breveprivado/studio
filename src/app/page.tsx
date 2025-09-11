@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
-import { initialTrades } from '@/lib/data';
+import { initialTrades, initialCreatures } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
@@ -168,7 +168,11 @@ export default function DashboardPage() {
     else setPlayerStats({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
-    if (storedCreatures) setCreatures(JSON.parse(storedCreatures));
+    if (storedCreatures) {
+      setCreatures(JSON.parse(storedCreatures));
+    } else {
+      setCreatures(initialCreatures);
+    }
     
     const storedJournalEntries = localStorage.getItem('journalEntries');
     if (storedJournalEntries) setJournalEntries(JSON.parse(storedJournalEntries));
