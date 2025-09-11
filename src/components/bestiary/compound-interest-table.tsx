@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
@@ -11,18 +13,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Creature } from '@/lib/types';
+import { Button } from '../ui/button';
 
 interface CompoundInterestTableProps {
     creatures: Creature[];
+    initialBalance: number;
+    onBalanceChange: (newBalance: number) => void;
 }
 
-const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures }) => {
-    const [initialBalance, setInitialBalance] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('ci_initialBalance') || '100';
-        }
-        return '100';
-    });
+const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures, initialBalance, onBalanceChange }) => {
     const [gainPercentage, setGainPercentage] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('ci_gainPercentage') || '0.86';
@@ -35,9 +34,10 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
         }
         return '4000';
     });
+     const [localBalance, setLocalBalance] = useState(initialBalance.toString());
 
     useEffect(() => {
-        localStorage.setItem('ci_initialBalance', initialBalance);
+        setLocalBalance(initialBalance.toString());
     }, [initialBalance]);
 
     useEffect(() => {
@@ -48,8 +48,22 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
         localStorage.setItem('ci_exchangeRate', exchangeRate);
     }, [exchangeRate]);
 
+    const handleBalanceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalBalance(e.target.value);
+    };
+
+    const handleBalanceBlur = () => {
+        const newBalance = parseFloat(localBalance);
+        if (!isNaN(newBalance)) {
+            onBalanceChange(newBalance);
+        } else {
+            setLocalBalance(initialBalance.toString());
+        }
+    };
+
+
     const interestData = useMemo(() => {
-        const balance = parseFloat(initialBalance);
+        const balance = initialBalance;
         const percentage = parseFloat(gainPercentage) / 100;
         const rate = parseFloat(exchangeRate);
 
@@ -100,8 +114,9 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                         <Input
                             id="initial-balance"
                             type="number"
-                            value={initialBalance}
-                            onChange={(e) => setInitialBalance(e.target.value)}
+                            value={localBalance}
+                            onChange={handleBalanceInputChange}
+                            onBlur={handleBalanceBlur}
                             placeholder="100"
                         />
                     </div>
@@ -164,5 +179,3 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 }
 
 export default CompoundInterestTable;
-
-    

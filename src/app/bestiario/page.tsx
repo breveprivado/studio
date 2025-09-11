@@ -67,6 +67,7 @@ const BestiaryPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
   
   const [editDescription, setEditDescription] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
@@ -89,11 +90,21 @@ const BestiaryPage = () => {
     } else {
       setCreatures(initialCreatures);
     }
+    
+    const storedBalance = localStorage.getItem('ci_initialBalance');
+    if (storedBalance) {
+        setCompoundInterestBalance(parseFloat(storedBalance));
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
   }, [creatures]);
+
+  useEffect(() => {
+      localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
+  }, [compoundInterestBalance]);
+
 
   const handleEncounterChange = (id: string, change: 'add' | 'remove') => {
     setCreatures(creatures.map(c => {
@@ -183,7 +194,7 @@ const BestiaryPage = () => {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                    <CompoundInterestTable creatures={creatures} />
+                    <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
                 </AccordionContent>
             </AccordionItem>
         </Accordion>
@@ -287,5 +298,3 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
-
-    

@@ -30,6 +30,7 @@ import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { Progress } from '@/components/ui/progress';
 import { useLeveling } from '@/hooks/use-leveling';
+import BestiaryDashboard from '@/components/dashboard/bestiary-dashboard';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -116,6 +117,7 @@ export default function DashboardPage() {
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined });
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
@@ -160,6 +162,10 @@ export default function DashboardPage() {
         setIsDarkMode(true);
         document.documentElement.classList.add('dark');
     }
+
+    const storedCiBalance = localStorage.getItem('ci_initialBalance');
+    if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
+
   }, []);
 
   useEffect(() => { localStorage.setItem('trades', JSON.stringify(trades)); }, [trades]);
@@ -167,6 +173,7 @@ export default function DashboardPage() {
   useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
   useEffect(() => { localStorage.setItem('creatures', JSON.stringify(creatures)); }, [creatures]);
+  useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -249,6 +256,14 @@ export default function DashboardPage() {
         title: '¡Bestia Enfrentada!',
         description: 'Has registrado tu encuentro en el bestiario.'
        })
+       
+       if (trade.status === 'win' && trade.profit > 0) {
+           setCompoundInterestBalance(prev => prev + trade.profit);
+            toast({
+              title: '¡Interés Compuesto!',
+              description: `Se han añadido ${formatCurrency(trade.profit)} a tu balance de interés compuesto.`,
+            });
+       }
     }
   };
   
@@ -346,6 +361,12 @@ export default function DashboardPage() {
                         <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
                         <BookHeart className="h-5 w-5 mr-2" />
                         Bestiario
+                        </Button>
+                    </Link>
+                     <Link href="#bestiary-dashboard">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
+                        <Shield className="h-5 w-5 mr-2" />
+                        Bestias
                         </Button>
                     </Link>
                     <Link href="/bestiario/logros">
@@ -458,6 +479,7 @@ export default function DashboardPage() {
             {level >= 10 && !playerStats.class && (
                 <ClassSelection onSelectClass={handleSelectClass} />
             )}
+            <BestiaryDashboard creatures={creatures} />
             <CurrencyConverter />
             <WithdrawalsDashboard withdrawals={withdrawals} formatCurrency={formatCurrency} />
             <StrategyPerformance trades={filteredTrades} />
