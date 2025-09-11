@@ -262,31 +262,27 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
 
-    // Create mutable copies for this operation
-    let currentXp = playerStats.xp;
+    let finalPlayerStats = { ...playerStats };
     let finalCreatures = [...creatures];
     let finalCompoundInterestBalance = compoundInterestBalance;
 
     if (trade.creatureId && trade.status === 'win') {
         const creature = creatures.find(c => c.id === trade.creatureId);
         
-        // XP from hunt
         let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
-        currentXp += xpGainedFromHunt;
+        let currentXp = finalPlayerStats.xp + xpGainedFromHunt;
         
         toast({
             title: '¡Experiencia Ganada!',
             description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
         });
 
-        // XP from achievements
         let xpGainedFromAchievement = 0;
         const creatureIndex = finalCreatures.findIndex(c => c.id === trade.creatureId);
         
         if (creatureIndex !== -1) {
             const oldEncounterCount = finalCreatures[creatureIndex].encounters.length;
             
-            // Create a new creature object with the new encounter
             const updatedCreature = {
                 ...finalCreatures[creatureIndex],
                 encounters: [...finalCreatures[creatureIndex].encounters, { id: newTrade.id, date: new Date().toISOString() }]
@@ -304,7 +300,6 @@ export default function DashboardPage() {
                 }
             });
 
-            // Replace the old creature with the updated one in our mutable copy
             finalCreatures[creatureIndex] = updatedCreature;
 
              toast({
@@ -314,7 +309,8 @@ export default function DashboardPage() {
         }
         
         currentXp += xpGainedFromAchievement;
-
+        finalPlayerStats = { ...finalPlayerStats, xp: currentXp };
+        
         if (trade.profit > 0) {
             finalCompoundInterestBalance += trade.profit;
             toast({
@@ -324,9 +320,6 @@ export default function DashboardPage() {
         }
     }
     
-    const finalPlayerStats = { ...playerStats, xp: currentXp };
-
-    // Set all states and save to localStorage ATOMICALLY
     setTrades(newTrades);
     localStorage.setItem('trades', JSON.stringify(newTrades));
 
@@ -339,6 +332,7 @@ export default function DashboardPage() {
     setCompoundInterestBalance(finalCompoundInterestBalance);
     localStorage.setItem('ci_initialBalance', finalCompoundInterestBalance.toString());
   };
+
 
   const filteredTrades = useMemo(() => {
     const now = new Date();
@@ -467,7 +461,7 @@ export default function DashboardPage() {
         localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
         
         setCreatures(finalCreatures);
-        localStorage.setItem('creatures', JSON.stringify(finalCreatures));
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
 
         toast({
             title: "Experiencia Ajustada",
