@@ -9,18 +9,41 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { JournalEntry, PlayerStats } from '@/lib/types';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const levelMilestones: { [key: number]: number } = {
     1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
     9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
 };
 const XP_PER_SURVIVAL_MISSION = 500;
+
+const RatingRules = () => (
+    <Accordion type="single" collapsible className="w-full">
+      <AccordionItem value="item-1">
+        <AccordionTrigger>
+            <div className="flex items-center">
+                <HelpCircle className="h-5 w-5 mr-2 text-primary" />
+                <h3 className="font-semibold">Reglas de Calificación</h3>
+            </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <ul className="space-y-3 text-sm p-2 bg-gray-50 dark:bg-neutral-800/50 rounded-lg">
+            <li className="flex items-start"><Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2 flex-shrink-0" /><div><span className="font-bold">5 Estrellas:</span> Día perfecto. Disciplina de hierro, arrasaste con todo.</div></li>
+            <li className="flex items-start"><Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2 flex-shrink-0" /><div><span className="font-bold">4 Estrellas:</span> Buen día, pero con pequeños errores (corazones perdidos sin romper el límite).</div></li>
+            <li className="flex items-start"><Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2 flex-shrink-0" /><div><span className="font-bold">3 Estrellas:</span> Límite de pérdidas alcanzado (3 corazones). Fin del día.</div></li>
+            <li className="flex items-start"><Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2 flex-shrink-0" /><div><span className="font-bold">2 Estrellas:</span> No se respetó la estrategia o el Stop Loss.</div></li>
+            <li className="flex items-start"><Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2 flex-shrink-0" /><div><span className="font-bold">1 Estrella:</span> Metralleta. Operativa impulsiva y sin control.</div></li>
+          </ul>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+);
 
 
 const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], viewDate: Date }) => {
@@ -174,6 +197,8 @@ export default function JournalPage() {
   const entryForSelectedDate = useMemo(() => {
     return entries.find(entry => isSameDay(new Date(entry.date), selectedDate));
   }, [entries, selectedDate]);
+  
+  const ratedDaysCount = useMemo(() => entries.filter(e => e.rating > 0).length, [entries]);
 
   useEffect(() => {
     if (entryForSelectedDate) {
@@ -205,6 +230,18 @@ export default function JournalPage() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const checkSurvivalMissions = (currentRatedDays: number, newRatedDays: number) => {
+    Object.values(levelMilestones).forEach((milestone) => {
+        if (currentRatedDays < milestone && newRatedDays >= milestone) {
+            setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
+            toast({
+                title: `¡Misión de Supervivencia Completa!`,
+                description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
+            });
+        }
+    });
+  }
 
 
   const handleSaveEntry = () => {
@@ -217,18 +254,13 @@ export default function JournalPage() {
       return;
     }
     
-    if (entryForSelectedDate && editingEntryId !== entryForSelectedDate.id) {
+    if (entryForSelectedDate) {
        toast({
         variant: 'destructive',
         title: 'Entrada Duplicada',
         description: 'Ya existe una entrada para este día. Puedes editarla.',
       });
       return;
-    }
-
-    if (editingEntryId) {
-       handleUpdateEntry();
-       return;
     }
 
     const newEntry: JournalEntry = {
@@ -240,21 +272,12 @@ export default function JournalPage() {
       imageUrl: currentImage,
     };
     
-    const oldRatedDaysCount = entries.filter(e => e.rating > 0).length;
     const newEntries = [newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setEntries(newEntries);
     
-    if (currentRating > 0) {
-        const newRatedDaysCount = oldRatedDaysCount + 1;
-        Object.values(levelMilestones).forEach((milestone, index) => {
-            if (oldRatedDaysCount < milestone && newRatedDaysCount >= milestone) {
-                setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
-                toast({
-                    title: `¡Misión de Supervivencia Completa!`,
-                    description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
-                });
-            }
-        });
+    const newRatedDaysCount = newEntries.filter(e => e.rating > 0).length;
+    if(currentRating > 0) {
+        checkSurvivalMissions(ratedDaysCount, newRatedDaysCount);
     }
     
     toast({
@@ -301,39 +324,33 @@ export default function JournalPage() {
       });
       return;
     }
-
-    const oldEntry = entries.find(e => e.id === editingEntryId);
-    const oldRatedDaysCount = entries.filter(e => e.rating > 0).length;
     
-    setEntries(prevEntries =>
-      prevEntries.map(entry =>
-        entry.id === editingEntryId
-          ? { 
-              ...entry, 
-              content: editingContent,
-              rating: editingRating,
-              ratingComment: editingRatingComment,
-              imageUrl: editingImage,
-            }
-          : entry
-      )
-    );
+    const oldEntry = entries.find(e => e.id === editingEntryId);
+    let wasPreviouslyUnrated = false;
+    if (oldEntry && oldEntry.rating === 0 && editingRating > 0) {
+        wasPreviouslyUnrated = true;
+    }
 
-    if (oldEntry && (oldEntry.rating === 0 && editingRating > 0)) {
-        const newRatedDaysCount = oldRatedDaysCount + 1;
-         Object.values(levelMilestones).forEach((milestone, index) => {
-            if (oldRatedDaysCount < milestone && newRatedDaysCount >= milestone) {
-                setPlayerStats(prev => ({ ...prev, xp: prev.xp + XP_PER_SURVIVAL_MISSION }));
-                toast({
-                    title: `¡Misión de Supervivencia Completa!`,
-                    description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
-                });
-            }
-        });
+    const newEntries = entries.map(entry =>
+      entry.id === editingEntryId
+        ? { 
+            ...entry, 
+            content: editingContent,
+            rating: editingRating,
+            ratingComment: editingRatingComment,
+            imageUrl: editingImage,
+          }
+        : entry
+    );
+    setEntries(newEntries);
+
+    if (wasPreviouslyUnrated) {
+        const newRatedDaysCount = newEntries.filter(e => e.rating > 0).length;
+        checkSurvivalMissions(ratedDaysCount, newRatedDaysCount);
     }
 
 
-    const updatedEntry = entries.find(e => e.id === editingEntryId);
+    const updatedEntry = newEntries.find(e => e.id === editingEntryId);
     if(updatedEntry && isSameDay(new Date(updatedEntry.date), selectedDate)) {
         setCurrentEntry(editingContent);
         setCurrentRating(editingRating);
@@ -394,7 +411,10 @@ export default function JournalPage() {
                         />
                     </CardContent>
                 </Card>
-                <RatingsDashboard entries={entries} viewDate={selectedDate} />
+                <div className="space-y-4">
+                    <RatingRules />
+                    <RatingsDashboard entries={entries} viewDate={selectedDate} />
+                </div>
             </div>
             <div className="md:col-span-2 space-y-6">
                 <Card className="bg-white dark:bg-neutral-900">
@@ -544,7 +564,3 @@ export default function JournalPage() {
     </div>
   );
 }
-
-    
-
-    
