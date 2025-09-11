@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -56,6 +56,7 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
+  const [openCombobox, setOpenCombobox] = useState(false);
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -126,12 +127,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel>Descripción</FormLabel>
-                    <Popover>
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
                         <PopoverTrigger asChild>
                             <FormControl>
                                 <Button
                                 variant="outline"
                                 role="combobox"
+                                aria-expanded={openCombobox}
                                 className={cn(
                                     "w-full justify-between",
                                     !field.value && "text-muted-foreground"
@@ -147,18 +149,26 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command shouldFilter={true}>
+                            <Command>
                                 <CommandInput 
                                     placeholder="Buscar o crear par..." 
                                     onValueChange={(search) => {
-                                        const exists = currencyPairs.some(p => p.value.toLowerCase() === search.toLowerCase());
-                                        if (!exists) {
-                                            form.setValue('pair', search);
-                                        }
+                                        field.onChange(search);
                                     }}
                                 />
                                 <CommandList>
-                                <CommandEmpty>No se encontró el par. Puedes escribir uno nuevo.</CommandEmpty>
+                                <CommandEmpty>
+                                    <button
+                                    type="button"
+                                    className="w-full text-left p-2 text-sm"
+                                    onClick={() => {
+                                        form.setValue('pair', form.getValues('pair'))
+                                        setOpenCombobox(false);
+                                    }}
+                                    >
+                                    Crear "{form.getValues('pair')}"
+                                    </button>
+                                </CommandEmpty>
                                 <CommandGroup>
                                 {currencyPairs.map((pair) => (
                                     <CommandItem
@@ -166,12 +176,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                         key={pair.value}
                                         onSelect={(currentValue) => {
                                             form.setValue("pair", currentValue === field.value ? "" : currentValue)
+                                            setOpenCombobox(false)
                                         }}
                                     >
                                     <Check
                                         className={cn(
                                         "mr-2 h-4 w-4",
-                                        pair.value === field.value
+                                        pair.value.toLowerCase() === field.value.toLowerCase()
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
@@ -396,5 +407,3 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-
-    
