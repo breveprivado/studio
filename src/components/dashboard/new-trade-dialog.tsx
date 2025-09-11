@@ -56,7 +56,9 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
-  const [openCombobox, setOpenCombobox] = useState(false);
+  const [openPairCombobox, setOpenPairCombobox] = useState(false);
+  const [openStrategyCombobox, setOpenStrategyCombobox] = useState(false);
+
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -127,13 +129,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel>Descripción</FormLabel>
-                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <Popover open={openPairCombobox} onOpenChange={setOpenPairCombobox}>
                         <PopoverTrigger asChild>
                             <FormControl>
                                 <Button
                                 variant="outline"
                                 role="combobox"
-                                aria-expanded={openCombobox}
+                                aria-expanded={openPairCombobox}
                                 className={cn(
                                     "w-full justify-between",
                                     !field.value && "text-muted-foreground"
@@ -153,7 +155,9 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                 <CommandInput 
                                     placeholder="Buscar o crear par..." 
                                     onValueChange={(search) => {
-                                        field.onChange(search);
+                                        if (currencyPairs.every(p => p.value.toLowerCase() !== search.toLowerCase())) {
+                                            field.onChange(search);
+                                        }
                                     }}
                                 />
                                 <CommandList>
@@ -163,7 +167,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                     className="w-full text-left p-2 text-sm"
                                     onClick={() => {
                                         form.setValue('pair', form.getValues('pair'))
-                                        setOpenCombobox(false);
+                                        setOpenPairCombobox(false);
                                     }}
                                     >
                                     Crear "{form.getValues('pair')}"
@@ -176,7 +180,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                         key={pair.value}
                                         onSelect={(currentValue) => {
                                             form.setValue("pair", currentValue === field.value ? "" : currentValue)
-                                            setOpenCombobox(false)
+                                            setOpenPairCombobox(false)
                                         }}
                                     >
                                     <Check
@@ -265,27 +269,75 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
             </div>
              <div className="grid grid-cols-2 gap-4">
                  <FormField
-                control={form.control}
-                name="strategy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Etiqueta</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una etiqueta" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {strategyOptions.map(option => (
-                                <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    control={form.control}
+                    name="strategy"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Etiqueta</FormLabel>
+                        <Popover open={openStrategyCombobox} onOpenChange={setOpenStrategyCombobox}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value || "Selecciona o crea una etiqueta"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput 
+                                        placeholder="Buscar o crear etiqueta..."
+                                        onValueChange={(search) => field.onChange(search)}
+                                        value={field.value}
+                                     />
+                                    <CommandList>
+                                    <CommandEmpty>
+                                         <button
+                                            type="button"
+                                            className="w-full text-left p-2 text-sm"
+                                            onClick={() => {
+                                                form.setValue('strategy', form.getValues('strategy'))
+                                                setOpenStrategyCombobox(false);
+                                            }}
+                                            >
+                                            Crear "{form.getValues('strategy')}"
+                                        </button>
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                    {strategyOptions.map((option) => (
+                                        <CommandItem
+                                            value={option}
+                                            key={option}
+                                            onSelect={(currentValue) => {
+                                                form.setValue("strategy", currentValue === field.value ? "" : currentValue)
+                                                setOpenStrategyCombobox(false)
+                                            }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            option === field.value ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        {option}
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                  <FormField
                     control={form.control}
                     name="date"
@@ -407,3 +459,5 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
+
+    

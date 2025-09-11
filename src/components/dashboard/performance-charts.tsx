@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, PieChart, Pie, Cell } from 'recharts';
 import { Trade } from '@/lib/types';
 import { format } from 'date-fns';
@@ -51,8 +51,8 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
     const losses = trades.filter(t => t.status === 'loss').length;
     if (wins === 0 && losses === 0) return [];
     return [
-      { name: 'Ganadoras', value: wins, color: '#22c55e' },
-      { name: 'Perdedoras', value: losses, color: '#ef4444' },
+      { name: 'Ganadoras', value: wins, color: 'hsl(var(--chart-2))' },
+      { name: 'Perdedoras', value: losses, color: 'hsl(var(--chart-1))' },
     ];
   }, [trades]);
 
@@ -61,14 +61,28 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
       return (
         <div className="p-2 bg-background border rounded-md shadow-md text-sm text-foreground">
           <p className="font-bold">{`Fecha: ${label}`}</p>
-          <p style={{ color: '#22c55e' }}>{`Ganancias: ${payload.find(p => p.dataKey === 'ganancias')?.value?.toFixed(2) || 0} US$`}</p>
-          <p style={{ color: '#ef4444' }}>{`Pérdidas: ${payload.find(p => p.dataKey === 'perdidas')?.value?.toFixed(2) || 0} US$`}</p>
-          <p style={{ color: '#3b82f6' }}>{`Beneficio Neto: ${payload.find(p => p.dataKey === 'beneficio neto')?.value?.toFixed(2) || 0} US$`}</p>
+          <p className="text-green-500">{`Ganancias: ${payload.find(p => p.dataKey === 'ganancias')?.value?.toFixed(2) || 0} US$`}</p>
+          <p className="text-red-500">{`Pérdidas: ${payload.find(p => p.dataKey === 'perdidas')?.value?.toFixed(2) || 0} US$`}</p>
+          <p className="text-blue-500">{`Beneficio Neto: ${payload.find(p => p.dataKey === 'beneficio neto')?.value?.toFixed(2) || 0} US$`}</p>
         </div>
       );
     }
     return null;
   };
+
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
 
   return (
     <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
@@ -83,7 +97,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
           <div className="space-y-8">
             <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento de Trading Diario</h3>
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento de Trading Diario</CardTitle>
               </CardHeader>
               <CardContent>
                 {performanceData.length > 0 ? (
@@ -92,11 +106,15 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(value) => `${value} US$`} />
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          color: 'hsl(var(--foreground))'
+                      }} />
                       <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
-                      <Bar dataKey="ganancias" fill="#22c55e" name="Ganancias" stackId="a" />
-                      <Bar dataKey="perdidas" fill="#ef4444" name="Pérdidas" stackId="a" />
-                      <Line type="monotone" dataKey="beneficio neto" stroke="#3b82f6" strokeWidth={3} name="Beneficio Neto" dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }}/>
+                      <Bar dataKey="ganancias" fill="hsl(var(--chart-2))" name="Ganancias" stackId="a" />
+                      <Bar dataKey="perdidas" fill="hsl(var(--chart-1))" name="Pérdidas" stackId="a" />
+                      <Line type="monotone" dataKey="beneficio neto" stroke="hsl(var(--primary))" strokeWidth={3} name="Beneficio Neto" dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }}/>
                     </ComposedChart>
                   </ResponsiveContainer>
                 ) : (
@@ -110,18 +128,18 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <CardHeader>
-                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento por Tipo de Operación</h3>
+                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento por Tipo de Operación</CardTitle>
                 </CardHeader>
                 <CardContent>
                    {operationTypeData.length > 0 ? (
                       <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
-                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label fill="hsl(var(--foreground))">
+                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
                                   {operationTypeData.map((entry, index) => (
                                       <Cell key={`cell-${index}`} fill={entry.color} />
                                   ))}
                               </Pie>
-                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}}/>
+                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}}/>
                               <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', paddingTop: '20px' }} />
                           </PieChart>
                       </ResponsiveContainer>
@@ -132,25 +150,18 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
               </Card>
               <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <CardHeader>
-                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tasa de Éxito por Operación</h3>
+                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tasa de Éxito por Operación</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {operationTypeData.length > 0 ? (
                       <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
-                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                                const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                                const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                                return (<text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                                          {`${(percent * 100).toFixed(0)}%`}
-                                        </text>);
-                              }}>
+                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
                                   {operationTypeData.map((entry, index) => (
                                       <Cell key={`cell-${index}`} fill={entry.color} />
                                   ))}
                               </Pie>
-                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}} />
+                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}} />
                               <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', paddingTop: '20px' }}/>
                           </PieChart>
                       </ResponsiveContainer>
@@ -168,3 +179,5 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 };
 
 export default PerformanceCharts;
+
+    
