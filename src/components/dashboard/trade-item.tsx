@@ -68,7 +68,8 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onSel
             {trade.pair}
             {isWin && huntedCreature && (
                 <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400">
-                    <Target className="h-3 w-3" /> {huntedCreature.name}
+                    <Target className="h-3 w-3" />
+                    {huntedCreature.icon} {huntedCreature.name}
                 </span>
             )}
             </p>
@@ -92,5 +93,3 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onSel
 };
 
 export default TradeItem;
-
-    

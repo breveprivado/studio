@@ -14,23 +14,23 @@ export const initialTrades: Trade[] = [
 ];
 
 export const initialCreatures: Creature[] = [
-    { id: '1', name: 'Sombra', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
-    { id: '2', name: 'Slimes', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
-    { id: '3', name: 'Goblins', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
-    { id: '4', name: 'Trolls', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
-    { id: '5', name: 'Orcos', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
-    { id: '6', name: 'Minotauros', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
-    { id: '7', name: 'Mujeres Lizzards', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
-    { id: '8', name: 'Hombres Lobos', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
-    { id: '9', name: 'Faunos', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
-    { id: '10', name: 'Sirenas', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
-    { id: '11', name: 'Hadas', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
-    { id: '12', name: 'Fenix', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
-    { id: '13', name: 'Basilisco', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
-    { id: '14', name: 'Kraken', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
-    { id: '15', name: 'Leviatan', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
-    { id: '16', name: 'Cthulhu', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
-    { id: '17', name: 'Un Dragón Ancestral', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
+    { id: '1', name: 'Sombra', icon: '👻', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
+    { id: '2', name: 'Slimes', icon: '💧', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
+    { id: '3', name: 'Goblins', icon: '👺', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
+    { id: '4', name: 'Trolls', icon: '👹', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
+    { id: '5', name: 'Orcos', icon: '🧌', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
+    { id: '6', name: 'Minotauros', icon: '🐂', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
+    { id: '7', name: 'Mujeres Lizzards', icon: '🦎', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
+    { id: '8', name: 'Hombres Lobos', icon: '🐺', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
+    { id: '9', name: 'Faunos', icon: '🐐', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
+    { id: '10', name: 'Sirenas', icon: '🧜‍♀️', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
+    { id: '11', name: 'Hadas', icon: '🧚‍♀️', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
+    { id: '12', name: 'Fenix', icon: '🔥', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
+    { id: '13', name: 'Basilisco', icon: '🐍', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
+    { id: '14', name: 'Kraken', icon: '🐙', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
+    { id: '15', name: 'Leviatan', icon: '🐳', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
+    { id: '16', name: 'Cthulhu', icon: '🦑', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
+    { id: '17', name: 'Un Dragón Ancestral', icon: '🐲', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
 ];
 
 export const currencyPairs = [
@@ -82,5 +82,3 @@ export const currencyPairs = [
   { label: "GBP/NOK", value: "GBP/NOK" },
   { label: "GBP/SEK", value: "GBP/SEK" },
 ];
-
-    

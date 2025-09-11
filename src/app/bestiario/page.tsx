@@ -18,23 +18,23 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { DollarSign } from 'lucide-react';
 
 const initialCreatures: Creature[] = [
-    { id: '1', name: 'Sombra', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
-    { id: '2', name: 'Slimes', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
-    { id: '3', name: 'Goblins', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
-    { id: '4', name: 'Trolls', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
-    { id: '5', name: 'Orcos', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
-    { id: '6', name: 'Minotauros', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
-    { id: '7', name: 'Mujeres Lizzards', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
-    { id: '8', name: 'Hombres Lobos', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
-    { id: '9', name: 'Faunos', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
-    { id: '10', name: 'Sirenas', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
-    { id: '11', name: 'Hadas', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
-    { id: '12', name: 'Fenix', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
-    { id: '13', name: 'Basilisco', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
-    { id: '14', name: 'Kraken', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
-    { id: '15', name: 'Leviatan', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
-    { id: '16', name: 'Cthulhu', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
-    { id: '17', name: 'Un Dragón Ancestral', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
+    { id: '1', name: 'Sombra', icon: '👻', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
+    { id: '2', name: 'Slimes', icon: '💧', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
+    { id: '3', name: 'Goblins', icon: '👺', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
+    { id: '4', name: 'Trolls', icon: '👹', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
+    { id: '5', name: 'Orcos', icon: '🧌', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
+    { id: '6', name: 'Minotauros', icon: '🐂', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
+    { id: '7', name: 'Mujeres Lizzards', icon: '🦎', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
+    { id: '8', name: 'Hombres Lobos', icon: '🐺', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
+    { id: '9', name: 'Faunos', icon: '🐐', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
+    { id: '10', name: 'Sirenas', icon: '🧜‍♀️', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
+    { id: '11', name: 'Hadas', icon: '🧚‍♀️', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
+    { id: '12', name: 'Fenix', icon: '🔥', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
+    { id: '13', name: 'Basilisco', icon: '🐍', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
+    { id: '14', name: 'Kraken', icon: '🐙', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
+    { id: '15', name: 'Leviatan', icon: '🐳', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
+    { id: '16', name: 'Cthulhu', icon: '🦑', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
+    { id: '17', name: 'Un Dragón Ancestral', icon: '🐲', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
 ];
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
@@ -57,6 +57,7 @@ const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: 
 
     return (
         <div className="flex items-center gap-2 group">
+            <span className="text-xl mr-2">{creature.icon}</span>
             <span className="font-semibold text-lg">{creature.name}</span>
             <Button onClick={() => setIsEditing(true)} size="icon" variant="ghost" className="h-8 w-8 opacity-0 group-hover:opacity-100">
                 <Pencil className="h-4 w-4" />
@@ -80,16 +81,7 @@ const BestiaryPage = () => {
    const loadData = () => {
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-      const parsedCreatures = JSON.parse(storedCreatures);
-      // Ensure we have 17 creatures, adding missing ones if necessary.
-      if (parsedCreatures.length < 17) {
-          const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
-          const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
-          const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
-          setCreatures(creaturesToSet);
-      } else {
-          setCreatures(parsedCreatures);
-      }
+      setCreatures(JSON.parse(storedCreatures));
     } else {
       setCreatures(initialCreatures);
     }
@@ -244,7 +236,10 @@ const BestiaryPage = () => {
                 {selectedCreature && (
                     <>
                     <SheetHeader>
-                        <SheetTitle>{selectedCreature.name}</SheetTitle>
+                        <SheetTitle className="flex items-center gap-3">
+                            <span className="text-3xl">{selectedCreature.icon}</span>
+                            {selectedCreature.name}
+                        </SheetTitle>
                         <SheetDescription>Edita los detalles de esta criatura y revisa su historial.</SheetDescription>
                     </SheetHeader>
                     <div className="space-y-4 py-4">
@@ -302,5 +297,3 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
-
-    

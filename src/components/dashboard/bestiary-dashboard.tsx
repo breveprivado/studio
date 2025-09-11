@@ -29,7 +29,10 @@ const BestiaryDashboard: React.FC<BestiaryDashboardProps> = ({ creatures }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sortedCreatures.map(creature => (
                   <div key={creature.id} className="p-3 border rounded-lg flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{creature.name}</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">{creature.icon}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{creature.name}</span>
+                    </div>
                     <span className="text-sm font-bold text-primary">{creature.encounters.length}</span>
                   </div>
                 ))}

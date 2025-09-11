@@ -369,8 +369,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="none">Ninguna</SelectItem>
-                            {creatures.map((creature) => (
-                                <SelectItem key={creature.id} value={creature.id}>{creature.name}</SelectItem>
+                            {creatures.sort((a,b) => parseInt(a.id) - parseInt(b.id)).map((creature) => (
+                                <SelectItem key={creature.id} value={creature.id}>
+                                    <div className="flex items-center gap-2">
+                                        <span>{creature.icon}</span>
+                                        <span>{creature.name}</span>
+                                    </div>
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

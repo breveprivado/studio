@@ -83,11 +83,15 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 
             const percentageSoFar = (accumulatedGain / balance) * 100;
             
-            const creatureName = sortedCreatures[i - 1]?.name || `Bestia #${i}`;
+            const creature = sortedCreatures[i - 1];
+            const creatureName = creature?.name || `Bestia #${i}`;
+            const creatureIcon = creature?.icon || '❓';
+
 
             data.push({
                 level: i,
                 name: creatureName,
+                icon: creatureIcon,
                 percentage: `${percentageSoFar.toFixed(2)}%`,
                 rawGain: rawGain.toFixed(2),
                 totalGain: (balance + accumulatedGain).toFixed(2),
@@ -157,7 +161,12 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                         <TableBody>
                             {interestData.map((row) => (
                                 <TableRow key={row.level} className={row.level <= 6 ? 'bg-amber-50 dark:bg-amber-950/50' : ''}>
-                                    <TableCell className="text-center font-medium">{row.name}</TableCell>
+                                    <TableCell className="text-center font-medium">
+                                       <div className="flex items-center justify-center gap-2">
+                                            <span>{row.icon}</span>
+                                            <span>{row.name}</span>
+                                       </div>
+                                    </TableCell>
                                     <TableCell className="text-center">{formatNumber(row.totalGain)}</TableCell>
                                     <TableCell className="text-center">{row.percentage}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.rawGain)}</TableCell>
