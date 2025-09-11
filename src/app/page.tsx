@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3 } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -276,7 +276,13 @@ export default function DashboardPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
+               <Link href="/obligatorio">
+                 <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
+                    <ClipboardCheck className="h-5 w-5 mr-2" />
+                    Obligatorio
+                 </Button>
+               </Link>
                <Link href="/journal">
                  <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
                     <BookOpen className="h-5 w-5 mr-2" />
