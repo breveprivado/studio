@@ -194,9 +194,15 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
+    // Check if data has been initialized
+    const isDataInitialized = localStorage.getItem('data_initialized');
+
     const storedTrades = localStorage.getItem('trades');
-    if (storedTrades) setTrades(JSON.parse(storedTrades));
-    else setTrades(initialTrades);
+    if (storedTrades) {
+      setTrades(JSON.parse(storedTrades));
+    } else if (!isDataInitialized) {
+      setTrades(initialTrades);
+    }
     
     const storedWithdrawals = localStorage.getItem('withdrawals');
     if (storedWithdrawals) setWithdrawals(JSON.parse(storedWithdrawals));
@@ -208,17 +214,9 @@ export default function DashboardPage() {
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-      const parsedCreatures = JSON.parse(storedCreatures);
-      if (parsedCreatures.length < 17) {
-          const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
-          const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
-          const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
-          setCreatures(creaturesToSet);
-      } else {
-          setCreatures(parsedCreatures);
-      }
-    } else {
-      setCreatures(initialCreatures);
+        setCreatures(JSON.parse(storedCreatures));
+    } else if (!isDataInitialized) {
+        setCreatures(initialCreatures);
     }
     
     const storedJournalEntries = localStorage.getItem('journalEntries');
@@ -240,6 +238,10 @@ export default function DashboardPage() {
     };
     
     window.addEventListener('storage', handleStorageChange);
+
+    if (!isDataInitialized) {
+        localStorage.setItem('data_initialized', 'true');
+    }
 
     return () => {
         window.removeEventListener('storage', handleStorageChange);
@@ -620,5 +622,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
