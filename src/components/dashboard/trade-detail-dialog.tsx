@@ -83,12 +83,6 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               </span>
             </div>
           )}
-           {trade.emotion && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Estado Emocional</span>
-              <EmotionIcon emotion={trade.emotion} />
-            </div>
-          )}
           {trade.notes && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Notas de la Operación</h4>

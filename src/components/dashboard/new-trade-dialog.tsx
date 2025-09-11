@@ -37,7 +37,6 @@ const formSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato de hora inválido (HH:MM)'),
   strategy: z.string().optional(),
   notes: z.string().optional(),
-  discipline: z.coerce.number().min(0).max(5).optional(),
   creatureId: z.string().optional(),
 });
 
@@ -67,7 +66,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      discipline: 0,
       creatureId: '',
     },
   });
@@ -113,7 +111,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      discipline: 0,
       creatureId: ''
     });
     onOpenChange(false);

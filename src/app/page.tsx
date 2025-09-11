@@ -194,14 +194,12 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
-    // Check if data has been initialized
     const isDataInitialized = localStorage.getItem('data_initialized');
 
     const storedTrades = localStorage.getItem('trades');
     if (storedTrades) {
       setTrades(JSON.parse(storedTrades));
     } else if (!isDataInitialized) {
-      localStorage.setItem('trades', JSON.stringify(initialTrades));
       setTrades(initialTrades);
     }
     
@@ -218,7 +216,6 @@ export default function DashboardPage() {
         setCreatures(JSON.parse(storedCreatures));
     } else if (!isDataInitialized) {
         setCreatures(initialCreatures);
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
     
     const storedJournalEntries = localStorage.getItem('journalEntries');
@@ -243,6 +240,8 @@ export default function DashboardPage() {
 
     if (!isDataInitialized) {
         localStorage.setItem('data_initialized', 'true');
+        localStorage.setItem('trades', JSON.stringify(initialTrades));
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
 
     return () => {
@@ -261,7 +260,29 @@ export default function DashboardPage() {
     }
   }, [isDarkMode]);
   
-   useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
+  useEffect(() => { 
+      localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
+  }, [compoundInterestBalance]);
+
+  useEffect(() => {
+      localStorage.setItem('trades', JSON.stringify(trades));
+  }, [trades]);
+
+  useEffect(() => {
+    localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+  }, [withdrawals]);
+  
+  useEffect(() => {
+      localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions));
+  }, [balanceAdditions]);
+
+  useEffect(() => {
+      localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
+  }, [creatures]);
+
+  useEffect(() => {
+    localStorage.setItem('playerStats', JSON.stringify(playerStats));
+  }, [playerStats]);
 
   const filteredTrades = useMemo(() => {
     const now = new Date();
@@ -324,23 +345,28 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
     setTrades(newTrades);
-    localStorage.setItem('trades', JSON.stringify(newTrades));
 
     if (trade.creatureId && trade.status === 'win') {
        const creature = creatures.find(c => c.id === trade.creatureId);
+       let currentXp = playerStats.xp;
        
        let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
-       let xpGainedFromAchievement = 0;
-       let achievementUnlocked = false;
+       currentXp += xpGainedFromHunt;
+       
+       toast({
+           title: '¡Experiencia Ganada!',
+           description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
+       });
 
+       let xpGainedFromAchievement = 0;
+       
        const updatedCreatures = creatures.map(c => {
          if (c.id === trade.creatureId) {
            const oldEncounterCount = c.encounters.length;
-           const newEncounters = [...c.encounters, { id: crypto.randomUUID(), date: new Date().toISOString() }];
+           const newEncounters = [...c.encounters, { id: newTrade.id, date: new Date().toISOString() }];
            
            achievementTiers.forEach(tier => {
                if(oldEncounterCount < tier && newEncounters.length >= tier) {
-                   achievementUnlocked = true;
                    xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
                    toast({
                        title: `¡Logro Desbloqueado!`,
@@ -353,23 +379,17 @@ export default function DashboardPage() {
          }
          return c;
        });
+
+       currentXp += xpGainedFromAchievement;
        setCreatures(updatedCreatures);
-       localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
        
        toast({
         title: `¡Bestia ${creature?.name} Cazada!`,
         description: 'Has registrado tu encuentro en el bestiario.'
        });
        
-       const totalXpGained = xpGainedFromHunt + xpGainedFromAchievement;
-       const newPlayerStats = { ...playerStats, xp: playerStats.xp + totalXpGained };
+       const newPlayerStats = { ...playerStats, xp: currentXp };
        setPlayerStats(newPlayerStats);
-       localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-       
-       toast({
-           title: '¡Experiencia Ganada!',
-           description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
-       });
 
        if (trade.profit > 0) {
            setCompoundInterestBalance(prev => prev + trade.profit);
@@ -383,9 +403,7 @@ export default function DashboardPage() {
   
   const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
     const newWithdrawal = { ...withdrawal, id: crypto.randomUUID(), date: new Date().toISOString() };
-    const newWithdrawals = [newWithdrawal, ...withdrawals];
-    setWithdrawals(newWithdrawals);
-    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
+    setWithdrawals(prev => [newWithdrawal, ...prev]);
     toast({
         title: "Retiro Registrado",
         description: "Tu retiro ha sido guardado exitosamente."
@@ -394,9 +412,7 @@ export default function DashboardPage() {
 
   const handleAddBalance = (balance: Omit<BalanceAddition, 'id' | 'date'>) => {
     const newBalance = { ...balance, id: crypto.randomUUID(), date: new Date().toISOString() };
-    const newBalanceAdditions = [newBalance, ...balanceAdditions];
-    setBalanceAdditions(newBalanceAdditions);
-    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
+    setBalanceAdditions(prev => [newBalance, ...prev]);
     toast({
         title: "Saldo Añadido",
         description: "Tu nuevo saldo ha sido registrado exitosamente."
@@ -404,21 +420,62 @@ export default function DashboardPage() {
   }
 
   const handleDeleteTrade = (id: string) => {
+    const tradeToDelete = trades.find(t => t.id === id);
+    if (!tradeToDelete) return;
+
+    let xpToDeduct = 0;
+
+    // Check if it was a successful hunt
+    if (tradeToDelete.creatureId && tradeToDelete.status === 'win') {
+        const creature = creatures.find(c => c.id === tradeToDelete.creatureId);
+        if (creature) {
+            const updatedEncounters = [...creature.encounters];
+            const encounterIndex = updatedEncounters.findIndex(enc => enc.id === id);
+
+            if (encounterIndex > -1) {
+                 updatedEncounters.splice(encounterIndex, 1);
+                
+                // Deduct XP from the hunt
+                xpToDeduct += (parseInt(tradeToDelete.creatureId, 10) / 17) * 50 + 10;
+
+                // Check if an achievement was lost
+                achievementTiers.forEach(tier => {
+                    if (creature.encounters.length >= tier && updatedEncounters.length < tier) {
+                        xpToDeduct += XP_PER_ACHIEVEMENT;
+                    }
+                });
+
+                const updatedCreatures = creatures.map(c => c.id === creature.id ? {...c, encounters: updatedEncounters} : c);
+                setCreatures(updatedCreatures);
+
+                toast({
+                    title: "Progreso de Caza Revertido",
+                    description: `Se ha eliminado el encuentro con ${creature.name}.`
+                })
+            }
+        }
+    }
+    
+    if (xpToDeduct > 0) {
+        const newXp = Math.max(0, playerStats.xp - xpToDeduct);
+        setPlayerStats({...playerStats, xp: newXp});
+        toast({
+            title: "Experiencia Ajustada",
+            description: `Se han restado ${xpToDeduct.toFixed(0)} XP.`,
+            variant: "destructive"
+        })
+    }
+
     const newTrades = trades.filter(t => t.id !== id);
     setTrades(newTrades);
-    localStorage.setItem('trades', JSON.stringify(newTrades));
   };
 
   const handleDeleteWithdrawal = (id: string) => {
-    const newWithdrawals = withdrawals.filter(w => w.id !== id);
-    setWithdrawals(newWithdrawals);
-    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
+    setWithdrawals(prev => prev.filter(w => w.id !== id));
   }
 
   const handleDeleteBalance = (id: string) => {
-    const newBalanceAdditions = balanceAdditions.filter(b => b.id !== id);
-    setBalanceAdditions(newBalanceAdditions);
-    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
+    setBalanceAdditions(prev => prev.filter(b => b.id !== id));
   }
 
   const handleSelectTrade = (trade: Trade) => {
