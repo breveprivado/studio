@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Trash2, Eye, Award } from 'lucide-react';
 import { type Creature, type Encounter } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -145,12 +145,20 @@ const BestiaryPage = () => {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza los "monstruos" que afectan tu operativa.</p>
           </div>
-          <Link href="/">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/bestiario/logros">
+                <Button variant="outline" className="bg-amber-500 hover:bg-amber-600 text-white">
+                    <Award className="h-4 w-4 mr-2" />
+                    Ver Panel de Logros
+                </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+              </Button>
+            </Link>
+          </div>
         </header>
 
         <Card>
