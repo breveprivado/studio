@@ -54,23 +54,21 @@ const CompoundInterestTable: React.FC = () => {
 
         let data = [];
         let accumulatedGain = 0;
-        let previousTotalGain = 0;
-        let totalGainInStair = 0;
 
         for (let i = 1; i <= 17; i++) {
-            const rawGain = (balance + totalGainInStair) * percentage;
+            const currentCapital = balance + accumulatedGain;
+            const rawGain = currentCapital * percentage;
             accumulatedGain += rawGain;
-            totalGainInStair += rawGain;
 
-            const percentageSoFar = (totalGainInStair / balance) * 100;
+            const percentageSoFar = (accumulatedGain / balance) * 100;
             
             data.push({
                 level: i,
                 percentage: `${percentageSoFar.toFixed(2)}%`,
                 rawGain: rawGain.toFixed(2),
-                totalGain: accumulatedGain.toFixed(2),
-                gainPerStep: totalGainInStair.toFixed(2),
-                gainInCOP: (totalGainInStair * rate).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+                totalGain: (balance + accumulatedGain).toFixed(2),
+                gainPerStep: accumulatedGain.toFixed(2),
+                gainInCOP: (accumulatedGain * rate).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
             });
         }
 
@@ -126,7 +124,7 @@ const CompoundInterestTable: React.FC = () => {
                                 <TableHead className="text-center">Total bestias</TableHead>
                                 <TableHead className="text-center">% Acumulado</TableHead>
                                 <TableHead className="text-center">Ganancia cruda ($)</TableHead>
-                                <TableHead className="text-center">Ganancia total ($)</TableHead>
+                                <TableHead className="text-center">Balance Total ($)</TableHead>
                                 <TableHead className="text-center">GANANCIA POR ESCALERA ($)</TableHead>
                                 <TableHead className="text-center">GANANCIA EN COP</TableHead>
                             </TableRow>
