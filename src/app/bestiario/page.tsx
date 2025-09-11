@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award } from 'lucide-react';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star } from 'lucide-react';
 import { type Creature, type PlayerStats } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -85,7 +85,8 @@ const BestiaryPage = () => {
       if (parsedCreatures.length < 17) {
           const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
           const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
-          setCreatures([...parsedCreatures, ...missingCreatures]);
+          const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
+          setCreatures(creaturesToSet);
       } else {
           setCreatures(parsedCreatures);
       }
@@ -143,6 +144,10 @@ const BestiaryPage = () => {
       handleCloseSheet();
   }
 
+  const getXpForCreature = (creatureId: string) => {
+      return (parseInt(creatureId, 10) / 17) * 50 + 10;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -187,7 +192,7 @@ const BestiaryPage = () => {
         <Card>
             <CardHeader>
                 <CardTitle>Listado de Bestias</CardTitle>
-                <CardDescription>Un resumen de todos los monstruos que has enfrentado.</CardDescription>
+                <CardDescription>Un resumen de todos los monstruos que has enfrentado y su recompensa.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -199,7 +204,13 @@ const BestiaryPage = () => {
                         >
                             <div className="flex-1">
                                <CreatureNameEditor creature={creature} onSave={handleNameSave} />
-                               <p className="text-sm text-muted-foreground mt-1">Encuentros totales: {creature.encounters.length}</p>
+                               <div className="flex items-center gap-4">
+                                <p className="text-sm text-muted-foreground mt-1">Encuentros: {creature.encounters.length}</p>
+                                <div className="flex items-center gap-1 text-sm text-amber-500 mt-1">
+                                    <Star className="h-4 w-4" />
+                                    <span>{getXpForCreature(creature.id).toFixed(0)} XP</span>
+                                </div>
+                               </div>
                             </div>
                             <div className="font-bold text-xl w-10 text-center">
                                 {creature.encounters.length}
