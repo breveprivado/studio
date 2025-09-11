@@ -131,13 +131,13 @@ const CompoundInterestTable: React.FC = () => {
                         </TableHeader>
                         <TableBody>
                             {interestData.map((row) => (
-                                <TableRow key={row.level} className={row.level <= 6 ? 'bg-purple-100 dark:bg-purple-900/30' : ''}>
+                                <TableRow key={row.level} className={row.level <= 6 ? 'bg-amber-50 dark:bg-amber-950/50' : ''}>
                                     <TableCell className="text-center font-medium">{row.level}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.totalGain)}</TableCell>
                                     <TableCell className="text-center">{row.percentage}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.rawGain)}</TableCell>
-                                    <TableCell className={`text-center font-bold ${row.level <= 11 ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-blue-200 dark:bg-blue-800/50'}`}>$ {formatNumber(row.gainPerStep)}</TableCell>
-                                    <TableCell className={`text-center font-bold ${row.level <= 8 ? 'bg-yellow-200 dark:bg-yellow-700/40' : 'bg-orange-300 dark:bg-orange-700/50'}`}>$ {row.gainInCOP}</TableCell>
+                                    <TableCell className={`text-center font-bold ${row.level <= 11 ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-emerald-200 dark:bg-emerald-800/50'}`}>$ {formatNumber(row.gainPerStep)}</TableCell>
+                                    <TableCell className={`text-center font-bold ${row.level <= 8 ? 'bg-amber-200 dark:bg-amber-700/40' : 'bg-orange-300 dark:bg-orange-700/50'}`}>$ {row.gainInCOP}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
