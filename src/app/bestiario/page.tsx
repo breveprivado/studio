@@ -64,7 +64,6 @@ const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: 
 
 const BestiaryPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0 });
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
@@ -81,32 +80,11 @@ const BestiaryPage = () => {
     } else {
       setCreatures(initialCreatures);
     }
-    const storedPlayerStats = localStorage.getItem('playerStats');
-    if (storedPlayerStats) {
-        setPlayerStats(JSON.parse(storedPlayerStats));
-    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
   }, [creatures]);
-
-  useEffect(() => {
-    localStorage.setItem('playerStats', JSON.stringify(playerStats));
-  }, [playerStats]);
-
-  const handleLevelUp = (newStats: PlayerStats) => {
-    let xpForNextLevel = Math.floor(100 * Math.pow(1.5, newStats.level - 1));
-    let updatedStats = { ...newStats };
-
-    while (updatedStats.xp >= xpForNextLevel) {
-        updatedStats.xp -= xpForNextLevel;
-        updatedStats.level += 1;
-        xpForNextLevel = Math.floor(100 * Math.pow(1.5, updatedStats.level - 1));
-        toast({ title: "¡Has subido de nivel!", description: `¡Felicidades! Has alcanzado el Nivel ${updatedStats.level}` });
-    }
-    return updatedStats;
-  }
 
   const handleEncounterChange = (id: string, change: 'add' | 'remove') => {
     setCreatures(creatures.map(c => {
@@ -114,11 +92,7 @@ const BestiaryPage = () => {
         let newEncounters = [...c.encounters];
         if (change === 'add') {
           newEncounters.push({ id: crypto.randomUUID(), date: new Date().toISOString() });
-          
-          setPlayerStats(prevStats => {
-              const newXp = prevStats.xp + 10; // Gain 10 XP per encounter
-              return handleLevelUp({ ...prevStats, xp: newXp });
-          });
+          toast({ title: '¡Encuentro Registrado!', description: 'Has añadido un nuevo encuentro a tu historial.'});
         } else {
           newEncounters.pop();
         }

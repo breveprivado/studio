@@ -48,7 +48,15 @@ export interface Creature {
 }
 
 export interface PlayerStats {
-    level: number;
-    xp: number;
+    startDate: string;
     class?: 'Invocador' | 'Arquero' | 'Espadachín' | undefined;
+}
+
+export interface JournalEntry {
+  id: string;
+  date: string;
+  content: string;
+  rating: number;
+  ratingComment: string;
+  imageUrl?: string | null;
 }

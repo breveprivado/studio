@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
 import StatCard from '@/components/dashboard/stat-card';
 import RecentTrades from '@/components/dashboard/recent-trades';
@@ -29,6 +29,7 @@ import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { Progress } from '@/components/ui/progress';
+import { useLeveling, levelMilestones } from '@/hooks/use-leveling';
 
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -77,12 +78,10 @@ const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) 
 }
 
 
-const LevelDashboard = ({ stats }: { stats: PlayerStats }) => {
-    const xpForNextLevel = useMemo(() => {
-        return Math.floor(100 * Math.pow(1.5, stats.level - 1));
-    }, [stats.level]);
-
-    const progressPercentage = (stats.xp / xpForNextLevel) * 100;
+const LevelDashboard = ({ playerStats, ratedDaysCount }: { playerStats: PlayerStats; ratedDaysCount: number; }) => {
+    const { level, nextMilestone } = useLeveling(ratedDaysCount);
+    
+    const progressPercentage = nextMilestone > 0 ? (ratedDaysCount / nextMilestone) * 100 : 100;
 
     return (
         <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -94,16 +93,16 @@ const LevelDashboard = ({ stats }: { stats: PlayerStats }) => {
             </CardHeader>
             <CardContent className="space-y-4">
                  <div className="flex justify-between items-center text-2xl font-bold">
-                    <span className="text-primary">Nivel {stats.level}</span>
-                    {stats.class && <span className="text-lg text-amber-500">{stats.class}</span>}
+                    <span className="text-primary">Nivel {level}</span>
+                    {playerStats.class && <span className="text-lg text-amber-500">{playerStats.class}</span>}
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground text-sm">
                    <span>Progreso</span>
-                   <span>{stats.xp} / {xpForNextLevel} XP</span>
+                   <span>{ratedDaysCount} / {nextMilestone} Días</span>
                 </div>
                 <Progress value={progressPercentage} className="h-4" />
                 <p className="text-center text-xs text-muted-foreground mt-2">
-                    ¡Sigue cazando bestias para subir de nivel!
+                    ¡Registra y califica tus días en la Bitácora para subir de nivel!
                 </p>
             </CardContent>
         </Card>
@@ -114,8 +113,9 @@ export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({ level: 1, xp: 0, class: undefined });
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined });
   const [creatures, setCreatures] = useState<Creature[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
@@ -126,6 +126,13 @@ export default function DashboardPage() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
+  
+  const ratedDaysCount = useMemo(() => {
+      return journalEntries.filter(entry => entry.rating > 0).length;
+  }, [journalEntries]);
+
+  const { level } = useLeveling(ratedDaysCount);
+
 
   useEffect(() => {
     const storedTrades = localStorage.getItem('trades');
@@ -140,9 +147,13 @@ export default function DashboardPage() {
     
     const storedPlayerStats = localStorage.getItem('playerStats');
     if (storedPlayerStats) setPlayerStats(JSON.parse(storedPlayerStats));
+    else setPlayerStats({ startDate: new Date().toISOString(), class: undefined });
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) setCreatures(JSON.parse(storedCreatures));
+    
+    const storedJournalEntries = localStorage.getItem('journalEntries');
+    if (storedJournalEntries) setJournalEntries(JSON.parse(storedJournalEntries));
 
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -155,7 +166,7 @@ export default function DashboardPage() {
   useEffect(() => { localStorage.setItem('withdrawals', JSON.stringify(withdrawals)); }, [withdrawals]);
   useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
-  useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
+  useEffect(() => { localStorage.setItem('creatures', JSON.stringify(creatures)); }, [creatures]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -214,19 +225,6 @@ export default function DashboardPage() {
     return `${formatted}\u00A0US$`;
   };
   
-  const handleLevelUp = (newStats: PlayerStats) => {
-    let xpForNextLevel = Math.floor(100 * Math.pow(1.5, newStats.level - 1));
-    let updatedStats = { ...newStats };
-
-    while (updatedStats.xp >= xpForNextLevel) {
-        updatedStats.xp -= xpForNextLevel;
-        updatedStats.level += 1;
-        xpForNextLevel = Math.floor(100 * Math.pow(1.5, updatedStats.level - 1));
-        toast({ title: "¡Has subido de nivel!", description: `¡Felicidades! Has alcanzado el Nivel ${updatedStats.level}` });
-    }
-    return updatedStats;
-  }
-  
   const handleSelectClass = (className: string) => {
       setPlayerStats(prev => ({...prev, class: className}));
       toast({
@@ -247,13 +245,9 @@ export default function DashboardPage() {
          }
          return c;
        }));
-       setPlayerStats(prevStats => {
-           const newXp = prevStats.xp + 10; // Gain 10 XP per encounter
-           return handleLevelUp({ ...prevStats, xp: newXp });
-       });
        toast({
-        title: '¡Bestia Cazada!',
-        description: 'Has ganado 10 XP por registrar tu encuentro.'
+        title: '¡Bestia Enfrentada!',
+        description: 'Has registrado tu encuentro en el bestiario.'
        })
     }
   };
@@ -460,8 +454,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8" id="level-dashboard">
-            <LevelDashboard stats={playerStats} />
-            {playerStats.level >= 10 && !playerStats.class && (
+            <LevelDashboard playerStats={playerStats} ratedDaysCount={ratedDaysCount} />
+            {level >= 10 && !playerStats.class && (
                 <ClassSelection onSelectClass={handleSelectClass} />
             )}
             <CurrencyConverter />
