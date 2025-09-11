@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Check, ChevronsUpDown, Smile, Frown, Meh } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Smile, Frown, Meh, Star } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -40,6 +40,7 @@ const formSchema = z.object({
   strategy: z.string().optional(),
   notes: z.string().optional(),
   emotion: z.enum(['happy', 'neutral', 'sad']).optional(),
+  discipline: z.number().min(1).max(5).optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -58,6 +59,7 @@ const strategyOptions = [
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade }) => {
   const [openPairCombobox, setOpenPairCombobox] = useState(false);
   const [openStrategyCombobox, setOpenStrategyCombobox] = useState(false);
+  const [disciplineRating, setDisciplineRating] = useState<number | undefined>(undefined);
 
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
@@ -68,7 +70,8 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      emotion: 'neutral'
+      emotion: 'neutral',
+      discipline: undefined,
     },
   });
 
@@ -98,6 +101,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       profit: finalProfit,
       status: data.status,
       strategyColor: data.strategy ? stringToColor(data.strategy) : undefined,
+      discipline: disciplineRating,
     };
     onAddTrade(newTrade);
     form.reset({
@@ -107,8 +111,10 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      emotion: 'neutral'
+      emotion: 'neutral',
+      discipline: undefined,
     });
+    setDisciplineRating(undefined);
     onOpenChange(false);
   }
 
@@ -151,7 +157,15 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                             </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
+                           <Command
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        if (form.getValues('pair')) {
+                                            setOpenPairCombobox(false);
+                                        }
+                                    }
+                                }}
+                            >
                                 <CommandInput 
                                     placeholder="Buscar o crear par..." 
                                     onValueChange={(search) => {
@@ -161,18 +175,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                     }}
                                 />
                                 <CommandList>
-                                <CommandEmpty>
-                                    <button
-                                    type="button"
-                                    className="w-full text-left p-2 text-sm"
-                                    onClick={() => {
-                                        form.setValue('pair', form.getValues('pair'))
-                                        setOpenPairCombobox(false);
-                                    }}
-                                    >
-                                    Crear "{form.getValues('pair')}"
-                                    </button>
-                                </CommandEmpty>
+                                <CommandEmpty>No se encontró el par.</CommandEmpty>
                                 <CommandGroup>
                                 {currencyPairs.map((pair) => (
                                     <CommandItem
@@ -285,7 +288,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                         !field.value && "text-muted-foreground"
                                     )}
                                     >
-                                    {field.value || "Selecciona o crea una etiqueta"}
+                                    {field.value || "Selecciona una etiqueta"}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </FormControl>
@@ -293,23 +296,10 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                 <Command>
                                     <CommandInput 
-                                        placeholder="Buscar o crear etiqueta..."
-                                        onValueChange={(search) => field.onChange(search)}
-                                        value={field.value}
+                                        placeholder="Buscar etiqueta..."
                                      />
                                     <CommandList>
-                                    <CommandEmpty>
-                                         <button
-                                            type="button"
-                                            className="w-full text-left p-2 text-sm"
-                                            onClick={() => {
-                                                form.setValue('strategy', form.getValues('strategy'))
-                                                setOpenStrategyCombobox(false);
-                                            }}
-                                            >
-                                            Crear "{form.getValues('strategy')}"
-                                        </button>
-                                    </CommandEmpty>
+                                    <CommandEmpty>No se encontró la etiqueta.</CommandEmpty>
                                     <CommandGroup>
                                     {strategyOptions.map((option) => (
                                         <CommandItem
@@ -436,6 +426,34 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
               )}
             />
             <FormField
+                control={form.control}
+                name="discipline"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>¿Respetaste tu Stop Loss y tu plan?</FormLabel>
+                        <FormControl>
+                            <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((rating) => (
+                                    <Star
+                                        key={rating}
+                                        className={cn(
+                                            "h-7 w-7 cursor-pointer text-gray-300 dark:text-gray-600",
+                                            (disciplineRating || 0) >= rating && "text-yellow-400"
+                                        )}
+                                        onClick={() => {
+                                            const newRating = rating === disciplineRating ? undefined : rating;
+                                            setDisciplineRating(newRating);
+                                            field.onChange(newRating);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </FormControl>
+                         <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
@@ -459,5 +477,3 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
-
-    

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Edit, Save, XCircle } from 'lucide-react';
 
 interface JournalEntry {
   id: string;
@@ -20,6 +20,8 @@ interface JournalEntry {
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [currentEntry, setCurrentEntry] = useState('');
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,6 +64,41 @@ export default function JournalPage() {
     toast({
       title: 'Entrada Eliminada',
       description: 'La entrada de la bitácora ha sido eliminada.',
+    });
+  };
+
+  const handleEditEntry = (entry: JournalEntry) => {
+    setEditingEntryId(entry.id);
+    setEditingContent(entry.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null);
+    setEditingContent('');
+  };
+
+  const handleUpdateEntry = () => {
+    if (editingContent.trim() === '') {
+      toast({
+        variant: 'destructive',
+        title: 'Entrada Vacía',
+        description: 'No puedes guardar una entrada vacía.',
+      });
+      return;
+    }
+
+    setEntries(prevEntries =>
+      prevEntries.map(entry =>
+        entry.id === editingEntryId
+          ? { ...entry, content: editingContent }
+          : entry
+      )
+    );
+
+    handleCancelEdit();
+    toast({
+      title: 'Entrada Actualizada',
+      description: 'Tu entrada ha sido actualizada correctamente.',
     });
   };
 
@@ -108,21 +145,50 @@ export default function JournalPage() {
           {entries.length > 0 ? (
             entries.map(entry => (
               <Card key={entry.id} className="bg-white dark:bg-neutral-900">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {format(new Date(entry.date), "eeee, dd 'de' MMMM 'de' yyyy", { locale: es })}
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-4 right-4 text-gray-500 hover:text-red-500"
-                    onClick={() => handleDeleteEntry(entry.id)}
-                  >
-                    Eliminar
-                  </Button>
+                <CardHeader className='flex-row items-start justify-between'>
+                  <div>
+                    <CardTitle className="text-lg">
+                      {format(new Date(entry.date), "eeee, dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
+                    </CardTitle>
+                  </div>
+                  <div className='flex gap-2'>
+                    {editingEntryId !== entry.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 hover:text-primary"
+                        onClick={() => handleEditEntry(entry)}
+                      >
+                        <Edit className='h-4 w-4' />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-500 hover:text-red-500"
+                      onClick={() => handleDeleteEntry(entry.id)}
+                    >
+                      <XCircle className='h-4 w-4' />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>
+                  {editingEntryId === entry.id ? (
+                    <div className="space-y-4">
+                      <Textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        rows={5}
+                        className="resize-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancelar</Button>
+                        <Button size="sm" onClick={handleUpdateEntry}><Save className='mr-2 h-4 w-4'/> Guardar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{entry.content}</p>
+                  )}
                 </CardContent>
               </Card>
             ))

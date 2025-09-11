@@ -13,6 +13,7 @@ export interface Trade {
   strategyColor?: string;
   notes?: string;
   emotion?: Emotion;
+  discipline?: number;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';

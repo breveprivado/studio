@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -21,13 +21,13 @@ import TimezoneClock from '@/components/dashboard/timezone-clock';
 import { Switch } from '@/components/ui/switch';
 import * as XLSX from 'xlsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16.6 5.82s.51.5 0 0A4.24 4.24 0 0 1 12.09 10v6.1a4.21 4.21 0 1 1-4.21-4.21c.1 0 .21.05.32.05s.21-.05.32-.05V7.82a10.61 10.61 0 1 0 10.61 10.61C18.16 12.51 16.6 5.82 16.6 5.82Z"/>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" fill="currentColor" {...props}>
+    <path d="M22.7,6.01c-0.08-0.01-0.16-0.01-0.24-0.02c-1.83-0.2-3.58-0.78-5.13-1.67c-0.12-0.07-0.25-0.15-0.38-0.23c-0.04-0.03-0.09-0.05-0.13-0.08c-0.56-0.37-1.07-0.8-1.52-1.28c-0.13-0.14-0.26-0.28-0.38-0.43C14.82,2.14,14.7,2,14.56,2c-0.1,0-0.2,0.07-0.26,0.16c-0.28,0.44-0.53,0.9-0.74,1.37c-0.02,0.05-0.05,0.1-0.07,0.15c-0.58,1.2-0.96,2.49-1.09,3.81c-0.01,0.06-0.01,0.12-0.02,0.18c-0.01,0.13-0.02,0.26-0.02,0.39v9.08c0,0.08,0,0.15,0.01,0.23c0.16,1.49,0.6,2.92,1.29,4.24c0.1,0.19,0.22,0.38,0.35,0.56c0.14,0.19,0.3,0.37,0.46,0.54c0.23,0.24,0.47,0.46,0.73,0.67c0.2,0.16,0.4,0.3,0.6,0.43c0.13,0.08,0.26,0.16,0.39,0.23c1.7,1.03,3.61,1.6,5.6,1.66c0.01,0,0.02,0,0.03,0c0.1,0,0.19-0.05,0.25-0.13c0.05-0.07,0.07-0.16,0.05-0.25c-0.07-0.43-0.15-0.85-0.24-1.28c-0.01-0.06-0.03-0.11-0.05-0.17c-0.44-1.12-0.66-2.29-0.66-3.48v-2.58c0-0.01,0-0.02,0-0.03c0.02-1.63,0.35-3.23,0.99-4.75c0.05-0.12,0.1-0.23,0.15-0.35c0.24-0.51,0.5-1,0.78-1.48c0.03-0.05,0.06-0.1,0.08-0.15c0.14-0.32,0.28-0.63,0.41-0.95c0.02-0.05,0.04-0.09,0.06-0.14c0.25-0.6,0.46-1.18,0.59-1.78c0.01-0.05,0.02-0.1,0.03-0.15c0.1-0.5,0.16-1,0.18-1.5c0-0.1-0.05-0.19-0.12-0.24c-0.05-0.03-0.1-0.05-0.15-0.05c-0.02,0-0.03,0-0.05,0l-2.73-0.01c-0.11,0-0.21,0.06-0.27,0.16c-0.1,0.17-0.21,0.34-0.32,0.51c-0.04,0.06-0.08,0.12-0.12,0.18c-0.78,1.15-1.84,2.1-3.09,2.78c-0.05,0.03-0.1,0.05-0.15,0.08c-0.5,0.28-1.02,0.52-1.56,0.71c-0.13,0.05-0.27,0.09-0.4,0.13c-1.3,0.41-2.65,0.62-4.01,0.62c-0.1,0-0.19-0.05-0.25-0.13c-0.05-0.07-0.07-0.16-0.05-0.24c0.03-0.19,0.07-0.39,0.11-0.58c0.01-0.03,0.02-0.05,0.03-0.08c0.19-0.8,0.47-1.58,0.82-2.33c0.1-0.22,0.21-0.43,0.32-0.65c0.18-0.35,0.38-0.69,0.58-1.03c0.03-0.05,0.06-0.1,0.09-0.15c0.39-0.65,0.82-1.27,1.29-1.86c0.06-0.08,0.12-0.15,0.18-0.22c0.3-0.32,0.61-0.62,0.93-0.91c0.02-0.02,0.03-0.03,0.05-0.05c0.16-0.15,0.32-0.29,0.48-0.43c0.04-0.03,0.07-0.06,0.11-0.09c0.4-0.35,0.82-0.67,1.25-0.97c0.23-0.16,0.46-0.31,0.7-0.45c0.15-0.09,0.3-0.17,0.45-0.25C18.42,7,19.26,6.57,20.13,6.2c0.08-0.03,0.15-0.07,0.23-0.1c0.5-0.19,1-0.34,1.5-0.45C22.25,5.52,22.5,5.5,22.75,5.5c0.11,0,0.2,0.06,0.26,0.16c0.04,0.08,0.05,0.16,0.01,0.24C22.9,5.95,22.8,5.98,22.7,6.01z"/>
   </svg>
 );
 
@@ -85,6 +85,55 @@ const PairAssertiveness = ({ trades }: { trades: Trade[] }) => {
     </Accordion>
   )
 }
+
+const DisciplineDashboard = ({ trades }: { trades: Trade[] }) => {
+  const { averageRating, totalRated } = useMemo(() => {
+    const ratedTrades = trades.filter(t => t.discipline != null && t.discipline > 0);
+    if (ratedTrades.length === 0) {
+      return { averageRating: 0, totalRated: 0 };
+    }
+    const totalRating = ratedTrades.reduce((acc, t) => acc + (t.discipline || 0), 0);
+    return {
+      averageRating: totalRating / ratedTrades.length,
+      totalRated: ratedTrades.length,
+    };
+  }, [trades]);
+
+  const getDisciplineMessage = (rating: number) => {
+    if (rating >= 4.5) return "¡Excelente! Mantén esa disciplina de hierro.";
+    if (rating >= 4) return "Muy bien. Sigues el plan de forma consistente.";
+    if (rating >= 3) return "Buen trabajo, pero hay espacio para mejorar la consistencia.";
+    if (rating >= 2) return "Atención. Revisa tus reglas y apégate a ellas.";
+    return "Necesitas un plan de acción. La disciplina es clave.";
+  };
+
+  if (totalRated === 0) {
+    return null;
+  }
+
+  return (
+    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+      <AccordionItem value="item-1">
+        <AccordionTrigger>
+          <div className="flex items-center">
+            <Award className="h-6 w-6 text-primary mr-3" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Dashboard de Disciplina</h2>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <CardContent className="pt-6 text-center">
+               <p className="text-sm text-muted-foreground mb-2">Tu calificación promedio de disciplina</p>
+               <div className="text-4xl font-bold text-primary mb-2">{averageRating.toFixed(1)} / 5</div>
+               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{getDisciplineMessage(averageRating)}</p>
+               <p className="text-xs text-muted-foreground mt-4">Basado en {totalRated} operaciones calificadas.</p>
+            </CardContent>
+          </Card>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+};
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -301,6 +350,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8">
+            <DisciplineDashboard trades={filteredTrades} />
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
