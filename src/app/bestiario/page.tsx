@@ -16,26 +16,7 @@ import { es } from 'date-fns/locale';
 import CompoundInterestTable from '@/components/bestiary/compound-interest-table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DollarSign } from 'lucide-react';
-
-const initialCreatures: Creature[] = [
-    { id: '1', name: 'Sombra', icon: '👻', description: 'Una descripción de Sombra...', imageUrl: null, encounters: [] },
-    { id: '2', name: 'Slimes', icon: '💧', description: 'Una descripción de Slimes...', imageUrl: null, encounters: [] },
-    { id: '3', name: 'Goblins', icon: '👺', description: 'Una descripción de Goblins...', imageUrl: null, encounters: [] },
-    { id: '4', name: 'Trolls', icon: '👹', description: 'Una descripción de Trolls...', imageUrl: null, encounters: [] },
-    { id: '5', name: 'Orcos', icon: '🧌', description: 'Una descripción de Orcos...', imageUrl: null, encounters: [] },
-    { id: '6', name: 'Minotauros', icon: '🐂', description: 'Una descripción de Minotauros...', imageUrl: null, encounters: [] },
-    { id: '7', name: 'Mujeres Lizzards', icon: '🦎', description: 'Una descripción de Mujeres Lizzards...', imageUrl: null, encounters: [] },
-    { id: '8', name: 'Hombres Lobos', icon: '🐺', description: 'Una descripción de Hombres Lobos...', imageUrl: null, encounters: [] },
-    { id: '9', name: 'Faunos', icon: '🐐', description: 'Una descripción de Faunos...', imageUrl: null, encounters: [] },
-    { id: '10', name: 'Sirenas', icon: '🧜‍♀️', description: 'Una descripción de Sirenas...', imageUrl: null, encounters: [] },
-    { id: '11', name: 'Hadas', icon: '🧚‍♀️', description: 'Una descripción de Hadas...', imageUrl: null, encounters: [] },
-    { id: '12', name: 'Fenix', icon: '🔥', description: 'Una descripción de Fenix...', imageUrl: null, encounters: [] },
-    { id: '13', name: 'Basilisco', icon: '🐍', description: 'Una descripción de Basilisco...', imageUrl: null, encounters: [] },
-    { id: '14', name: 'Kraken', icon: '🐙', description: 'Una descripción de Kraken...', imageUrl: null, encounters: [] },
-    { id: '15', name: 'Leviatan', icon: '🐳', description: 'Una descripción de Leviatan...', imageUrl: null, encounters: [] },
-    { id: '16', name: 'Cthulhu', icon: '🦑', description: 'Una descripción de Cthulhu...', imageUrl: null, encounters: [] },
-    { id: '17', name: 'Un Dragón Ancestral', icon: '🐲', description: 'Una descripción de Un Dragón Ancestral...', imageUrl: null, encounters: [] },
-];
+import { initialCreatures } from '@/lib/data';
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
     const [name, setName] = useState(creature.name);
@@ -297,5 +278,3 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
-
-    

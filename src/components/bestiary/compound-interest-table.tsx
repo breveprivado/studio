@@ -188,5 +188,3 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 }
 
 export default CompoundInterestTable;
-
-    
