@@ -240,8 +240,6 @@ export default function DashboardPage() {
 
     if (!isDataInitialized) {
         localStorage.setItem('data_initialized', 'true');
-        localStorage.setItem('trades', JSON.stringify(initialTrades));
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
 
     return () => {
@@ -260,29 +258,77 @@ export default function DashboardPage() {
     }
   }, [isDarkMode]);
   
-  useEffect(() => { 
-      localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
-  }, [compoundInterestBalance]);
+  const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
+    const newTrade = { ...trade, id: crypto.randomUUID() };
+    const newTrades = [newTrade, ...trades];
 
-  useEffect(() => {
-      localStorage.setItem('trades', JSON.stringify(trades));
-  }, [trades]);
+    let finalPlayerStats = { ...playerStats };
+    let finalCreatures = [...creatures];
+    let finalCompoundInterestBalance = compoundInterestBalance;
 
-  useEffect(() => {
-    localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
-  }, [withdrawals]);
-  
-  useEffect(() => {
-      localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions));
-  }, [balanceAdditions]);
+    if (trade.creatureId && trade.status === 'win') {
+        const creature = creatures.find(c => c.id === trade.creatureId);
+        let currentXp = finalPlayerStats.xp;
+        
+        let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
+        currentXp += xpGainedFromHunt;
+        
+        toast({
+            title: '¡Experiencia Ganada!',
+            description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
+        });
 
-  useEffect(() => {
-      localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
-  }, [creatures]);
+        let xpGainedFromAchievement = 0;
+        
+        finalCreatures = creatures.map(c => {
+            if (c.id === trade.creatureId) {
+                const oldEncounterCount = c.encounters.length;
+                const newEncounters = [...c.encounters, { id: newTrade.id, date: new Date().toISOString() }];
+                
+                achievementTiers.forEach(tier => {
+                    if (oldEncounterCount < tier && newEncounters.length >= tier) {
+                        xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
+                        toast({
+                            title: `¡Logro Desbloqueado!`,
+                            description: `Has cazado ${tier} ${c.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
+                        });
+                    }
+                });
 
-  useEffect(() => {
-    localStorage.setItem('playerStats', JSON.stringify(playerStats));
-  }, [playerStats]);
+                return { ...c, encounters: newEncounters };
+            }
+            return c;
+        });
+
+        currentXp += xpGainedFromAchievement;
+        
+        toast({
+            title: `¡Bestia ${creature?.name} Cazada!`,
+            description: 'Has registrado tu encuentro en el bestiario.'
+        });
+        
+        finalPlayerStats = { ...finalPlayerStats, xp: currentXp };
+
+        if (trade.profit > 0) {
+            finalCompoundInterestBalance += trade.profit;
+            toast({
+                title: '¡Interés Compuesto!',
+                description: `Se han añadido ${formatCurrency(trade.profit)} a tu balance de interés compuesto.`,
+            });
+        }
+    }
+
+    // Set all states and save to localStorage
+    setTrades(newTrades);
+    setCreatures(finalCreatures);
+    setPlayerStats(finalPlayerStats);
+    setCompoundInterestBalance(finalCompoundInterestBalance);
+
+    localStorage.setItem('trades', JSON.stringify(newTrades));
+    localStorage.setItem('creatures', JSON.stringify(finalCreatures));
+    localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
+    localStorage.setItem('ci_initialBalance', finalCompoundInterestBalance.toString());
+  };
 
   const filteredTrades = useMemo(() => {
     const now = new Date();
@@ -340,70 +386,12 @@ export default function DashboardPage() {
         description: "Tu leyenda como trader ha comenzado."
       })
   }
-
-  const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
-    const newTrade = { ...trade, id: crypto.randomUUID() };
-    const newTrades = [newTrade, ...trades];
-    setTrades(newTrades);
-
-    if (trade.creatureId && trade.status === 'win') {
-       const creature = creatures.find(c => c.id === trade.creatureId);
-       let currentXp = playerStats.xp;
-       
-       let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
-       currentXp += xpGainedFromHunt;
-       
-       toast({
-           title: '¡Experiencia Ganada!',
-           description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
-       });
-
-       let xpGainedFromAchievement = 0;
-       
-       const updatedCreatures = creatures.map(c => {
-         if (c.id === trade.creatureId) {
-           const oldEncounterCount = c.encounters.length;
-           const newEncounters = [...c.encounters, { id: newTrade.id, date: new Date().toISOString() }];
-           
-           achievementTiers.forEach(tier => {
-               if(oldEncounterCount < tier && newEncounters.length >= tier) {
-                   xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
-                   toast({
-                       title: `¡Logro Desbloqueado!`,
-                       description: `Has cazado ${tier} ${c.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
-                   })
-               }
-           });
-
-           return { ...c, encounters: newEncounters };
-         }
-         return c;
-       });
-
-       currentXp += xpGainedFromAchievement;
-       setCreatures(updatedCreatures);
-       
-       toast({
-        title: `¡Bestia ${creature?.name} Cazada!`,
-        description: 'Has registrado tu encuentro en el bestiario.'
-       });
-       
-       const newPlayerStats = { ...playerStats, xp: currentXp };
-       setPlayerStats(newPlayerStats);
-
-       if (trade.profit > 0) {
-           setCompoundInterestBalance(prev => prev + trade.profit);
-            toast({
-              title: '¡Interés Compuesto!',
-              description: `Se han añadido ${formatCurrency(trade.profit)} a tu balance de interés compuesto.`,
-            });
-       }
-    }
-  };
   
   const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
     const newWithdrawal = { ...withdrawal, id: crypto.randomUUID(), date: new Date().toISOString() };
-    setWithdrawals(prev => [newWithdrawal, ...prev]);
+    const newWithdrawals = [newWithdrawal, ...withdrawals];
+    setWithdrawals(newWithdrawals);
+    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
     toast({
         title: "Retiro Registrado",
         description: "Tu retiro ha sido guardado exitosamente."
@@ -412,7 +400,9 @@ export default function DashboardPage() {
 
   const handleAddBalance = (balance: Omit<BalanceAddition, 'id' | 'date'>) => {
     const newBalance = { ...balance, id: crypto.randomUUID(), date: new Date().toISOString() };
-    setBalanceAdditions(prev => [newBalance, ...prev]);
+    const newBalanceAdditions = [newBalance, ...balanceAdditions];
+    setBalanceAdditions(newBalanceAdditions);
+    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
     toast({
         title: "Saldo Añadido",
         description: "Tu nuevo saldo ha sido registrado exitosamente."
@@ -424,7 +414,8 @@ export default function DashboardPage() {
     if (!tradeToDelete) return;
 
     let xpToDeduct = 0;
-
+    let finalCreatures = [...creatures];
+    
     // Check if it was a successful hunt
     if (tradeToDelete.creatureId && tradeToDelete.status === 'win') {
         const creature = creatures.find(c => c.id === tradeToDelete.creatureId);
@@ -445,9 +436,8 @@ export default function DashboardPage() {
                     }
                 });
 
-                const updatedCreatures = creatures.map(c => c.id === creature.id ? {...c, encounters: updatedEncounters} : c);
-                setCreatures(updatedCreatures);
-
+                finalCreatures = creatures.map(c => c.id === creature.id ? {...c, encounters: updatedEncounters} : c);
+                
                 toast({
                     title: "Progreso de Caza Revertido",
                     description: `Se ha eliminado el encuentro con ${creature.name}.`
@@ -456,26 +446,37 @@ export default function DashboardPage() {
         }
     }
     
+    const newTrades = trades.filter(t => t.id !== id);
+    setTrades(newTrades);
+    localStorage.setItem('trades', JSON.stringify(newTrades));
+
     if (xpToDeduct > 0) {
         const newXp = Math.max(0, playerStats.xp - xpToDeduct);
-        setPlayerStats({...playerStats, xp: newXp});
+        const newPlayerStats = {...playerStats, xp: newXp};
+        setPlayerStats(newPlayerStats);
+        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+        
+        setCreatures(finalCreatures);
+        localStorage.setItem('creatures', JSON.stringify(finalCreatures));
+
         toast({
             title: "Experiencia Ajustada",
             description: `Se han restado ${xpToDeduct.toFixed(0)} XP.`,
             variant: "destructive"
         })
     }
-
-    const newTrades = trades.filter(t => t.id !== id);
-    setTrades(newTrades);
   };
 
   const handleDeleteWithdrawal = (id: string) => {
-    setWithdrawals(prev => prev.filter(w => w.id !== id));
+    const newWithdrawals = withdrawals.filter(w => w.id !== id);
+    setWithdrawals(newWithdrawals);
+    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
   }
 
   const handleDeleteBalance = (id: string) => {
-    setBalanceAdditions(prev => prev.filter(b => b.id !== id));
+    const newBalanceAdditions = balanceAdditions.filter(b => b.id !== id);
+    setBalanceAdditions(newBalanceAdditions);
+    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
   }
 
   const handleSelectTrade = (trade: Trade) => {
