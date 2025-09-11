@@ -181,12 +181,19 @@ export default function JournalPage() {
       setEntries(JSON.parse(storedEntries));
     }
   }, []);
+  
+  const ratedDaysCount = useMemo(() => {
+    const storedEntries = localStorage.getItem('journalEntries');
+    if (storedEntries) {
+      const parsedEntries: JournalEntry[] = JSON.parse(storedEntries);
+      return parsedEntries.filter(e => e.rating === 3 || e.rating === 5).length;
+    }
+    return 0;
+  }, [entries]);
 
   const entryForSelectedDate = useMemo(() => {
     return entries.find(entry => isSameDay(new Date(entry.date), selectedDate));
   }, [entries, selectedDate]);
-  
-  const ratedDaysCount = useMemo(() => entries.filter(e => e.rating === 3 || e.rating === 5).length, [entries]);
 
   useEffect(() => {
     if (entryForSelectedDate) {
@@ -227,7 +234,7 @@ export default function JournalPage() {
     
     // Get current player stats from storage
     const statsStr = localStorage.getItem('playerStats');
-    const storedPlayerStats: PlayerStats = statsStr ? JSON.parse(statsStr) : { xp: 0, startDate: new Date().toISOString() };
+    const storedPlayerStats: PlayerStats = statsStr ? JSON.parse(statsStr) : { xp: 0, startDate: new Date().toISOString(), class: undefined };
     if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
 
     // --- 1. Grant XP for the single day of survival ---
@@ -585,5 +592,3 @@ export default function JournalPage() {
     </div>
   );
 }
-
-    
