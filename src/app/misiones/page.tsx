@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Gamepad2, Star, Trophy, ShieldHalf } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Star, Trophy, ShieldHalf, RotateCcw } from 'lucide-react';
 import { type Creature, type JournalEntry } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
 const XP_PER_HUNTING_MISSION = 250;
@@ -33,9 +45,9 @@ const MissionsPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [journalDays, setJournalDays] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setIsClient(true);
+  const loadData = () => {
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
       setCreatures(JSON.parse(storedCreatures));
@@ -46,6 +58,11 @@ const MissionsPage = () => {
         const ratedDaysCount = entries.filter((e) => e.rating === 3 || e.rating === 5).length;
         setJournalDays(ratedDaysCount);
     }
+  }
+
+  useEffect(() => {
+    setIsClient(true);
+    loadData();
   }, []);
 
   const beastMissionProgress = useMemo(() => {
@@ -76,6 +93,38 @@ const MissionsPage = () => {
   const totalStars = beastMissionProgress + survivalMissionProgress;
   const totalXp = (beastMissionProgress * XP_PER_HUNTING_MISSION) + (survivalMissionProgress * XP_PER_SURVIVAL_MISSION);
 
+  const handleResetProgress = () => {
+    // Reset player stats (XP and class)
+    localStorage.setItem('playerStats', JSON.stringify({ xp: 0, class: undefined, startDate: new Date().toISOString() }));
+    
+    // Reset bestiary encounters
+    const storedCreatures = localStorage.getItem('bestiaryCreatures');
+    if (storedCreatures) {
+        let currentCreatures: Creature[] = JSON.parse(storedCreatures);
+        currentCreatures = currentCreatures.map(c => ({...c, encounters: []}));
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(currentCreatures));
+        setCreatures(currentCreatures);
+    }
+    
+    // Reset journal entries
+    localStorage.removeItem('journalEntries');
+    setJournalDays(0);
+
+    // Reset specific mission milestones
+    Object.values(levelMilestones).forEach(milestone => {
+        localStorage.removeItem(`xpEarned_${milestone}`);
+    });
+
+    toast({
+        title: "Progreso Reiniciado",
+        description: "Se ha restablecido todo tu progreso. ¡Una nueva aventura comienza!",
+    });
+
+    // Reload data to reflect changes
+    loadData();
+    window.dispatchEvent(new Event('storage')); // Notify other components like the main page
+  }
+
   if (!isClient) {
     return null; // Or a loading spinner
   }
@@ -91,12 +140,34 @@ const MissionsPage = () => {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tu camino para convertirte en un Trader de Leyenda.</p>
           </div>
-          <Link href="/">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="bg-red-600 hover:bg-red-700 text-white">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reiniciar Progreso
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción es irreversible. Se borrará todo tu progreso de misiones, nivel, experiencia (XP), clase y entradas de la bitácora. 
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetProgress} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar todo</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Link href="/">
+                <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+                </Button>
+            </Link>
+          </div>
         </header>
 
         <Card className="mb-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
@@ -201,3 +272,5 @@ const MissionsPage = () => {
 };
 
 export default MissionsPage;
+
+    
