@@ -99,6 +99,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 
     const newTrade: Omit<Trade, 'id'> = {
       ...data,
+      creatureId: data.creatureId === 'none' ? undefined : data.creatureId,
       date: tradeDate.toISOString(),
       profit: finalProfit,
       status: data.status,
@@ -363,14 +364,14 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Bestia Asociada (Opcional)</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una bestia del bestiario" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="">Ninguna</SelectItem>
+                            <SelectItem value="none">Ninguna</SelectItem>
                             {creatures.map((creature) => (
                                 <SelectItem key={creature.id} value={creature.id}>{creature.name}</SelectItem>
                             ))}
