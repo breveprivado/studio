@@ -10,8 +10,13 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Creature } from '@/lib/types';
 
-const CompoundInterestTable: React.FC = () => {
+interface CompoundInterestTableProps {
+    creatures: Creature[];
+}
+
+const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures }) => {
     const [initialBalance, setInitialBalance] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('ci_initialBalance') || '100';
@@ -54,6 +59,8 @@ const CompoundInterestTable: React.FC = () => {
 
         let data = [];
         let accumulatedGain = 0;
+        
+        const sortedCreatures = [...creatures].sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
         for (let i = 1; i <= 17; i++) {
             const currentCapital = balance + accumulatedGain;
@@ -62,19 +69,11 @@ const CompoundInterestTable: React.FC = () => {
 
             const percentageSoFar = (accumulatedGain / balance) * 100;
             
-            let name;
-            switch(i) {
-                case 1: name = 'Sombra'; break;
-                case 2: name = 'Slimes'; break;
-                case 3: name = 'Goblins'; break;
-                case 4: name = 'Ogro'; break;
-                case 5: name = 'Orcos'; break;
-                default: name = i;
-            }
+            const creatureName = sortedCreatures[i - 1]?.name || `Bestia #${i}`;
 
             data.push({
                 level: i,
-                name: name,
+                name: creatureName,
                 percentage: `${percentageSoFar.toFixed(2)}%`,
                 rawGain: rawGain.toFixed(2),
                 totalGain: (balance + accumulatedGain).toFixed(2),
@@ -84,7 +83,7 @@ const CompoundInterestTable: React.FC = () => {
         }
 
         return data;
-    }, [initialBalance, gainPercentage, exchangeRate]);
+    }, [initialBalance, gainPercentage, exchangeRate, creatures]);
 
     const formatNumber = (value: string) => {
         const num = parseFloat(value);
@@ -165,3 +164,5 @@ const CompoundInterestTable: React.FC = () => {
 }
 
 export default CompoundInterestTable;
+
+    

@@ -24,6 +24,7 @@ const initialCreatures: Creature[] = Array.from({ length: 17 }, (_, i) => {
     if (id === '2') name = 'Slime';
     if (id === '3') name = 'Goblins';
     if (id === '4') name = 'Orcos';
+    if (id === '5') name = 'Ogro';
     
     return {
         id,
@@ -76,7 +77,15 @@ const BestiaryPage = () => {
   useEffect(() => {
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-      setCreatures(JSON.parse(storedCreatures));
+      const parsedCreatures = JSON.parse(storedCreatures);
+      // Ensure we have 17 creatures, adding missing ones if necessary.
+      if (parsedCreatures.length < 17) {
+          const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
+          const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
+          setCreatures([...parsedCreatures, ...missingCreatures]);
+      } else {
+          setCreatures(parsedCreatures);
+      }
     } else {
       setCreatures(initialCreatures);
     }
@@ -174,7 +183,7 @@ const BestiaryPage = () => {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                    <CompoundInterestTable />
+                    <CompoundInterestTable creatures={creatures} />
                 </AccordionContent>
             </AccordionItem>
         </Accordion>
@@ -186,7 +195,7 @@ const BestiaryPage = () => {
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
-                    {creatures.map(creature => (
+                    {creatures.sort((a, b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
                         <div key={creature.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors">
                             <div className="flex-1">
                                <CreatureNameEditor creature={creature} onSave={handleNameSave} />
@@ -278,3 +287,5 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
+
+    
