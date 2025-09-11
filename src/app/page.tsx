@@ -201,6 +201,7 @@ export default function DashboardPage() {
     if (storedTrades) {
       setTrades(JSON.parse(storedTrades));
     } else if (!isDataInitialized) {
+      localStorage.setItem('trades', JSON.stringify(initialTrades));
       setTrades(initialTrades);
     }
     
@@ -214,9 +215,19 @@ export default function DashboardPage() {
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
-        setCreatures(JSON.parse(storedCreatures));
+        const parsedCreatures = JSON.parse(storedCreatures);
+        if (parsedCreatures.length < 17) {
+            const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
+            const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
+            const creaturesToSet = [...parsedCreatures, ...missingCreatures].map((c, index) => ({...c, id: (index + 1).toString()}));
+            setCreatures(creaturesToSet);
+            localStorage.setItem('bestiaryCreatures', JSON.stringify(creaturesToSet));
+        } else {
+            setCreatures(parsedCreatures);
+        }
     } else if (!isDataInitialized) {
         setCreatures(initialCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
     
     const storedJournalEntries = localStorage.getItem('journalEntries');
@@ -249,13 +260,6 @@ export default function DashboardPage() {
 
   }, []);
 
-  useEffect(() => { localStorage.setItem('trades', JSON.stringify(trades)); }, [trades]);
-  useEffect(() => { localStorage.setItem('withdrawals', JSON.stringify(withdrawals)); }, [withdrawals]);
-  useEffect(() => { localStorage.setItem('balanceAdditions', JSON.stringify(balanceAdditions)); }, [balanceAdditions]);
-  useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
-  useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
-  useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
-  
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -265,6 +269,10 @@ export default function DashboardPage() {
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
+  
+   useEffect(() => { localStorage.setItem('playerStats', JSON.stringify(playerStats)); }, [playerStats]);
+   useEffect(() => { localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures)); }, [creatures]);
+   useEffect(() => { localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString())}, [compoundInterestBalance]);
 
   const filteredTrades = useMemo(() => {
     const now = new Date();
@@ -323,13 +331,15 @@ export default function DashboardPage() {
 
   const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
     const newTrade = { ...trade, id: crypto.randomUUID() };
-    setTrades(prevTrades => [newTrade, ...prevTrades]);
+    const newTrades = [newTrade, ...trades];
+    setTrades(newTrades);
+    localStorage.setItem('trades', JSON.stringify(newTrades));
 
     if (trade.creatureId && trade.status === 'win') {
        const creature = creatures.find(c => c.id === trade.creatureId);
        let achievementUnlocked = false;
 
-       setCreatures(creatures.map(c => {
+       const updatedCreatures = creatures.map(c => {
          if (c.id === trade.creatureId) {
            const oldEncounterCount = c.encounters.length;
            const newEncounters = [...c.encounters, { id: crypto.randomUUID(), date: new Date().toISOString() }];
@@ -348,7 +358,9 @@ export default function DashboardPage() {
            return { ...c, encounters: newEncounters };
          }
          return c;
-       }));
+       });
+       setCreatures(updatedCreatures);
+       localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
        
        toast({
         title: `¡Bestia ${creature?.name} Cazada!`,
@@ -374,7 +386,9 @@ export default function DashboardPage() {
   
   const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
     const newWithdrawal = { ...withdrawal, id: crypto.randomUUID(), date: new Date().toISOString() };
-    setWithdrawals(prev => [newWithdrawal, ...prev]);
+    const newWithdrawals = [newWithdrawal, ...withdrawals];
+    setWithdrawals(newWithdrawals);
+    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
     toast({
         title: "Retiro Registrado",
         description: "Tu retiro ha sido guardado exitosamente."
@@ -383,7 +397,9 @@ export default function DashboardPage() {
 
   const handleAddBalance = (balance: Omit<BalanceAddition, 'id' | 'date'>) => {
     const newBalance = { ...balance, id: crypto.randomUUID(), date: new Date().toISOString() };
-    setBalanceAdditions(prev => [newBalance, ...prev]);
+    const newBalanceAdditions = [newBalance, ...balanceAdditions];
+    setBalanceAdditions(newBalanceAdditions);
+    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
     toast({
         title: "Saldo Añadido",
         description: "Tu nuevo saldo ha sido registrado exitosamente."
@@ -391,15 +407,21 @@ export default function DashboardPage() {
   }
 
   const handleDeleteTrade = (id: string) => {
-    setTrades(prevTrades => prevTrades.filter(t => t.id !== id));
+    const newTrades = trades.filter(t => t.id !== id);
+    setTrades(newTrades);
+    localStorage.setItem('trades', JSON.stringify(newTrades));
   };
 
   const handleDeleteWithdrawal = (id: string) => {
-    setWithdrawals(prev => prev.filter(w => w.id !== id));
+    const newWithdrawals = withdrawals.filter(w => w.id !== id);
+    setWithdrawals(newWithdrawals);
+    localStorage.setItem('withdrawals', JSON.stringify(newWithdrawals));
   }
 
   const handleDeleteBalance = (id: string) => {
-    setBalanceAdditions(prev => prev.filter(b => b.id !== id));
+    const newBalanceAdditions = balanceAdditions.filter(b => b.id !== id);
+    setBalanceAdditions(newBalanceAdditions);
+    localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
   }
 
   const handleSelectTrade = (trade: Trade) => {
@@ -496,27 +518,27 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
             <div className="flex flex-col items-end gap-4 w-full md:w-auto">
-              <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
-                  <Link href="/bestiario" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
-                  <Link href="/misiones" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
-                  <Link href="/obligatorio" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
-                  <Link href="/journal" className='w-full'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
+              <div className="w-full flex flex-wrap justify-end items-center gap-2">
+                  <Link href="/bestiario" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
+                  <Link href="/misiones" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
+                  <Link href="/obligatorio" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-orange-500 hover:bg-orange-600 text-white"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
+                  <Link href="/journal" className='flex-grow md:flex-grow-0'><Button variant="outline" className="w-full transition-all transform hover:scale-105 shadow-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
               </div>
-              <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
-                  <Button onClick={() => setIsAddBalanceOpen(true)} className="w-full bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+              <div className="w-full flex flex-wrap justify-end items-center gap-2">
+                  <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
                       <Landmark className="h-5 w-5 mr-2" />
                       Añadir Saldo
                   </Button>
-                  <Button onClick={() => setIsWithdrawalOpen(true)} className="w-full bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                  <Button onClick={() => setIsWithdrawalOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
                       <Banknote className="h-5 w-5 mr-2" />
                       Registrar Retiro
                   </Button>
-                  <Button onClick={() => setIsNewTradeOpen(true)} className="w-full bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
+                  <Button onClick={() => setIsNewTradeOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
                       <Plus className="h-5 w-5 mr-2" />
                       Nueva Operación
                   </Button>
               </div>
-               <div className='flex items-center justify-end gap-2 w-full'>
+               <div className='flex items-center justify-end gap-2 w-full flex-wrap'>
                     <div className="flex items-center space-x-2">
                       <Sun className="h-5 w-5" />
                       <Switch
