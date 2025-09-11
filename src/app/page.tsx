@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -289,11 +289,17 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
-                <div className='flex gap-2'>
-                    <Link href="/bestiario">
+                <div className='flex gap-2 flex-wrap justify-center'>
+                     <Link href="/bestiario">
                         <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-purple-500 hover:bg-purple-600 text-white">
                         <BookHeart className="h-5 w-5 mr-2" />
                         Bestiario
+                        </Button>
+                    </Link>
+                    <Link href="/bestiario/logros">
+                        <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-amber-500 hover:bg-amber-600 text-white">
+                        <Award className="h-5 w-5 mr-2" />
+                        Logros
                         </Button>
                     </Link>
                     <Link href="/obligatorio">
@@ -308,6 +314,14 @@ export default function DashboardPage() {
                         Bitácora
                         </Button>
                     </Link>
+                    <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white" disabled>
+                        <Star className="h-5 w-5 mr-2" />
+                        Nivel
+                    </Button>
+                     <Button variant="outline" className="transition-all transform hover:scale-105 shadow-lg bg-gray-500 hover:bg-gray-600 text-white" disabled>
+                        <Gamepad2 className="h-5 w-5 mr-2" />
+                        Misiones
+                    </Button>
                 </div>
                <div className="flex items-center space-x-2">
                  <Sun className="h-5 w-5" />
@@ -382,7 +396,7 @@ export default function DashboardPage() {
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
             <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Depósitos: ${formatCurrency(totalBalanceAdditions)} | Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-400" />
+            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-600" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-500" />
           </div>
 
           <div className="space-y-8">
