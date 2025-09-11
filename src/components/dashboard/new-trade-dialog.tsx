@@ -164,7 +164,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                                 placeholder="Busca o crea una divisa..."
                                 value={field.value}
                                 onValueChange={(value) => {
-                                    form.setValue('pair', value, { shouldValidate: true });
+                                    form.setValue('pair', value.toUpperCase(), { shouldValidate: true });
                                 }}
                             />
                             <CommandList>
