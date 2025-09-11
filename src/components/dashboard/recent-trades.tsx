@@ -1,12 +1,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trade, Withdrawal, Activity, BalanceAddition } from '@/lib/types';
+import { Trade, Withdrawal, Activity, BalanceAddition, Creature } from '@/lib/types';
 import TradeItem from './trade-item';
 import WithdrawalItem from './withdrawal-item';
 import BalanceItem from './balance-item';
 
 interface RecentTradesProps {
   activities: Activity[];
+  creatures: Creature[];
   onDeleteTrade: (id: string) => void;
   onDeleteWithdrawal: (id: string) => void;
   onDeleteBalance: (id: string) => void;
@@ -14,7 +15,7 @@ interface RecentTradesProps {
   formatCurrency: (value: number) => string;
 }
 
-const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
+const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDeleteTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
   return (
     <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <CardHeader className="p-0 mb-4">
@@ -30,7 +31,7 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, 
           ) : (
             activities.map(activity => {
               if (activity.type === 'trade') {
-                return <TradeItem key={`trade-${activity.id}`} trade={activity} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+                return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
               } else if (activity.type === 'withdrawal') {
                 return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} formatCurrency={formatCurrency} />
               } else {
@@ -45,3 +46,5 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ activities, onDeleteTrade, 
 };
 
 export default RecentTrades;
+
+    

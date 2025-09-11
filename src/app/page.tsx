@@ -183,43 +183,39 @@ export default function DashboardPage() {
   
   const { level } = useLeveling(playerStats.xp);
   
-  const loadPlayerStats = () => {
+  const loadAllData = () => {
+    const storedTrades = localStorage.getItem('trades');
+    setTrades(storedTrades ? JSON.parse(storedTrades) : []);
+    
+    const storedWithdrawals = localStorage.getItem('withdrawals');
+    setWithdrawals(storedWithdrawals ? JSON.parse(storedWithdrawals) : []);
+    
+    const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
+    setBalanceAdditions(storedBalanceAdditions ? JSON.parse(storedBalanceAdditions) : []);
+    
     const storedPlayerStats = localStorage.getItem('playerStats');
-    if (storedPlayerStats) {
-      setPlayerStats(JSON.parse(storedPlayerStats));
-    } else {
-      setPlayerStats({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
+    setPlayerStats(storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 });
+    
+    const storedCreatures = localStorage.getItem('bestiaryCreatures');
+    setCreatures(storedCreatures ? JSON.parse(storedCreatures) : initialCreatures);
+    
+    const storedJournalEntries = localStorage.getItem('journalEntries');
+    setJournalEntries(storedJournalEntries ? JSON.parse(storedJournalEntries) : []);
+
+    const storedCiBalance = localStorage.getItem('ci_initialBalance');
+    if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
+
+    const isDataInitialized = localStorage.getItem('data_initialized');
+    if (!isDataInitialized) {
+        setTrades(initialTrades);
+        setCreatures(initialCreatures);
+        localStorage.setItem('data_initialized', 'true');
     }
   };
 
 
   useEffect(() => {
-    const isDataInitialized = localStorage.getItem('data_initialized');
-
-    const storedTrades = localStorage.getItem('trades');
-    if (storedTrades) {
-      setTrades(JSON.parse(storedTrades));
-    } else if (!isDataInitialized) {
-      setTrades(initialTrades);
-    }
-    
-    const storedWithdrawals = localStorage.getItem('withdrawals');
-    if (storedWithdrawals) setWithdrawals(JSON.parse(storedWithdrawals));
-    
-    const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
-    if (storedBalanceAdditions) setBalanceAdditions(JSON.parse(storedBalanceAdditions));
-    
-    loadPlayerStats();
-    
-    const storedCreatures = localStorage.getItem('bestiaryCreatures');
-    if (storedCreatures) {
-        setCreatures(JSON.parse(storedCreatures));
-    } else if (!isDataInitialized) {
-        setCreatures(initialCreatures);
-    }
-    
-    const storedJournalEntries = localStorage.getItem('journalEntries');
-    if (storedJournalEntries) setJournalEntries(JSON.parse(storedJournalEntries));
+    loadAllData();
 
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -227,20 +223,15 @@ export default function DashboardPage() {
         document.documentElement.classList.add('dark');
     }
 
-    const storedCiBalance = localStorage.getItem('ci_initialBalance');
-    if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
-
      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'xp_updated' || e.key === 'playerStats') {
-            loadPlayerStats();
+        // A simple way to reload all data if any of the key items change in another tab.
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'ci_initialBalance'];
+        if (e.key && keysToWatch.includes(e.key)) {
+            loadAllData();
         }
     };
     
     window.addEventListener('storage', handleStorageChange);
-
-    if (!isDataInitialized) {
-        localStorage.setItem('data_initialized', 'true');
-    }
 
     return () => {
         window.removeEventListener('storage', handleStorageChange);
@@ -262,14 +253,18 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
 
+    let currentCreatures = [...creatures];
     let finalPlayerStats = { ...playerStats };
-    let finalCreatures = [...creatures];
-    let finalCompoundInterestBalance = compoundInterestBalance;
+    let currentCiBalance = compoundInterestBalance;
 
     if (trade.creatureId && trade.status === 'win') {
-        const creature = creatures.find(c => c.id === trade.creatureId);
+        const creatureIndex = currentCreatures.findIndex(c => c.id === trade.creatureId);
         
-        let xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
+        let xpGainedFromHunt = 0;
+        if(creatureIndex !== -1) {
+            xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
+        }
+        
         let currentXp = finalPlayerStats.xp + xpGainedFromHunt;
         
         toast({
@@ -278,14 +273,13 @@ export default function DashboardPage() {
         });
 
         let xpGainedFromAchievement = 0;
-        const creatureIndex = finalCreatures.findIndex(c => c.id === trade.creatureId);
         
         if (creatureIndex !== -1) {
-            const oldEncounterCount = finalCreatures[creatureIndex].encounters.length;
+            const oldEncounterCount = currentCreatures[creatureIndex].encounters.length;
             
             const updatedCreature = {
-                ...finalCreatures[creatureIndex],
-                encounters: [...finalCreatures[creatureIndex].encounters, { id: newTrade.id, date: new Date().toISOString() }]
+                ...currentCreatures[creatureIndex],
+                encounters: [...currentCreatures[creatureIndex].encounters, { id: newTrade.id, date: new Date().toISOString() }]
             };
 
             const newEncounterCount = updatedCreature.encounters.length;
@@ -299,11 +293,11 @@ export default function DashboardPage() {
                     });
                 }
             });
-
-            finalCreatures[creatureIndex] = updatedCreature;
+            
+            currentCreatures[creatureIndex] = updatedCreature;
 
              toast({
-                title: `¡Bestia ${creature?.name} Cazada!`,
+                title: `¡Bestia ${updatedCreature.name} Cazada!`,
                 description: 'Has registrado tu encuentro en el bestiario.'
             });
         }
@@ -312,7 +306,7 @@ export default function DashboardPage() {
         finalPlayerStats = { ...finalPlayerStats, xp: currentXp };
         
         if (trade.profit > 0) {
-            finalCompoundInterestBalance += trade.profit;
+            currentCiBalance += trade.profit;
             toast({
                 title: '¡Interés Compuesto!',
                 description: `Se han añadido ${formatCurrency(trade.profit)} a tu balance de interés compuesto.`,
@@ -320,17 +314,18 @@ export default function DashboardPage() {
         }
     }
     
+    // Set all states and save to localStorage
     setTrades(newTrades);
     localStorage.setItem('trades', JSON.stringify(newTrades));
 
-    setCreatures(finalCreatures);
-    localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
+    setCreatures(currentCreatures);
+    localStorage.setItem('bestiaryCreatures', JSON.stringify(currentCreatures));
 
     setPlayerStats(finalPlayerStats);
     localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
     
-    setCompoundInterestBalance(finalCompoundInterestBalance);
-    localStorage.setItem('ci_initialBalance', finalCompoundInterestBalance.toString());
+    setCompoundInterestBalance(currentCiBalance);
+    localStorage.setItem('ci_initialBalance', currentCiBalance.toString());
   };
 
 
@@ -419,11 +414,14 @@ export default function DashboardPage() {
 
     let xpToDeduct = 0;
     let finalCreatures = [...creatures];
+    let finalPlayerStats = { ...playerStats };
     
     // Check if it was a successful hunt
     if (tradeToDelete.creatureId && tradeToDelete.status === 'win') {
-        const creature = creatures.find(c => c.id === tradeToDelete.creatureId);
-        if (creature) {
+        const creatureIndex = finalCreatures.findIndex(c => c.id === tradeToDelete.creatureId);
+
+        if (creatureIndex !== -1) {
+            const creature = finalCreatures[creatureIndex];
             const updatedEncounters = [...creature.encounters];
             const encounterIndex = updatedEncounters.findIndex(enc => enc.id === id);
 
@@ -439,8 +437,8 @@ export default function DashboardPage() {
                         xpToDeduct += XP_PER_ACHIEVEMENT;
                     }
                 });
-
-                finalCreatures = creatures.map(c => c.id === creature.id ? {...c, encounters: updatedEncounters} : c);
+                
+                finalCreatures[creatureIndex] = {...creature, encounters: updatedEncounters};
                 
                 toast({
                     title: "Progreso de Caza Revertido",
@@ -456,9 +454,10 @@ export default function DashboardPage() {
 
     if (xpToDeduct > 0) {
         const newXp = Math.max(0, playerStats.xp - xpToDeduct);
-        const newPlayerStats = {...playerStats, xp: newXp};
-        setPlayerStats(newPlayerStats);
-        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+        finalPlayerStats = {...finalPlayerStats, xp: newXp};
+        
+        setPlayerStats(finalPlayerStats);
+        localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
         
         setCreatures(finalCreatures);
         localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
@@ -681,7 +680,7 @@ export default function DashboardPage() {
             <StrategyPerformance trades={filteredTrades} />
             <PairAssertiveness trades={filteredTrades} />
             <PerformanceCharts trades={filteredTrades} />
-            <RecentTrades activities={activities} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+            <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
           </div>
         </div>
       </div>
@@ -703,3 +702,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    

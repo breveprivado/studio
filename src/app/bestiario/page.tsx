@@ -76,8 +76,8 @@ const BestiaryPage = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
-
-  useEffect(() => {
+  
+   const loadData = () => {
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
       const parsedCreatures = JSON.parse(storedCreatures);
@@ -98,10 +98,27 @@ const BestiaryPage = () => {
     if (storedBalance) {
         setCompoundInterestBalance(parseFloat(storedBalance));
     }
+  }
+
+  useEffect(() => {
+    loadData();
+
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'bestiaryCreatures' || e.key === 'ci_initialBalance') {
+            loadData();
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
+    if (creatures.length > 0) {
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
+    }
   }, [creatures]);
 
   useEffect(() => {
@@ -285,3 +302,5 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
+
+    
