@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, PieChart, Pie, Cell, LegendProps } from 'recharts';
 import { Trade } from '@/lib/types';
 import { format } from 'date-fns';
 import { BarChart3 } from 'lucide-react';
@@ -75,17 +75,48 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }: any) => {
-    if (percent === 0) return null;
+    if (percent < 0.05) return null;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold pointer-events-none">
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     );
   };
+  
+  const CustomPieTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-md text-sm text-foreground">
+          <p className="font-bold" style={{color: payload[0].payload.color}}>{payload[0].name}</p>
+          <p>{`Operaciones: ${payload[0].value}`}</p>
+          <p>{`Porcentaje: ${(payload[0].payload.percent * 100).toFixed(1)}%`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  const CustomLegend = (props: LegendProps) => {
+    const { payload } = props;
+    const total = payload?.reduce((sum, entry) => sum + (typeof entry.payload?.value === 'number' ? entry.payload.value : 0), 0) || 0;
+    
+    return (
+      <ul className="flex flex-col gap-2">
+        {payload?.map((entry, index) => (
+          <li key={`item-${index}`} className="flex items-center gap-2 text-sm">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}></span>
+            <span className="text-muted-foreground">{entry.value}:</span>
+            <span className="font-medium text-foreground">{entry.payload?.value}</span>
+            <span className="text-muted-foreground/70">({total > 0 ? ((entry.payload?.value || 0) / total * 100).toFixed(1) : 0}%)</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
 
   return (
@@ -125,52 +156,30 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
               </CardContent>
             </Card>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <CardHeader>
-                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rendimiento por Tipo de Operación</CardTitle>
-                </CardHeader>
-                <CardContent>
-                   {operationTypeData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={250}>
-                          <PieChart>
-                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
-                                  {operationTypeData.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} />
-                                  ))}
-                              </Pie>
-                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}}/>
-                              <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', paddingTop: '20px' }} />
-                          </PieChart>
-                      </ResponsiveContainer>
-                   ) : (
-                      <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de operaciones para mostrar</p></div>
-                   )}
-                </CardContent>
-              </Card>
-              <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <CardHeader>
-                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tasa de Éxito por Operación</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Distribución de Operaciones</CardTitle>
+              </CardHeader>
+              <CardContent>
                   {operationTypeData.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                       <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
-                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} labelLine={false} label={renderCustomizedLabel}>
+                              <Pie data={operationTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={renderCustomizedLabel}>
                                   {operationTypeData.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                      <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} />
                                   ))}
                               </Pie>
-                              <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)'}} />
-                              <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', paddingTop: '20px' }}/>
+                              <Tooltip content={<CustomPieTooltip />} />
                           </PieChart>
                       </ResponsiveContainer>
-                   ) : (
-                      <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de tasa de éxito para mostrar</p></div>
-                   )}
-                </CardContent>
-              </Card>
-            </div>
+                      <CustomLegend payload={operationTypeData.map(d => ({value: d.name, color: d.color, type: 'square', payload: { value: d.value }}))} />
+                    </div>
+                  ) : (
+                      <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400"><p>No hay datos de operaciones para mostrar</p></div>
+                  )}
+              </CardContent>
+            </Card>
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -179,3 +188,5 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades }) => {
 };
 
 export default PerformanceCharts;
+
+    
