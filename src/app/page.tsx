@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, ChevronDown, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -33,6 +33,17 @@ import { Progress } from '@/components/ui/progress';
 import { useLeveling } from '@/hooks/use-leveling';
 import BestiaryDashboard from '@/components/dashboard/bestiary-dashboard';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { subDays } from 'date-fns';
 
 
@@ -85,7 +96,7 @@ const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) 
 }
 
 
-const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
+const LevelDashboard = ({ playerStats, onResetLevel }: { playerStats: PlayerStats; onResetLevel: () => void; }) => {
     if (playerStats?.xp === undefined) {
         return (
             <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -107,9 +118,30 @@ const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
     return (
         <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <CardHeader>
-                <CardTitle className="flex items-center text-lg font-semibold">
-                    <Star className="h-5 w-5 mr-2 text-yellow-400" />
-                    Nivel del Trader
+                <CardTitle className="flex items-center justify-between text-lg font-semibold">
+                   <div className='flex items-center'>
+                     <Star className="h-5 w-5 mr-2 text-yellow-400" />
+                     Nivel del Trader
+                   </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro de que quieres reiniciar?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción restablecerá tu experiencia (XP) y tu clase de trader a cero. No podrás deshacer esta acción.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={onResetLevel} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Reiniciar</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -123,7 +155,7 @@ const LevelDashboard = ({ playerStats }: { playerStats: PlayerStats; }) => {
                 </div>
                 <Progress value={progressPercentage} className="h-4" />
                 <p className="text-center text-xs text-muted-foreground mt-2">
-                    ¡Asocia bestias a tus operaciones para ganar XP y subir de nivel!
+                    ¡Asocia bestias a tus operaciones ganadoras para ganar XP y subir de nivel!
                 </p>
             </CardContent>
         </Card>
@@ -170,7 +202,6 @@ export default function DashboardPage() {
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
       const parsedCreatures = JSON.parse(storedCreatures);
-      // Ensure we have 17 creatures, adding missing ones if necessary.
       if (parsedCreatures.length < 17) {
           const existingIds = new Set(parsedCreatures.map((c: Creature) => c.id));
           const missingCreatures = initialCreatures.filter(c => !existingIds.has(c.id));
@@ -273,7 +304,7 @@ export default function DashboardPage() {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     setTrades(prevTrades => [newTrade, ...prevTrades]);
 
-    if (trade.creatureId) {
+    if (trade.creatureId && trade.status === 'win') {
        const creature = creatures.find(c => c.id === trade.creatureId);
        let achievementUnlocked = false;
 
@@ -310,7 +341,7 @@ export default function DashboardPage() {
            description: `Has ganado ${xpGained.toFixed(0)} XP.`,
        });
 
-       if (trade.status === 'win' && trade.profit > 0) {
+       if (trade.profit > 0) {
            setCompoundInterestBalance(prev => prev + trade.profit);
             toast({
               title: '¡Interés Compuesto!',
@@ -421,6 +452,14 @@ export default function DashboardPage() {
     });
   }
 
+  const handleResetLevel = () => {
+    setPlayerStats(prev => ({...prev, xp: 0, class: undefined}));
+    toast({
+      title: "Nivel Reiniciado",
+      description: "Tu experiencia y clase han sido restablecidas.",
+    });
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
@@ -528,7 +567,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8" id="level-dashboard">
-            <LevelDashboard playerStats={playerStats} />
+            <LevelDashboard playerStats={playerStats} onResetLevel={handleResetLevel} />
             {level >= 10 && !playerStats.class && (
                 <ClassSelection onSelectClass={handleSelectClass} />
             )}
@@ -560,3 +599,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
