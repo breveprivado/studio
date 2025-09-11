@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Target, BarChart3, TrendingUp, Calendar, Bot, FileDown } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, BarChart3, TrendingUp, Calendar, Bot, FileDown, Instagram, Youtube, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type TimeRange } from '@/lib/types';
 import { initialTrades } from '@/lib/data';
@@ -16,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import TradeDetailDialog from '@/components/dashboard/trade-detail-dialog';
+import TimezoneClock from '@/components/dashboard/timezone-clock';
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -145,8 +147,8 @@ export default function DashboardPage() {
           <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div className="mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <Target className="h-8 w-8 text-primary mr-3" />
-                Trading Wallet - Bitácora
+                <Image src="/logo.png" alt="Olimpo Trade Academy Logo" width={40} height={40} className="mr-3" />
+                Olimpo Trade Academy
               </h1>
               <p className="text-gray-600 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
             </div>
@@ -198,11 +200,13 @@ export default function DashboardPage() {
               )
             })}
           </div>
+          
+          <TimezoneClock />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
             <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-50" valueColorClass="text-green-600" />
             <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-50" valueColorClass="text-red-600" />
-            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={<Target className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-50" valueColorClass={netProfit >= 0 ? "text-green-600" : "text-red-600"} />
+            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-50" valueColorClass={netProfit >= 0 ? "text-green-600" : "text-red-600"} />
             <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<BarChart3 className="h-6 w-6 text-accent-foreground" />} iconBgClass="bg-yellow-50" valueColorClass={winRate > 50 ? "text-green-600" : "text-red-600"} />
           </div>
 
@@ -213,6 +217,16 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+       <footer className="bg-gray-800 text-white py-4">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="flex items-center justify-center gap-4">
+            Síguenos en todas las redes como @olimpotradeacademy
+            <a href="https://instagram.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://youtube.com/@olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 hover:text-primary" /></a>
+            <a href="https://facebook.com/olimpotradeacademy" target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 hover:text-primary" /></a>
+          </p>
+        </div>
+      </footer>
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>

@@ -17,20 +17,24 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Trade, TradeStatus } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { currencyPairs } from '@/lib/data';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La descripción es requerida'),
-  profit: z.coerce.number().refine(val => val !== 0, 'El beneficio no puede ser cero'),
+  status: z.enum(['win', 'loss'], { required_error: 'El resultado es requerido' }),
+  profit: z.coerce.number(),
   pips: z.coerce.number().optional(),
   lotSize: z.coerce.number().optional(),
   date: z.date({ required_error: 'La fecha es requerida' }),
+  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Formato de hora inválido (HH:MM)'),
   strategy: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -55,6 +59,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       pair: '',
       profit: 0,
       date: new Date(),
+      time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
     },
@@ -74,21 +79,34 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
   }
 
   function onSubmit(data: NewTradeFormValues) {
-    const status: TradeStatus = data.profit > 0 ? 'win' : 'loss';
+    const [hours, minutes] = data.time.split(':');
+    const tradeDate = new Date(data.date);
+    tradeDate.setHours(parseInt(hours), parseInt(minutes));
+
+    const finalProfit = data.status === 'win' ? Math.abs(data.profit) : -Math.abs(data.profit);
+
     const newTrade: Omit<Trade, 'id'> = {
       ...data,
-      date: data.date.toISOString(),
-      status,
+      date: tradeDate.toISOString(),
+      profit: finalProfit,
+      status: data.status,
       strategyColor: data.strategy ? stringToColor(data.strategy) : undefined,
     };
     onAddTrade(newTrade);
-    form.reset();
+    form.reset({
+      pair: '',
+      profit: 0,
+      date: new Date(),
+      time: format(new Date(), 'HH:mm'),
+      strategy: '',
+      notes: ''
+    });
     onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Añadir Nueva Operación</DialogTitle>
           <DialogDescription>
@@ -97,20 +115,86 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="pair"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: EUR/USD Venta" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+             <FormField
+                control={form.control}
+                name="pair"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Descripción</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value
+                                ? currencyPairs.find(
+                                    (pair) => pair.value === field.value
+                                )?.label
+                                : "Selecciona un par"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                            <CommandInput placeholder="Buscar par..." />
+                            <CommandEmpty>No se encontró el par.</CommandEmpty>
+                            <CommandGroup>
+                            {currencyPairs.map((pair) => (
+                                <CommandItem
+                                value={pair.label}
+                                key={pair.value}
+                                onSelect={() => {
+                                    form.setValue("pair", pair.value)
+                                }}
+                                >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    pair.value === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                />
+                                {pair.label}
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             <div className="grid grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Resultado</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona el resultado" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="win">Ganada</SelectItem>
+                            <SelectItem value="loss">Perdida</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="profit"
@@ -124,30 +208,8 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="strategy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Etiqueta</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una etiqueta" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {strategyOptions.map(option => (
-                                <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
                 name="pips"
@@ -175,6 +237,84 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 )}
                 />
             </div>
+             <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                control={form.control}
+                name="strategy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Etiqueta</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una etiqueta" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {strategyOptions.map(option => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+                 <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Fecha</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP", { locale: es })
+                                ) : (
+                                    <span>Elige una fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+             </div>
+             <FormField
+              control={form.control}
+              name="time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hora (HH:MM)</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="notes"
@@ -184,47 +324,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                   <FormControl>
                     <Textarea placeholder="Añade detalles sobre la operación..." {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Fecha de la Operación</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: es })
-                          ) : (
-                            <span>Elige una fecha</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
