@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
@@ -33,8 +33,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const PlayerLevelCard = ({ xp, onReset }: { xp: number; onReset: () => void; }) => {
-    const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
+const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => void; level: number }) => {
+    const { xpForNextLevel, progressPercentage } = useLeveling(xp);
 
     return (
         <Card>
@@ -90,6 +90,22 @@ export default function DashboardPage() {
   const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const { toast } = useToast();
+
+  const { level } = useLeveling(playerStats.xp);
+  const isInitialLoad = useRef(true);
+
+   useEffect(() => {
+    if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+        return;
+    }
+
+    if (level > 0) {
+        const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/10/18/audio_1416d860d5.mp3');
+        audio.play();
+    }
+  }, [level]);
+
   
   const loadAllData = () => {
     const storedTrades = localStorage.getItem('trades');
@@ -383,7 +399,7 @@ export default function DashboardPage() {
                       </Card>
                   </div>
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} />
+                      <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                       <Card>
                           <CardHeader>
                               <CardTitle>Clase de Trader</CardTitle>
