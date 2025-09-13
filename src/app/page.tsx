@@ -22,6 +22,7 @@ import { Sidebar, SidebarHeader, SidebarTrigger, SidebarMenu, SidebarMenuItem, S
 import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import { Progress } from '@/components/ui/progress';
+import DailyPerformance from '@/components/dashboard/daily-performance';
 
 const PlayerLevelCard = ({ xp, onClassChange }: { xp: number, onClassChange: (newClass: PlayerStats['class']) => void }) => {
     const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
@@ -159,7 +160,7 @@ export default function DashboardPage() {
     }
   }, [isDarkMode]);
   
-  const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
+ const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
     setTrades(newTrades);
@@ -320,7 +321,7 @@ export default function DashboardPage() {
       { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
       { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
-      { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
+      { href: "/gremio", label: "Gremio", icon: BookOpen, color: 'dark:bg-purple-600' },
   ];
 
   return (
@@ -395,7 +396,7 @@ export default function DashboardPage() {
                         <Button onClick={() => setIsWithdrawalOpen(true)} size="sm" variant="outline">
                             Registrar Retiro
                         </Button>
-                        <Link href="/tienda">
+                         <Link href="/tienda">
                           <Button size="sm" className="bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold hover:scale-105 transition-transform shadow-md">
                             <Trophy className="mr-2 h-4 w-4"/>
                             Tienda
@@ -452,6 +453,8 @@ export default function DashboardPage() {
                   <StrategyPerformance trades={filteredTrades} />
                   <PairAssertiveness trades={filteredTrades} />
                 </div>
+                
+                <DailyPerformance trades={filteredTrades} />
 
                 <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
