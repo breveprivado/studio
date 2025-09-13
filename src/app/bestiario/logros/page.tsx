@@ -61,10 +61,10 @@ const AchievementsPage = () => {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tu progreso cazando las bestias del mercado.</p>
           </div>
-          <Link href="/bestiario">
+          <Link href="/">
             <Button variant="outline">
-              <BookHeart className="h-4 w-4 mr-2" />
-              Volver al Bestiario
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver al Dashboard
             </Button>
           </Link>
         </header>
