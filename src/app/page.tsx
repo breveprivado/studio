@@ -178,21 +178,45 @@ export default function DashboardPage() {
     localStorage.setItem('trades', JSON.stringify(newTrades));
 
     if (trade.creatureId && trade.status === 'win') {
-        setCreatures(prevCreatures => {
-            const newCreatures = prevCreatures.map(c => {
-                if (c.id === trade.creatureId) {
-                    const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString() };
-                    return {...c, encounters: [...c.encounters, newEncounter]};
-                }
-                return c;
-            });
-            localStorage.setItem('bestiaryCreatures', JSON.stringify(newCreatures));
-            return newCreatures;
+        const achievementTiers = [1, 5, 10, 25, 50, 100];
+        const XP_PER_HUNTING_MISSION = 250;
+        
+        let creatureName = '';
+        let oldEncounterCount = 0;
+
+        const updatedCreatures = creatures.map(c => {
+            if (c.id === trade.creatureId) {
+                creatureName = c.name;
+                oldEncounterCount = c.encounters.length;
+                const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString() };
+                return {...c, encounters: [...c.encounters, newEncounter]};
+            }
+            return c;
         });
+        
+        setCreatures(updatedCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+        
         toast({
             title: "¡Bestia Cazada!",
-            description: `Has registrado un nuevo encuentro. Revisa tu bestiario y logros.`
-        })
+            description: `Has registrado un nuevo encuentro con ${creatureName}.`
+        });
+
+        const newEncounterCount = oldEncounterCount + 1;
+        const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
+
+        if (unlockedTier) {
+             setPlayerStats(prevStats => {
+                const newXp = prevStats.xp + XP_PER_HUNTING_MISSION;
+                const newPlayerStats = { ...prevStats, xp: newXp };
+                localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+                toast({
+                    title: "¡Misión de Caza Completada!",
+                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado ${XP_PER_HUNTING_MISSION} XP!`
+                });
+                return newPlayerStats;
+             });
+        }
     }
   };
 
