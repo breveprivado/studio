@@ -1,3 +1,4 @@
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -49,7 +50,7 @@ export interface Creature {
 
 export interface PlayerStats {
     startDate: string;
-    class?: 'Invocador' | 'Arquero' | 'Espadachín' | undefined;
+    class?: 'Invocador' | 'Arquero' | 'Espadachín' | 'Nigromante' | undefined;
     xp: number;
 }
 
@@ -61,3 +62,5 @@ export interface JournalEntry {
   ratingComment: string;
   imageUrl?: string | null;
 }
+
+    

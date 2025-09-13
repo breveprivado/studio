@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -86,6 +87,23 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
     );
 };
 
+const HexagonCard = ({ className, children }: { className?: string, children: React.ReactNode }) => {
+    return (
+        <div className={cn("relative flex items-center justify-center w-[160px] h-[184px]", className)}>
+            <svg className="absolute w-full h-full" viewBox="0 0 100 115.47">
+                <path
+                    d="M50 0 L100 28.87 L100 86.6 L50 115.47 L0 86.6 L0 28.87 Z"
+                    className="fill-card stroke-border"
+                    strokeWidth="2"
+                />
+            </svg>
+            <div className="relative z-10 text-center">
+                {children}
+            </div>
+        </div>
+    );
+};
+
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -125,9 +143,14 @@ export default function DashboardPage() {
     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
     setBalanceAdditions(storedBalanceAdditions ? JSON.parse(storedBalanceAdditions) : []);
     
+    let stats = storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 };
+    if (!stats.class) {
+        stats.class = 'Nigromante';
+        localStorage.setItem('playerStats', JSON.stringify(stats));
+    }
     const storedPlayerStats = localStorage.getItem('playerStats');
-    setPlayerStats(storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 });
-    
+    setPlayerStats(storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: 'Nigromante', xp: 0 });
+
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
       setCreatures(JSON.parse(storedCreatures));
@@ -404,16 +427,15 @@ export default function DashboardPage() {
                           </CardContent>
                       </Card>
                   </div>
-                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Clase de Trader</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                              <p className="text-sm text-muted-foreground">{playerStats.class || 'No seleccionada'}</p>
-                          </CardContent>
-                      </Card>
+                      <div className="flex justify-center">
+                        <HexagonCard className="animate-pulse-slow">
+                            <Skull className="h-10 w-10 text-primary mb-2" />
+                            <h3 className="text-sm font-bold text-foreground">{playerStats.class}</h3>
+                            <p className="text-xs text-muted-foreground">Clase de Trader</p>
+                        </HexagonCard>
+                      </div>
                   </div>
               </div>
               
@@ -438,3 +460,6 @@ export default function DashboardPage() {
     </>
   );
 }
+
+
+    
