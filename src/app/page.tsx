@@ -172,6 +172,19 @@ export default function DashboardPage() {
         
         let creatureName = '';
         let oldEncounterCount = 0;
+        let xpGained = 0;
+
+        // Base XP for hunting the creature
+        const getXpForCreature = (creatureId: string) => {
+          return (parseInt(creatureId, 10) / 17) * 50 + 10;
+        };
+        const baseCreatureXp = getXpForCreature(trade.creatureId);
+        xpGained += baseCreatureXp;
+        
+        toast({
+            title: "¡Bestia Cazada!",
+            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
+        });
 
         const updatedCreatures = creatures.map(c => {
             if (c.id === trade.creatureId) {
@@ -182,30 +195,29 @@ export default function DashboardPage() {
             }
             return c;
         });
-        
-        setCreatures(updatedCreatures);
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
-        
-        toast({
-            title: "¡Bestia Cazada!",
-            description: `Has registrado un nuevo encuentro con ${creatureName}.`
-        });
 
         const newEncounterCount = oldEncounterCount + 1;
         const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
 
         if (unlockedTier) {
-             setPlayerStats(prevStats => {
-                const newXp = (prevStats.xp || 0) + XP_PER_HUNTING_MISSION;
+            xpGained += XP_PER_HUNTING_MISSION;
+            toast({
+                title: "¡Misión de Caza Completada!",
+                description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
+            });
+        }
+        
+        if (xpGained > 0) {
+            setPlayerStats(prevStats => {
+                const newXp = (prevStats.xp || 0) + xpGained;
                 const newPlayerStats = { ...prevStats, xp: newXp };
                 localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-                toast({
-                    title: "¡Misión de Caza Completada!",
-                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado ${XP_PER_HUNTING_MISSION} XP!`
-                });
                 return newPlayerStats;
-             });
+            });
         }
+
+        setCreatures(updatedCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
     }
   };
 
@@ -317,7 +329,7 @@ export default function DashboardPage() {
 
   const navItems = [
       { href: "/", label: "Dashboard", icon: LayoutGrid },
-      { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: 'dark:bg-red-600' },
+      { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: 'dark:bg-red-500' },
       { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
       { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
@@ -340,7 +352,7 @@ export default function DashboardPage() {
                     <Link href={item.href}>
                         <SidebarMenuButton 
                          isActive={item.label === 'Dashboard'}
-                         className={cn(item.color, item.label !== 'Dashboard' && 'text-white')}
+                         className={cn(item.label !== 'Dashboard' && 'text-white', item.color)}
                         >
                             <item.icon/>
                             {item.label}
