@@ -123,8 +123,9 @@ export default function DashboardPage() {
   const prevLevel = usePrevious(level);
 
   useEffect(() => {
-    // Check if the level has increased and it's not the initial load
-    if (prevLevel !== undefined && level > prevLevel) {
+    if (prevLevel === undefined) return;
+    
+    if (level > prevLevel) {
         const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/10/18/audio_1416d860d5.mp3');
         audio.play().catch(error => {
             console.error("Audio playback failed:", error);
@@ -433,7 +434,7 @@ export default function DashboardPage() {
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                       <div className="flex justify-center">
                         <HexagonCard className="animate-pulse-slow">
-                            <Skull className="h-10 w-10 text-primary mb-2" />
+                            <Skull className="h-10 w-10 text-primary mb-2 mx-auto" />
                             <h3 className="text-sm font-bold text-foreground">{playerStats.class}</h3>
                             <p className="text-xs text-muted-foreground">Clase de Trader</p>
                         </HexagonCard>
@@ -463,5 +464,7 @@ export default function DashboardPage() {
   );
 }
 
+
+    
 
     
