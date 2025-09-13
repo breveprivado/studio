@@ -345,9 +345,11 @@ export default function DashboardPage() {
   }
 
   const handleResetLevel = () => {
-    const newPlayerStats = { ...playerStats, xp: 0 };
-    setPlayerStats(newPlayerStats);
-    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+    setPlayerStats(prev => {
+        const newPlayerStats = { ...prev, xp: 0 };
+        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+        return newPlayerStats;
+    });
     toast({
         title: "Nivel Reiniciado",
         description: "Tu experiencia (XP) ha sido restablecida a 0."
@@ -454,7 +456,7 @@ export default function DashboardPage() {
       </div>
       
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
-      <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} />
+      <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} creatures={creatures} />
       <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
