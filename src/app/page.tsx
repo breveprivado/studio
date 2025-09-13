@@ -339,7 +339,7 @@ export default function DashboardPage() {
                     <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={TrendingUp} iconBg="bg-red-100 dark:bg-red-900/20" valueColor="text-red-500" description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} />
                 </div>
                 
-                <PerformanceCharts trades={filteredTrades} />
+                <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
 
                 <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
