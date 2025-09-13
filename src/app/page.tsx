@@ -322,14 +322,12 @@ export default function DashboardPage() {
   }
 
   const handleResetLevel = () => {
-    setPlayerStats(prevStats => {
-        const newPlayerStats = { ...prevStats, xp: 0 };
-        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-        toast({
-            title: "Nivel Reiniciado",
-            description: "Tu experiencia (XP) ha sido restablecida a 0."
-        });
-        return newPlayerStats;
+    const newPlayerStats = { ...playerStats, xp: 0 };
+    setPlayerStats(newPlayerStats);
+    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+    toast({
+        title: "Nivel Reiniciado",
+        description: "Tu experiencia (XP) ha sido restablecida a 0."
     });
   };
 
