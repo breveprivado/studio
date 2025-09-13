@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
 const XP_PER_ACHIEVEMENT = 250;
@@ -82,104 +83,99 @@ const AchievementsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div className="mb-4 md:mb-0">
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <SidebarTrigger className="md:hidden"/>
+          <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               <Award className="h-8 w-8 mr-3 text-amber-500" />
               Salón de los Héroes
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tu progreso cazando las bestias del mercado.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Reiniciar Logros
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro de reiniciar el Salón de Héroes?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción restablecerá a cero los contadores de encuentros para todas las bestias. Perderás el progreso de los logros de caza, pero no tu XP, nivel o nombres de bestias personalizados.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleResetAchievements} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <Link href="/">
-              <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver al Dashboard
-              </Button>
-            </Link>
-          </div>
-        </header>
-
-        <Card className="mb-8">
-            <CardHeader>
-                <CardTitle>Progreso Total de Logros</CardTitle>
-                <CardDescription>Has completado {achievementsProgress.unlocked} de {achievementsProgress.total} hitos de cazador.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Progress value={achievementsProgress.percentage} className="w-full" />
-            </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {creatures.map(creature => {
-            const encounters = creature.encounters.length;
-            
-            return (
-              <Card 
-                key={creature.id}
-                className="bg-white dark:bg-neutral-900"
-              >
-                <CardHeader>
-                    <CardTitle>{creature.name}</CardTitle>
-                    <CardDescription>Has cazado a esta bestia {encounters} {encounters === 1 ? 'vez' : 'veces'}.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {achievementTiers.map(tier => {
-                    const isUnlocked = encounters >= tier;
-                    const prevTier = achievementTiers[achievementTiers.indexOf(tier) - 1] || 0;
-                    const progressInTier = Math.max(0, encounters - prevTier);
-                    const neededForTier = tier - prevTier;
-                    const tierProgress = (progressInTier / neededForTier) * 100;
-
-                    return(
-                      <div key={tier}>
-                        <div className="flex items-center gap-3">
-                           <ShieldCheck className={cn("h-6 w-6 flex-shrink-0", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-600")} />
-                           <div className="flex-1">
-                               <div className="flex justify-between items-center">
-                                <p className={cn("font-medium", isUnlocked ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
-                                  Caza {tier} {creature.name}{tier > 1 ? 's' : ''}
-                                </p>
-                                <div className={cn("flex items-center gap-1 text-xs font-semibold", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-500")}>
-                                    <Star className="h-3 w-3" />
-                                    <span>+{XP_PER_ACHIEVEMENT} XP</span>
-                                </div>
-                               </div>
-                                <Progress value={isUnlocked ? 100 : tierProgress} className="h-2 mt-1" />
-                           </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </CardContent>
-              </Card>
-            );
-          })}
         </div>
+        <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reiniciar Logros
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro de reiniciar el Salón de Héroes?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción restablecerá a cero los contadores de encuentros para todas las bestias. Perderás el progreso de los logros de caza, pero no tu XP, nivel o nombres de bestias personalizados.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetAchievements} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </header>
 
+      <Card className="mb-8">
+          <CardHeader>
+              <CardTitle>Progreso Total de Logros</CardTitle>
+              <CardDescription>Has completado {achievementsProgress.unlocked} de {achievementsProgress.total} hitos de cazador.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Progress value={achievementsProgress.percentage} className="w-full" />
+          </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {creatures.map(creature => {
+          const encounters = creature.encounters.length;
+          
+          return (
+            <Card 
+              key={creature.id}
+              className="bg-white dark:bg-neutral-900"
+            >
+              <CardHeader>
+                  <CardTitle>{creature.name}</CardTitle>
+                  <CardDescription>Has cazado a esta bestia {encounters} {encounters === 1 ? 'vez' : 'veces'}.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {achievementTiers.map(tier => {
+                  const isUnlocked = encounters >= tier;
+                  const prevTier = achievementTiers[achievementTiers.indexOf(tier) - 1] || 0;
+                  const progressInTier = Math.max(0, encounters - prevTier);
+                  const neededForTier = tier - prevTier;
+                  const tierProgress = (progressInTier / neededForTier) * 100;
+
+                  return(
+                    <div key={tier}>
+                      <div className="flex items-center gap-3">
+                          <ShieldCheck className={cn("h-6 w-6 flex-shrink-0", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-600")} />
+                          <div className="flex-1">
+                              <div className="flex justify-between items-center">
+                              <p className={cn("font-medium", isUnlocked ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+                                Caza {tier} {creature.name}{tier > 1 ? 's' : ''}
+                              </p>
+                              <div className={cn("flex items-center gap-1 text-xs font-semibold", isUnlocked ? "text-amber-500" : "text-gray-400 dark:text-gray-500")}>
+                                  <Star className="h-3 w-3" />
+                                  <span>+{XP_PER_ACHIEVEMENT} XP</span>
+                              </div>
+                              </div>
+                              <Progress value={isUnlocked ? 100 : tierProgress} className="h-2 mt-1" />
+                          </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
     </div>
   );
 };

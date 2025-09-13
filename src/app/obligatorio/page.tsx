@@ -19,6 +19,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 interface MandatoryRule {
   id: string;
@@ -236,39 +237,34 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
 
 export default function MandatoryPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div className="mb-4 md:mb-0">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <SidebarTrigger className="md:hidden"/>
+          <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-               <Shield className="h-8 w-8 mr-3 text-primary" />
+              <Shield className="h-8 w-8 mr-3 text-primary" />
               Reglas Obligatorias
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tus principios inquebrantables para el éxito.</p>
           </div>
-          <Link href="/">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </Link>
-        </header>
+        </div>
+      </header>
 
-        <main>
-          <Tabs defaultValue="trading" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="trading">Trading Obligatorio</TabsTrigger>
-              <TabsTrigger value="personaje">Personaje</TabsTrigger>
-            </TabsList>
-            <TabsContent value="trading">
-              <EditableMandatoryList category="trading" />
-            </TabsContent>
-            <TabsContent value="personaje">
-              <EditableMandatoryList category="personaje" />
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
+      <main>
+        <Tabs defaultValue="trading" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="trading">Trading Obligatorio</TabsTrigger>
+            <TabsTrigger value="personaje">Personaje</TabsTrigger>
+          </TabsList>
+          <TabsContent value="trading">
+            <EditableMandatoryList category="trading" />
+          </TabsContent>
+          <TabsContent value="personaje">
+            <EditableMandatoryList category="personaje" />
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 }

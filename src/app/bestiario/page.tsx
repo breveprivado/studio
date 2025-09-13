@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
@@ -162,153 +163,148 @@ const BestiaryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div className="mb-4 md:mb-0">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <SidebarTrigger className="md:hidden"/>
+          <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               <BookHeart className="h-8 w-8 mr-3 text-purple-500" />
               Bestiario de Trading
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza los "monstruos" que afectan tu operativa.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Reiniciar Bestiario
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro de reiniciar el Bestiario?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción restaurará la lista de bestias a su estado original. Se perderán todos los nombres personalizados, descripciones, imágenes y contadores de encuentros. Esta acción no afecta tu XP ni tu nivel.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleResetBestiary} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <Link href="/">
-              <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver al Dashboard
+        </div>
+        <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reiniciar Bestiario
               </Button>
-            </Link>
-          </div>
-        </header>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro de reiniciar el Bestiario?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción restaurará la lista de bestias a su estado original. Se perderán todos los nombres personalizados, descripciones, imágenes y contadores de encuentros. Esta acción no afecta tu XP ni tu nivel.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetBestiary} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </header>
 
-         <Accordion type="single" collapsible className="w-full mb-8">
-            <AccordionItem value="item-1">
-                <AccordionTrigger>
-                    <div className="flex items-center">
-                        <DollarSign className="h-6 w-6 text-primary mr-3" />
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Tabla de Interés Compuesto</h2>
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
+        <Accordion type="single" collapsible className="w-full mb-8">
+          <AccordionItem value="item-1">
+              <AccordionTrigger>
+                  <div className="flex items-center">
+                      <DollarSign className="h-6 w-6 text-primary mr-3" />
+                      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Tabla de Interés Compuesto</h2>
+                  </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                  <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
+              </AccordionContent>
+          </AccordionItem>
+      </Accordion>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Listado de Bestias</CardTitle>
-                <CardDescription>Un resumen de todos los monstruos que has enfrentado y su recompensa.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {creatures.sort((a, b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
-                        <div 
-                            key={creature.id} 
-                            className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
-                            onClick={() => handleOpenSheet(creature)}
-                        >
-                            <div className="flex-1">
-                               <CreatureNameEditor creature={creature} onSave={handleNameSave} />
-                               <div className="flex items-center gap-4">
-                                <p className="text-sm text-muted-foreground mt-1">Encuentros: {creature.encounters.length}</p>
-                                <div className="flex items-center gap-1 text-sm text-amber-500 mt-1">
-                                    <Star className="h-4 w-4" />
-                                    <span>{getXpForCreature(creature.id).toFixed(0)} XP</span>
-                                </div>
-                               </div>
-                            </div>
-                            <div className="font-bold text-xl w-10 text-center">
-                                {creature.encounters.length}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-      </div>
-
-       <Sheet open={isSheetOpen} onOpenChange={handleCloseSheet}>
-            <SheetContent className="sm:max-w-lg overflow-y-auto">
-                {selectedCreature && (
-                    <>
-                    <SheetHeader>
-                        <SheetTitle className="flex items-center gap-3">
-                            {selectedCreature.name}
-                        </SheetTitle>
-                        <SheetDescription>Edita los detalles de esta criatura y revisa su historial.</SheetDescription>
-                    </SheetHeader>
-                    <div className="space-y-4 py-4">
-                         <div>
-                            <label className="text-sm font-medium">Descripción</label>
-                            <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={5} className="mt-1" placeholder="Añade una descripción detallada..." />
-                        </div>
+      <Card>
+          <CardHeader>
+              <CardTitle>Listado de Bestias</CardTitle>
+              <CardDescription>Un resumen de todos los monstruos que has enfrentado y su recompensa.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="space-y-4">
+                  {creatures.sort((a, b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
+                      <div 
+                          key={creature.id} 
+                          className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+                          onClick={() => handleOpenSheet(creature)}
+                      >
+                          <div className="flex-1">
+                              <CreatureNameEditor creature={creature} onSave={handleNameSave} />
+                              <div className="flex items-center gap-4">
+                              <p className="text-sm text-muted-foreground mt-1">Encuentros: {creature.encounters.length}</p>
+                              <div className="flex items-center gap-1 text-sm text-amber-500 mt-1">
+                                  <Star className="h-4 w-4" />
+                                  <span>{getXpForCreature(creature.id).toFixed(0)} XP</span>
+                              </div>
+                              </div>
+                          </div>
+                          <div className="font-bold text-xl w-10 text-center">
+                              {creature.encounters.length}
+                          </div>
+                      </div>
+                  ))}
+              </div>
+          </CardContent>
+      </Card>
+      
+      <Sheet open={isSheetOpen} onOpenChange={handleCloseSheet}>
+          <SheetContent className="sm:max-w-lg overflow-y-auto">
+              {selectedCreature && (
+                  <>
+                  <SheetHeader>
+                      <SheetTitle className="flex items-center gap-3">
+                          {selectedCreature.name}
+                      </SheetTitle>
+                      <SheetDescription>Edita los detalles de esta criatura y revisa su historial.</SheetDescription>
+                  </SheetHeader>
+                  <div className="space-y-4 py-4">
                         <div>
-                            <label className="text-sm font-medium">Imagen</label>
-                            {editImageUrl ? (
-                                <div className="relative mt-2">
-                                    <Image src={editImageUrl} alt={`Imagen de ${selectedCreature.name}`} width={400} height={200} className="rounded-lg object-cover w-full" />
-                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditImageUrl(null)}><X className="h-4 w-4"/></Button>
-                                </div>
-                            ) : (
-                                <Button variant="outline" className="w-full mt-2" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    Subir Imagen
-                                </Button>
-                            )}
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-medium mb-2">Historial de Encuentros ({selectedCreature.encounters.length})</h3>
-                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                {selectedCreature.encounters.length > 0 ? (
-                                    selectedCreature.encounters.map(encounter => (
-                                        <div key={encounter.id} className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-neutral-800/50 rounded-md">
-                                            {format(new Date(encounter.date), "dd MMM yyyy, HH:mm", { locale: es })}
-                                        </div>
-                                    )).reverse()
-                                ) : (
-                                    <p className="text-xs text-muted-foreground text-center py-4">No hay encuentros registrados.</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <SheetFooter>
-                        <Button variant="outline" onClick={handleCloseSheet}>Cancelar</Button>
-                        <Button onClick={handleSaveChanges}>Guardar Cambios</Button>
-                    </SheetFooter>
-                    </>
-                )}
-            </SheetContent>
-       </Sheet>
+                          <label className="text-sm font-medium">Descripción</label>
+                          <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={5} className="mt-1" placeholder="Añade una descripción detallada..." />
+                      </div>
+                      <div>
+                          <label className="text-sm font-medium">Imagen</label>
+                          {editImageUrl ? (
+                              <div className="relative mt-2">
+                                  <Image src={editImageUrl} alt={`Imagen de ${selectedCreature.name}`} width={400} height={200} className="rounded-lg object-cover w-full" />
+                                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditImageUrl(null)}><X className="h-4 w-4"/></Button>
+                              </div>
+                          ) : (
+                              <Button variant="outline" className="w-full mt-2" onClick={() => fileInputRef.current?.click()}>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Subir Imagen
+                              </Button>
+                          )}
+                      </div>
+                      <div>
+                          <h3 className="text-sm font-medium mb-2">Historial de Encuentros ({selectedCreature.encounters.length})</h3>
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                              {selectedCreature.encounters.length > 0 ? (
+                                  selectedCreature.encounters.map(encounter => (
+                                      <div key={encounter.id} className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-neutral-800/50 rounded-md">
+                                          {format(new Date(encounter.date), "dd MMM yyyy, HH:mm", { locale: es })}
+                                      </div>
+                                  )).reverse()
+                              ) : (
+                                  <p className="text-xs text-muted-foreground text-center py-4">No hay encuentros registrados.</p>
+                              )}
+                          </div>
+                      </div>
+                  </div>
+                  <SheetFooter>
+                      <Button variant="outline" onClick={handleCloseSheet}>Cancelar</Button>
+                      <Button onClick={handleSaveChanges}>Guardar Cambios</Button>
+                  </SheetFooter>
+                  </>
+              )}
+          </SheetContent>
+      </Sheet>
 
-       <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleImageUpload} 
-        className="hidden" 
-        accept="image/*"
-      />
+      <input 
+      type="file" 
+      ref={fileInputRef} 
+      onChange={handleImageUpload} 
+      className="hidden" 
+      accept="image/*"
+    />
     </div>
   );
 };

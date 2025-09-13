@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { JournalEntry, PlayerStats } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 const levelMilestones: { [key: number]: number } = {
     1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
@@ -397,190 +398,185 @@ export default function JournalPage() {
   const ratedDays = useMemo(() => entries.filter(e => e.rating === 3 || e.rating === 5).map(e => new Date(e.date)), [entries]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div className="mb-4 md:mb-0">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <SidebarTrigger className="md:hidden"/>
+          <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
               <Shield className="h-8 w-8 mr-3 text-primary" />
               Bitácora de Trading
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Un espacio para tus reflexiones y análisis diarios.</p>
           </div>
-           <Link href="/">
-             <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver al Dashboard
-             </Button>
-            </Link>
-        </header>
+        </div>
+      </header>
 
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-1 space-y-8">
-                 <Card className="bg-white dark:bg-neutral-900">
-                    <CardHeader>
-                        <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Calendario</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                         <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => date && setSelectedDate(date)}
-                            className="p-0"
-                            locale={es}
-                            modifiers={{ rated: ratedDays }}
-                            modifiersStyles={{ rated: {
-                                // @ts-ignore
-                                '--day-border-color': 'hsl(var(--primary))',
-                                'borderWidth': '2px',
-                                'borderColor': 'var(--day-border-color)',
-                                'borderRadius': '50%',
-                             } }}
-                        />
-                    </CardContent>
-                </Card>
-                <div className="space-y-4">
-                    <RatingRules />
-                    <RatingsDashboard entries={entries} viewDate={selectedDate} />
-                </div>
-            </div>
-            <div className="md:col-span-2 space-y-6">
+      <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-1 space-y-8">
                 <Card className="bg-white dark:bg-neutral-900">
                   <CardHeader>
-                      <CardTitle>Entrada para {format(selectedDate, "PPP", { locale: es })}</CardTitle>
-                      {!entryForSelectedDate ? (
-                          <CardDescription>Añade una nueva entrada para este día.</CardDescription>
-                      ) : (
-                          <CardDescription>Aquí puedes ver o editar tu entrada.</CardDescription>
-                      )}
+                      <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Calendario</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                      <div className="grid gap-4">
-                          {editingEntryId && entryForSelectedDate && editingEntryId === entryForSelectedDate.id ? (
-                            // Editing view
-                            <>
-                              <Textarea
-                                  value={editingContent}
-                                  onChange={(e) => setEditingContent(e.target.value)}
-                                  rows={4}
-                                  className="resize-none"
-                              />
-                               {editingImage && (
-                                <div className="relative">
-                                    <Image src={editingImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
-                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditingImage(null)}><XCircle className="h-4 w-4"/></Button>
-                                </div>
-                               )}
-                              <div className="space-y-2">
-                                  <label className="text-sm font-medium">Calificación del día</label>
-                                  <div className="flex items-center gap-1">
-                                      {[1, 2, 3, 4, 5].map((rating) => (
-                                          <Star
-                                              key={rating}
-                                              className={cn(
-                                                  "h-6 w-6 cursor-pointer",
-                                                  editingRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
-                                              )}
-                                              onClick={() => setEditingRating(rating)}
-                                          />
-                                      ))}
-                                  </div>
-                              </div>
-                              <Input
-                                  placeholder="Comentario sobre tu calificación..."
-                                  value={editingRatingComment}
-                                  onChange={(e) => setEditingRatingComment(e.target.value)}
-                              />
-                              <div className="flex gap-2 flex-wrap">
-                                <Button onClick={handleUpdateEntry}>Guardar Cambios</Button>
-                                <Button variant="ghost" onClick={handleCancelEdit}>Cancelar</Button>
-                                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    {editingImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
-                                </Button>
-                              </div>
-                            </>
-                          ) : entryForSelectedDate ? (
-                            // Display view
-                            <div>
-                               {entryForSelectedDate.imageUrl && (
-                                 <Image src={entryForSelectedDate.imageUrl} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full mb-4" />
-                               )}
-                               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">{entryForSelectedDate.content}</p>
-                                {entryForSelectedDate.rating > 0 && (
-                                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                    <div className="flex items-center gap-2">
-                                      <p className="font-semibold">Calificación:</p>
-                                      <div className="flex">
-                                        {[1,2,3,4,5].map(star => (
-                                          <Star key={star} className={cn("h-5 w-5", entryForSelectedDate.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
-                                        ))}
-                                      </div>
-                                    </div>
-                                    {entryForSelectedDate.ratingComment && (
-                                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">"{entryForSelectedDate.ratingComment}"</p>
-                                    )}
-                                  </div>
-                                )}
-                               <div className="flex gap-2 mt-4">
-                                <Button onClick={() => handleEditEntry(entryForSelectedDate)}>
-                                  <Edit className="h-4 w-4 mr-2" /> Editar
-                                </Button>
-                                <Button variant="destructive" onClick={() => handleDeleteEntry(entryForSelectedDate.id)}>
-                                  <XCircle className="h-4 w-4 mr-2" /> Eliminar
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                             // New entry view
-                            <>
-                              <Textarea
-                                  placeholder="Escribe aquí tu entrada del día..."
-                                  value={currentEntry}
-                                  onChange={(e) => setCurrentEntry(e.target.value)}
-                                  rows={4}
-                                  className="resize-none"
-                              />
-                               {currentImage && (
-                                <div className="relative">
-                                    <Image src={currentImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
-                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCurrentImage(null)}><XCircle className="h-4 w-4"/></Button>
-                                </div>
-                               )}
-                              <div className="space-y-2">
-                                  <label className="text-sm font-medium">Calificación del día</label>
-                                  <div className="flex items-center gap-1">
-                                      {[1, 2, 3, 4, 5].map((rating) => (
-                                          <Star
-                                              key={rating}
-                                              className={cn(
-                                                  "h-6 w-6 cursor-pointer",
-                                                  currentRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
-                                              )}
-                                              onClick={() => setCurrentRating(rating)}
-                                          />
-                                      ))}
-                                  </div>
-                              </div>
-                              <Input
-                                  placeholder="Comentario sobre tu calificación..."
-                                  value={currentRatingComment}
-                                  onChange={(e) => setCurrentRatingComment(e.target.value)}
-                              />
-                              <div className="flex gap-2 flex-wrap">
-                                <Button onClick={handleSaveEntry} className="md:w-auto self-end">Guardar Entrada</Button>
-                                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    {currentImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                      </div>
+                  <CardContent className="p-2">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => date && setSelectedDate(date)}
+                          className="p-0"
+                          locale={es}
+                          modifiers={{ rated: ratedDays }}
+                          modifiersStyles={{ rated: {
+                              // @ts-ignore
+                              '--day-border-color': 'hsl(var(--primary))',
+                              'borderWidth': '2px',
+                              'borderColor': 'var(--day-border-color)',
+                              'borderRadius': '50%',
+                            } }}
+                      />
                   </CardContent>
-                </Card>
-            </div>
-        </div>
+              </Card>
+              <div className="space-y-4">
+                  <RatingRules />
+                  <RatingsDashboard entries={entries} viewDate={selectedDate} />
+              </div>
+          </div>
+          <div className="md:col-span-2 space-y-6">
+              <Card className="bg-white dark:bg-neutral-900">
+                <CardHeader>
+                    <CardTitle>Entrada para {format(selectedDate, "PPP", { locale: es })}</CardTitle>
+                    {!entryForSelectedDate ? (
+                        <CardDescription>Añade una nueva entrada para este día.</CardDescription>
+                    ) : (
+                        <CardDescription>Aquí puedes ver o editar tu entrada.</CardDescription>
+                    )}
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-4">
+                        {editingEntryId && entryForSelectedDate && editingEntryId === entryForSelectedDate.id ? (
+                          // Editing view
+                          <>
+                            <Textarea
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                rows={4}
+                                className="resize-none"
+                            />
+                              {editingImage && (
+                              <div className="relative">
+                                  <Image src={editingImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditingImage(null)}><XCircle className="h-4 w-4"/></Button>
+                              </div>
+                              )}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Calificación del día</label>
+                                <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map((rating) => (
+                                        <Star
+                                            key={rating}
+                                            className={cn(
+                                                "h-6 w-6 cursor-pointer",
+                                                editingRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                                            )}
+                                            onClick={() => setEditingRating(rating)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <Input
+                                placeholder="Comentario sobre tu calificación..."
+                                value={editingRatingComment}
+                                onChange={(e) => setEditingRatingComment(e.target.value)}
+                            />
+                            <div className="flex gap-2 flex-wrap">
+                              <Button onClick={handleUpdateEntry}>Guardar Cambios</Button>
+                              <Button variant="ghost" onClick={handleCancelEdit}>Cancelar</Button>
+                              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  {editingImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                              </Button>
+                            </div>
+                          </>
+                        ) : entryForSelectedDate ? (
+                          // Display view
+                          <div>
+                              {entryForSelectedDate.imageUrl && (
+                                <Image src={entryForSelectedDate.imageUrl} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full mb-4" />
+                              )}
+                              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">{entryForSelectedDate.content}</p>
+                              {entryForSelectedDate.rating > 0 && (
+                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold">Calificación:</p>
+                                    <div className="flex">
+                                      {[1,2,3,4,5].map(star => (
+                                        <Star key={star} className={cn("h-5 w-5", entryForSelectedDate.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {entryForSelectedDate.ratingComment && (
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">"{entryForSelectedDate.ratingComment}"</p>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex gap-2 mt-4">
+                              <Button onClick={() => handleEditEntry(entryForSelectedDate)}>
+                                <Edit className="h-4 w-4 mr-2" /> Editar
+                              </Button>
+                              <Button variant="destructive" onClick={() => handleDeleteEntry(entryForSelectedDate.id)}>
+                                <XCircle className="h-4 w-4 mr-2" /> Eliminar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                            // New entry view
+                          <>
+                            <Textarea
+                                placeholder="Escribe aquí tu entrada del día..."
+                                value={currentEntry}
+                                onChange={(e) => setCurrentEntry(e.target.value)}
+                                rows={4}
+                                className="resize-none"
+                            />
+                              {currentImage && (
+                              <div className="relative">
+                                  <Image src={currentImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCurrentImage(null)}><XCircle className="h-4 w-4"/></Button>
+                              </div>
+                              )}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Calificación del día</label>
+                                <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map((rating) => (
+                                        <Star
+                                            key={rating}
+                                            className={cn(
+                                                "h-6 w-6 cursor-pointer",
+                                                currentRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                                            )}
+                                            onClick={() => setCurrentRating(rating)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <Input
+                                placeholder="Comentario sobre tu calificación..."
+                                value={currentRatingComment}
+                                onChange={(e) => setCurrentRatingComment(e.target.value)}
+                            />
+                            <div className="flex gap-2 flex-wrap">
+                              <Button onClick={handleSaveEntry} className="md:w-auto self-end">Guardar Entrada</Button>
+                                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  {currentImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                    </div>
+                </CardContent>
+              </Card>
+          </div>
       </div>
       <input 
         type="file" 
