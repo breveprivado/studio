@@ -378,6 +378,7 @@ export default function DashboardPage() {
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
       { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
       { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
+      { href: "/bestiario/logros", label: "Panel de Logros", icon: Award, color: 'dark:bg-amber-500' },
   ];
 
   return (
@@ -386,7 +387,7 @@ export default function DashboardPage() {
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8"><Shield className="h-6 w-6 text-primary" /></Button>
-            <span className="text-lg font-semibold text-foreground">Olimpo Wallet</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">Olimpo Wallet</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -395,8 +396,8 @@ export default function DashboardPage() {
                 <SidebarMenuItem key={item.label}>
                     <Link href={item.href}>
                         <SidebarMenuButton 
-                         isActive={item.label === 'Dashboard'}
-                         className={cn(item.label !== 'Dashboard' && 'text-white', item.color)}
+                         isActive={item.href === '/'}
+                         className={cn('dark:text-white', item.color)}
                         >
                             <item.icon/>
                             {item.label}
@@ -525,3 +526,5 @@ export default function DashboardPage() {
     </SidebarProvider>
   );
 }
+
+    

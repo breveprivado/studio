@@ -193,12 +193,6 @@ const BestiaryPage = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Link href="/bestiario/logros">
-                <Button variant="outline" className="bg-amber-500 hover:bg-amber-600 text-white">
-                    <Award className="h-4 w-4 mr-2" />
-                    Ver Panel de Logros
-                </Button>
-            </Link>
             <Link href="/">
               <Button variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -320,3 +314,5 @@ const BestiaryPage = () => {
 };
 
 export default BestiaryPage;
+
+    
