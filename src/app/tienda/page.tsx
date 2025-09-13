@@ -135,7 +135,7 @@ const TiendaPage = () => {
               <Card key={item.id} className="flex flex-col">
                   <CardHeader>
                       <div className="aspect-[4/3] relative mb-4">
-                          <Image src={item.imageUrl} alt={item.name} layout="fill" className="rounded-t-lg object-cover" data-ai-hint={item.imageHint}/>
+                          <Image src={item.imageUrl} alt={item.name} fill={true} className="rounded-t-lg object-cover" data-ai-hint={item.imageHint}/>
                       </div>
                       <CardTitle>{item.name}</CardTitle>
                   </CardHeader>
@@ -144,7 +144,7 @@ const TiendaPage = () => {
                   </CardContent>
                     <CardContent>
                       <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-1 font-bold text-green-600 text-lg">
+                          <div className="flex items-center gap-1 font-bold text-green-600 dark:text-green-400 text-lg">
                               <DollarSign className="h-5 w-5" />
                               <span>{item.price}</span>
                           </div>
