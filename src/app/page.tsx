@@ -24,7 +24,7 @@ import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import { Progress } from '@/components/ui/progress';
 import DailyPerformance from '@/components/dashboard/daily-performance';
 
-const PlayerLevelCard = ({ xp, onClassChange }: { xp: number, onClassChange: (newClass: PlayerStats['class']) => void }) => {
+const PlayerLevelCard = ({ xp }: { xp: number }) => {
     const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
 
     return (
@@ -136,7 +136,7 @@ export default function DashboardPage() {
     }
 
      const handleStorageChange = (e: StorageEvent) => {
-        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures'];
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated'];
         if (e.key && keysToWatch.includes(e.key)) {
             loadAllData();
         }
@@ -321,7 +321,7 @@ export default function DashboardPage() {
       { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
       { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
-      { href: "/gremio", label: "Gremio", icon: BookOpen, color: 'dark:bg-purple-600' },
+      { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
   ];
 
   return (
@@ -442,7 +442,7 @@ export default function DashboardPage() {
                         </Card>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <PlayerLevelCard xp={playerStats.xp} onClassChange={handleClassChange}/>
+                       <PlayerLevelCard xp={playerStats.xp} />
                        <ClassSelectionCard currentClass={playerStats.class} onClassChange={handleClassChange} />
                     </div>
                 </div>

@@ -63,6 +63,16 @@ const MissionsPage = () => {
   useEffect(() => {
     setIsClient(true);
     loadData();
+     const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'bestiaryCreatures' || e.key === 'journalEntries') {
+            loadData();
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const beastMissionProgress = useMemo(() => {
@@ -103,26 +113,28 @@ const MissionsPage = () => {
         let currentCreatures: Creature[] = JSON.parse(storedCreatures);
         currentCreatures = currentCreatures.map(c => ({...c, encounters: []}));
         localStorage.setItem('bestiaryCreatures', JSON.stringify(currentCreatures));
-        setCreatures(currentCreatures);
     }
     
     // Reset journal entries
     localStorage.removeItem('journalEntries');
-    setJournalDays(0);
 
     // Reset specific mission milestones
     Object.values(levelMilestones).forEach(milestone => {
         localStorage.removeItem(`xpEarned_${milestone}`);
     });
+    
+    // Trigger storage event for other components to update
+    window.dispatchEvent(new StorageEvent('storage', { key: 'playerStats' }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bestiaryCreatures' }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'journalEntries' }));
 
     toast({
         title: "Progreso Reiniciado",
         description: "Se ha restablecido todo tu progreso. ¡Una nueva aventura comienza!",
     });
 
-    // Reload data to reflect changes
+    // Reload data on this page
     loadData();
-    window.dispatchEvent(new Event('storage')); // Notify other components like the main page
   }
 
   if (!isClient) {
@@ -152,7 +164,7 @@ const MissionsPage = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción es irreversible. Se borrará todo tu progreso de misiones, nivel, experiencia (XP), clase y entradas de la bitácora. 
+                    Esta acción es irreversible. Se borrará todo tu progreso de misiones, nivel, experiencia (XP), clase y entradas de la bitácora. Los nombres y descripciones de las bestias se mantendrán.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
