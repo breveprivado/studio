@@ -13,12 +13,12 @@ import { Button } from '@/components/ui/button';
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutGrid },
-    { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: 'dark:bg-red-500' },
-    { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
     { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
     { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
-    { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
+    { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: 'dark:bg-red-500' },
+    { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
     { href: "/bestiario/logros", label: "Panel de Logros", icon: Award, color: 'dark:bg-amber-500' },
+    { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
 ];
 
 export default function RootLayout({
