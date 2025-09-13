@@ -143,13 +143,13 @@ export default function DashboardPage() {
     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
     setBalanceAdditions(storedBalanceAdditions ? JSON.parse(storedBalanceAdditions) : []);
     
+    const storedPlayerStats = localStorage.getItem('playerStats');
     let stats = storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 };
     if (!stats.class) {
         stats.class = 'Nigromante';
         localStorage.setItem('playerStats', JSON.stringify(stats));
     }
-    const storedPlayerStats = localStorage.getItem('playerStats');
-    setPlayerStats(storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: 'Nigromante', xp: 0 });
+    setPlayerStats(stats);
 
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
