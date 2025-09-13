@@ -30,7 +30,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
-const XP_PER_HUNTING_MISSION = 250;
+const XP_PER_HUNTING_MISSION = 500;
 const XP_PER_SURVIVAL_MISSION = 500;
 const totalBeastMissionStars = 17 * achievementTiers.length;
 const totalSurvivalMissionStars = 15;

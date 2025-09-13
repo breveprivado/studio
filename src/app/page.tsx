@@ -200,7 +200,7 @@ export default function DashboardPage() {
 
     if (trade.creatureId && trade.status === 'win') {
         const achievementTiers = [1, 5, 10, 25, 50, 100];
-        const XP_PER_HUNTING_MISSION = 250;
+        const XP_PER_HUNTING_MISSION = 500;
         
         let creatureName = '';
         let oldEncounterCount = 0;
@@ -209,8 +209,11 @@ export default function DashboardPage() {
         const getXpForCreature = (creatureId: string) => {
           return (parseInt(creatureId, 10) / 17) * 50 + 10;
         };
+        
+        const currentCreatures = creatures;
+        let finalCreatures = currentCreatures;
 
-        const updatedCreatures = creatures.map(c => {
+        const updatedCreatures = currentCreatures.map(c => {
             if (c.id === trade.creatureId) {
                 creatureName = c.name;
                 oldEncounterCount = c.encounters.length;
@@ -219,6 +222,8 @@ export default function DashboardPage() {
             }
             return c;
         });
+        
+        finalCreatures = updatedCreatures;
 
         const baseCreatureXp = getXpForCreature(trade.creatureId);
         xpGained += baseCreatureXp;
@@ -239,8 +244,8 @@ export default function DashboardPage() {
             });
         }
         
-        setCreatures(updatedCreatures); // Update creatures state
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+        setCreatures(finalCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
         
         if (xpGained > 0) {
             setPlayerStats(prevStats => {
@@ -397,7 +402,7 @@ export default function DashboardPage() {
                     <Link href={item.href}>
                         <SidebarMenuButton 
                          isActive={item.href === '/'}
-                         className={cn('dark:text-white', item.color)}
+                         className={cn(item.color)}
                         >
                             <item.icon/>
                             {item.label}
@@ -526,5 +531,3 @@ export default function DashboardPage() {
     </SidebarProvider>
   );
 }
-
-    
