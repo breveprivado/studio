@@ -47,7 +47,19 @@ const defaultMandatoryItems: { [key: string]: MandatoryRule[] } = {
 
 
 const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje' }) => {
-  const [items, setItems] = useState<MandatoryRule[]>([]);
+  const [items, setItems] = useState<MandatoryRule[]>(() => {
+    if (typeof window === 'undefined') {
+      return defaultMandatoryItems[category];
+    }
+    try {
+      const storedItems = localStorage.getItem(`mandatoryItems_${category}`);
+      return storedItems ? JSON.parse(storedItems) : defaultMandatoryItems[category];
+    } catch (error) {
+      console.error("Failed to parse mandatory items from localStorage", error);
+      return defaultMandatoryItems[category];
+    }
+  });
+
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MandatoryRule | null>(null);
   const [editText, setEditText] = useState("");
@@ -56,18 +68,12 @@ const EditableMandatoryList = ({ category }: { category: 'trading' | 'personaje'
   
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const storedItems = localStorage.getItem(`mandatoryItems_${category}`);
-    if (storedItems) {
-      setItems(JSON.parse(storedItems));
-    } else {
-      setItems(defaultMandatoryItems[category]);
-    }
-  }, [category]);
   
   useEffect(() => {
-    localStorage.setItem(`mandatoryItems_${category}`, JSON.stringify(items));
+    // We prevent overwriting the stored data on initial load if items is empty.
+    if (items.length > 0) {
+        localStorage.setItem(`mandatoryItems_${category}`, JSON.stringify(items));
+    }
   }, [items, category]);
 
   const openEditDialog = (item: MandatoryRule) => {
@@ -268,5 +274,3 @@ export default function MandatoryPage() {
     </div>
   );
 }
-
-    
