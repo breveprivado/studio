@@ -23,18 +23,6 @@ import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import { Progress } from '@/components/ui/progress';
 
-const StatCard = ({ title, value, description, valueColor }: { title: string; value: string; description?: string; valueColor?: string }) => (
-    <Card className="bg-card">
-        <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className={cn("text-2xl font-bold", valueColor)}>{value}</div>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </CardContent>
-    </Card>
-);
-
 const PlayerLevelCard = ({ xp, onClassChange }: { xp: number, onClassChange: (newClass: PlayerStats['class']) => void }) => {
     const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
 
@@ -207,7 +195,7 @@ export default function DashboardPage() {
 
         if (unlockedTier) {
              setPlayerStats(prevStats => {
-                const newXp = prevStats.xp + XP_PER_HUNTING_MISSION;
+                const newXp = (prevStats.xp || 0) + XP_PER_HUNTING_MISSION;
                 const newPlayerStats = { ...prevStats, xp: newXp };
                 localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
                 toast({
@@ -315,13 +303,15 @@ export default function DashboardPage() {
   }
 
   const handleClassChange = (newClass: PlayerStats['class']) => {
-    const newPlayerStats = { ...playerStats, class: newClass };
-    setPlayerStats(newPlayerStats);
-    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-    toast({
-        title: "¡Clase seleccionada!",
-        description: `Ahora eres un ${newClass}.`
-    })
+    setPlayerStats(prevStats => {
+        const newPlayerStats = { ...prevStats, class: newClass };
+        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+        toast({
+            title: "¡Clase seleccionada!",
+            description: `Ahora eres un ${newClass}.`
+        })
+        return newPlayerStats;
+    });
   };
 
   const navItems = [
@@ -331,7 +321,6 @@ export default function DashboardPage() {
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
       { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
       { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
-      { href: "/tienda", label: "Tienda", icon: Trophy, color: 'bg-gradient-to-r from-amber-400 to-orange-500 text-black' },
   ];
 
   return (
@@ -383,39 +372,73 @@ export default function DashboardPage() {
                         <p className="text-muted-foreground">Una vista detallada de tu situación financiera</p>
                     </div>
                 </div>
-                 <div className="flex items-center gap-2 flex-wrap">
-                    {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
-                        const rangeKey = range.toLowerCase() as TimeRange;
-                        return (
-                            <Button
-                            key={range}
-                            onClick={() => setTimeRange(rangeKey)}
-                            variant={timeRange === rangeKey ? "default" : "outline"}
-                            size="sm"
-                            >
-                            {range}
-                            </Button>
-                        )
-                    })}
-                     <Button onClick={() => setIsNewTradeOpen(true)} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                        <Plus className="mr-2 h-4 w-4"/>
-                        Nueva Operación
-                     </Button>
-                      <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
-                        Añadir Saldo
-                     </Button>
-                      <Button onClick={() => setIsWithdrawalOpen(true)} size="sm" variant="outline">
-                        Registrar Retiro
-                     </Button>
+                 <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:flex-wrap">
+                    <div className='flex gap-2'>
+                        {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
+                            const rangeKey = range.toLowerCase() as TimeRange;
+                            return (
+                                <Button
+                                key={range}
+                                onClick={() => setTimeRange(rangeKey)}
+                                variant={timeRange === rangeKey ? "default" : "outline"}
+                                size="sm"
+                                >
+                                {range}
+                                </Button>
+                            )
+                        })}
+                    </div>
+                    <div className='flex gap-2'>
+                        <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
+                            Añadir Saldo
+                        </Button>
+                        <Button onClick={() => setIsWithdrawalOpen(true)} size="sm" variant="outline">
+                            Registrar Retiro
+                        </Button>
+                        <Link href="/tienda">
+                          <Button size="sm" className="bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold hover:scale-105 transition-transform shadow-md">
+                            <Trophy className="mr-2 h-4 w-4"/>
+                            Tienda
+                          </Button>
+                        </Link>
+                        <Button onClick={() => setIsNewTradeOpen(true)} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <Plus className="mr-2 h-4 w-4"/>
+                            Nueva Operación
+                        </Button>
+                    </div>
                 </div>
             </header>
 
             <main className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`${filteredTrades.length} operaciones`} valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"}/>
-                        <StatCard title="Ganancias" value={formatCurrency(gains)} description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} valueColor="text-green-500" />
-                        <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} valueColor="text-red-500" />
+                        <Card className="bg-card">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className={cn("text-2xl font-bold", netProfit >= 0 ? "text-green-500" : "text-red-500")}>{formatCurrency(netProfit)}</div>
+                                <p className="text-xs text-muted-foreground">{filteredTrades.length} operaciones</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-card">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-green-500">{formatCurrency(gains)}</div>
+                                <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
+                            </CardContent>
+                        </Card>
+                         <Card className="bg-card">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-red-500">{formatCurrency(Math.abs(losses))}</div>
+                                <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas</p>
+                            </CardContent>
+                        </Card>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                        <PlayerLevelCard xp={playerStats.xp} onClassChange={handleClassChange}/>
