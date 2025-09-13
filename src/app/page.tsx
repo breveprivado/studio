@@ -1,45 +1,24 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import Image from 'next/image';
-import { Plus, BarChart3, TrendingUp, Calendar, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, RotateCcw, Users, Trophy, Store } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, RotateCcw, Users, Trophy, Store, LayoutGrid, ArrowRightLeft, Wallet, Settings, HelpCircle, LogOut, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
-import StatCard from '@/components/dashboard/stat-card';
-import RecentTrades from '@/components/dashboard/recent-trades';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import TradeDetailDialog from '@/components/dashboard/trade-detail-dialog';
-import TimezoneClock from '@/components/dashboard/timezone-clock';
 import { Switch } from '@/components/ui/switch';
 import * as XLSX from 'xlsx';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
-import CurrencyConverter from '@/components/dashboard/currency-converter';
 import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
-import WithdrawalsDashboard from '@/components/dashboard/withdrawals-dashboard';
-import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
-import { Progress } from '@/components/ui/progress';
 import { useLeveling } from '@/hooks/use-leveling';
-import BestiaryDashboard from '@/components/dashboard/bestiary-dashboard';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
+import RecentTrades from '@/components/dashboard/recent-trades';
+import { Sidebar, SidebarHeader, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarContent, SidebarFooter, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -51,110 +30,18 @@ const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const classOptions = [
-    { name: 'Invocador', icon: '🔮', description: 'Maestro de la paciencia, espera el momento perfecto para que sus operaciones se materialicen.' },
-    { name: 'Arquero', icon: '🏹', description: 'Preciso y disciplinado, dispara únicamente a objetivos de alta probabilidad con una gestión de riesgo milimétrica.' },
-    { name: 'Espadachín', icon: '⚔️', description: 'Ágil y rápido, entra y sale del mercado con destreza, tomando ganancias en movimientos cortos y decisivos.' }
-]
-
-const achievementTiers = [1, 5, 10, 25, 50, 100];
-const XP_PER_ACHIEVEMENT = 250;
-
-const ClassSelection = ({ onSelectClass }: { onSelectClass: (className: string) => void }) => {
-    return (
-        <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white my-8">
-            <CardHeader>
-                <CardTitle className="text-2xl text-center">¡Has alcanzado el Nivel 10!</CardTitle>
-                <CardDescription className="text-center text-purple-200">Es hora de forjar tu leyenda. Elige tu clase de Trader.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-3 gap-6">
-                {classOptions.map(cls => (
-                    <Card key={cls.name} className="bg-white/10 backdrop-blur-sm border-white/20 text-center flex flex-col">
-                        <CardHeader>
-                            <CardTitle className="text-5xl mx-auto">{cls.icon}</CardTitle>
-                            <CardTitle>{cls.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                            <p className="text-sm text-purple-200">{cls.description}</p>
-                        </CardContent>
-                        <CardContent>
-                             <Button onClick={() => onSelectClass(cls.name)} className="w-full bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold">
-                                Elegir {cls.name}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ))}
-            </CardContent>
-        </Card>
-    )
-}
-
-
-const LevelDashboard = ({ playerStats, onResetLevel }: { playerStats: PlayerStats; onResetLevel: () => void; }) => {
-    if (playerStats?.xp === undefined) {
-        return (
-            <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <CardHeader>
-                    <CardTitle className="flex items-center text-lg font-semibold">
-                        <Star className="h-5 w-5 mr-2 text-yellow-400" />
-                        Nivel del Trader
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <p className="text-center text-muted-foreground">Cargando estadísticas...</p>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    const { level, xpForNextLevel, progressPercentage } = useLeveling(playerStats.xp);
-    
-    return (
-        <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <CardHeader>
-                <CardTitle className="flex items-center justify-between text-lg font-semibold">
-                   <div className='flex items-center'>
-                     <Star className="h-5 w-5 mr-2 text-yellow-400" />
-                     Nivel del Trader
-                   </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                            <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro de que quieres reiniciar?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción restablecerá tu experiencia (XP) y tu clase de trader a cero. No podrás deshacer esta acción.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={onResetLevel} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Reiniciar</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="flex justify-between items-center text-2xl font-bold">
-                    <span className="text-primary">Nivel {level}</span>
-                    {playerStats.class && <span className="text-lg text-amber-500">{playerStats.class}</span>}
-                </div>
-                <div className="flex justify-between items-center text-muted-foreground text-sm">
-                   <span>Progreso</span>
-                   <span>{playerStats.xp.toFixed(0)} / {xpForNextLevel} XP</span>
-                </div>
-                <Progress value={progressPercentage} className="h-4" />
-                <p className="text-center text-xs text-muted-foreground mt-2">
-                    ¡Asocia bestias a tus operaciones ganadoras para ganar XP y subir de nivel!
-                </p>
-            </CardContent>
-        </Card>
-    );
-}
+const StatCard = ({ title, value, change, description, icon: Icon, iconBg, valueColor }: { title: string; value: string; change?: string; description?: string; icon: React.ElementType; iconBg: string; valueColor: string; }) => (
+    <Card className="bg-card">
+        <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+            {change && <p className={`text-xs ${parseFloat(change) > 0 ? 'text-green-500' : 'text-red-500'}`}>{change}</p>}
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </CardContent>
+    </Card>
+);
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -162,8 +49,6 @@ export default function DashboardPage() {
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [creatures, setCreatures] = useState<Creature[]>([]);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
@@ -172,8 +57,6 @@ export default function DashboardPage() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
-  
-  const { level } = useLeveling(playerStats.xp);
   
   const loadAllData = () => {
     const storedTrades = localStorage.getItem('trades');
@@ -195,12 +78,6 @@ export default function DashboardPage() {
       setCreatures(initialCreatures);
       localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
-    
-    const storedJournalEntries = localStorage.getItem('journalEntries');
-    setJournalEntries(storedJournalEntries ? JSON.parse(storedJournalEntries) : []);
-
-    const storedCiBalance = localStorage.getItem('ci_initialBalance');
-    if(storedCiBalance) setCompoundInterestBalance(parseFloat(storedCiBalance));
 
     const isDataInitialized = localStorage.getItem('data_initialized');
     if (!isDataInitialized) {
@@ -223,8 +100,7 @@ export default function DashboardPage() {
     }
 
      const handleStorageChange = (e: StorageEvent) => {
-        // A simple way to reload all data if any of the key items change in another tab.
-        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'ci_initialBalance'];
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures'];
         if (e.key && keysToWatch.includes(e.key)) {
             loadAllData();
         }
@@ -245,87 +121,14 @@ export default function DashboardPage() {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-      localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
   
   const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
     const newTrade = { ...trade, id: crypto.randomUUID() };
     const newTrades = [newTrade, ...trades];
-
-    let currentCreatures = [...creatures];
-    let finalPlayerStats = { ...playerStats };
-    let currentCiBalance = compoundInterestBalance;
-
-    if (trade.creatureId && trade.status === 'win') {
-        const creatureIndex = currentCreatures.findIndex(c => c.id === trade.creatureId);
-        
-        let xpGainedFromHunt = 0;
-        if(creatureIndex !== -1) {
-            xpGainedFromHunt = (parseInt(trade.creatureId, 10) / 17) * 50 + 10;
-        }
-        
-        let currentXp = finalPlayerStats.xp + xpGainedFromHunt;
-        
-        toast({
-            title: '¡Experiencia Ganada!',
-            description: `Has ganado ${xpGainedFromHunt.toFixed(0)} XP por la caza.`,
-        });
-
-        let xpGainedFromAchievement = 0;
-        
-        if (creatureIndex !== -1) {
-            const oldEncounterCount = currentCreatures[creatureIndex].encounters.length;
-            
-            const updatedCreature = {
-                ...currentCreatures[creatureIndex],
-                encounters: [...currentCreatures[creatureIndex].encounters, { id: newTrade.id, date: new Date().toISOString() }]
-            };
-
-            const newEncounterCount = updatedCreature.encounters.length;
-
-            achievementTiers.forEach(tier => {
-                if (oldEncounterCount < tier && newEncounterCount >= tier) {
-                    xpGainedFromAchievement += XP_PER_ACHIEVEMENT;
-                    toast({
-                        title: `¡Logro Desbloqueado!`,
-                        description: `Has cazado ${tier} ${updatedCreature.name}s y ganado ${XP_PER_ACHIEVEMENT} XP!`
-                    });
-                }
-            });
-            
-            currentCreatures[creatureIndex] = updatedCreature;
-
-             toast({
-                title: `¡Bestia ${updatedCreature.name} Cazada!`,
-                description: 'Has registrado tu encuentro en el bestiario.'
-            });
-        }
-        
-        currentXp += xpGainedFromAchievement;
-        finalPlayerStats = { ...finalPlayerStats, xp: currentXp };
-        
-        if (trade.profit > 0) {
-            currentCiBalance += trade.profit;
-            toast({
-                title: '¡Interés Compuesto!',
-                description: `Se han añadido ${formatCurrency(trade.profit)} a tu balance de interés compuesto.`,
-            });
-        }
-    }
-    
-    // Set all states and save to localStorage
     setTrades(newTrades);
     localStorage.setItem('trades', JSON.stringify(newTrades));
-
-    setCreatures(currentCreatures);
-    localStorage.setItem('bestiaryCreatures', JSON.stringify(currentCreatures));
-
-    setPlayerStats(finalPlayerStats);
-    localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
-    
-    setCompoundInterestBalance(currentCiBalance);
-    localStorage.setItem('ci_initialBalance', currentCiBalance.toString());
   };
 
 
@@ -369,22 +172,14 @@ export default function DashboardPage() {
   }, [filteredTrades, withdrawals, balanceAdditions]);
 
   const formatCurrency = (value: number) => {
-    const formatted = new Intl.NumberFormat('es-ES', {
+    const formatted = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
-    return `${formatted}\u00A0US$`;
+    return formatted;
   };
-  
-  const handleSelectClass = (className: string) => {
-      const newPlayerStats = {...playerStats, class: className};
-      setPlayerStats(newPlayerStats);
-      localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-      toast({
-        title: `¡Clase seleccionada: ${className}!`,
-        description: "Tu leyenda como trader ha comenzado."
-      })
-  }
   
   const handleAddWithdrawal = (withdrawal: Omit<Withdrawal, 'id' | 'date'>) => {
     const newWithdrawal = { ...withdrawal, id: crypto.randomUUID(), date: new Date().toISOString() };
@@ -409,65 +204,9 @@ export default function DashboardPage() {
   }
 
   const handleDeleteTrade = (id: string) => {
-    const tradeToDelete = trades.find(t => t.id === id);
-    if (!tradeToDelete) return;
-
-    let xpToDeduct = 0;
-    let finalCreatures = [...creatures];
-    let finalPlayerStats = { ...playerStats };
-    
-    // Check if it was a successful hunt
-    if (tradeToDelete.creatureId && tradeToDelete.status === 'win') {
-        const creatureIndex = finalCreatures.findIndex(c => c.id === tradeToDelete.creatureId);
-
-        if (creatureIndex !== -1) {
-            const creature = finalCreatures[creatureIndex];
-            const updatedEncounters = [...creature.encounters];
-            const encounterIndex = updatedEncounters.findIndex(enc => enc.id === id);
-
-            if (encounterIndex > -1) {
-                 updatedEncounters.splice(encounterIndex, 1);
-                
-                // Deduct XP from the hunt
-                xpToDeduct += (parseInt(tradeToDelete.creatureId, 10) / 17) * 50 + 10;
-
-                // Check if an achievement was lost
-                achievementTiers.forEach(tier => {
-                    if (creature.encounters.length >= tier && updatedEncounters.length < tier) {
-                        xpToDeduct += XP_PER_ACHIEVEMENT;
-                    }
-                });
-                
-                finalCreatures[creatureIndex] = {...creature, encounters: updatedEncounters};
-                
-                toast({
-                    title: "Progreso de Caza Revertido",
-                    description: `Se ha eliminado el encuentro con ${creature.name}.`
-                })
-            }
-        }
-    }
-    
     const newTrades = trades.filter(t => t.id !== id);
     setTrades(newTrades);
     localStorage.setItem('trades', JSON.stringify(newTrades));
-
-    if (xpToDeduct > 0) {
-        const newXp = Math.max(0, playerStats.xp - xpToDeduct);
-        finalPlayerStats = {...finalPlayerStats, xp: newXp};
-        
-        setPlayerStats(finalPlayerStats);
-        localStorage.setItem('playerStats', JSON.stringify(finalPlayerStats));
-        
-        setCreatures(finalCreatures);
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(finalCreatures));
-
-        toast({
-            title: "Experiencia Ajustada",
-            description: `Se han restado ${xpToDeduct.toFixed(0)} XP.`,
-            variant: "destructive"
-        })
-    }
   };
 
   const handleDeleteWithdrawal = (id: string) => {
@@ -511,136 +250,107 @@ export default function DashboardPage() {
     });
   }
 
-  const handleResetLevel = () => {
-    const newPlayerStats = {...playerStats, xp: 0, class: undefined};
-    setPlayerStats(newPlayerStats);
-    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-    toast({
-      title: "Nivel Reiniciado",
-      description: "Tu experiencia y clase han sido restablecidas.",
-    });
-  }
+  const navItems = [
+      { href: "/", label: "Dashboard", icon: LayoutGrid },
+      { href: "/bestiario", label: "Bestiario", icon: BookHeart },
+      { href: "/misiones", label: "Misiones", icon: Gamepad2 },
+      { href: "/tienda", label: "Tienda", icon: Trophy },
+      { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck },
+      { href: "/journal", label: "Bitácora", icon: BookOpen },
+      { href: "/gremio", label: "Gremio", icon: Users },
+      { href: "/settings", label: "Ajustes", icon: Settings },
+  ];
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <header className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4">
-            <div className="mb-4 md:mb-0">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                 <Shield className="h-8 w-8 mr-3 text-primary" />
-                Olimpo Wallet
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza tus operaciones de trading con métricas detalladas</p>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8"><Shield className="h-6 w-6 text-primary" /></Button>
+            <span className="text-lg font-semibold text-foreground">Olimpo Wallet</span>
+          </div>
+          <SidebarTrigger className="absolute top-3.5 right-2" />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {navItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                    <Link href={item.href}>
+                        <SidebarMenuButton isActive={item.label === 'Dashboard'}>
+                            <item.icon/>
+                            {item.label}
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className='items-center'>
+            <div className="flex items-center space-x-2">
+                <Sun className="h-5 w-5" />
+                <Switch
+                    id="dark-mode"
+                    checked={isDarkMode}
+                    onCheckedChange={setIsDarkMode}
+                    />
+                <Moon className="h-5 w-5" />
             </div>
-            <div className="flex flex-col items-end gap-4 w-full md:w-auto">
-              <div className="w-full flex flex-wrap justify-end items-center gap-2">
-                  <Link href="/bestiario"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-red-600 dark:text-white dark:hover:bg-red-700 text-foreground hover:bg-gray-100"><BookHeart className="h-5 w-5 mr-2" />Bestiario</Button></Link>
-                  <Link href="/misiones"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-orange-500 dark:text-white dark:hover:bg-orange-600 text-foreground hover:bg-gray-100"><Gamepad2 className="h-5 w-5 mr-2" />Misiones</Button></Link>
-                  <Link href="/obligatorio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 text-foreground hover:bg-gray-100"><ClipboardCheck className="h-5 w-5 mr-2" />Obligatorio</Button></Link>
-                  <Link href="/journal"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-yellow-500 dark:text-white dark:hover:bg-yellow-600 text-foreground hover:bg-gray-100"><BookOpen className="h-5 w-5 mr-2" />Bitácora</Button></Link>
-                  <Link href="/gremio"><Button variant="outline" className="transition-all transform hover:scale-105 shadow-md bg-white dark:bg-purple-600 dark:text-white dark:hover:bg-purple-700 text-foreground hover:bg-gray-100"><Users className="h-5 w-5 mr-2" />Gremio</Button></Link>
-              </div>
-              <div className="w-full grid grid-cols-2 md:flex md:flex-wrap justify-end items-center gap-2">
-                  <Link href="/tienda">
-                      <Button className="w-full flex-grow md:flex-grow-0 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 rounded-xl hover:from-amber-500 hover:to-orange-600 transition-all transform hover:scale-105 shadow-lg px-6 py-3 font-bold">
-                          <Trophy className="h-5 w-5 mr-2" />
-                          Tienda
-                      </Button>
-                  </Link>
-                   <Button onClick={() => setIsAddBalanceOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
-                      <Landmark className="h-5 w-5 mr-2" />
-                      Añadir Saldo
-                  </Button>
-                  <Button onClick={() => setIsWithdrawalOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
-                      <Banknote className="h-5 w-5 mr-2" />
-                      Registrar Retiro
-                  </Button>
-                  <Button onClick={() => setIsNewTradeOpen(true)} className="flex-grow md:flex-grow-0 bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg px-6 py-3">
-                      <Plus className="h-5 w-5 mr-2" />
-                      Nueva Operación
-                  </Button>
-              </div>
-               <div className='flex items-center justify-end gap-2 w-full flex-wrap'>
-                    <div className="flex items-center space-x-2">
-                      <Sun className="h-5 w-5" />
-                      <Switch
-                          id="dark-mode"
-                          checked={isDarkMode}
-                          onCheckedChange={setIsDarkMode}
-                        />
-                      <Moon className="h-5 w-5" />
-                    </div>
-                    <Button onClick={exportToXlsx} variant="outline" className="transition-all transform hover:scale-105 shadow-lg">
-                        <FileDown className="h-5 w-5 mr-2"/>
-                        Exportar
-                    </Button>
+        </SidebarFooter>
+      </Sidebar>
+
+      <SidebarInset>
+        <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8">
+            <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Dashboard</h1>
+                    <p className="text-muted-foreground">Una vista detallada de tu situación financiera</p>
                 </div>
-            </div>
-          </header>
-          
-          <div className="flex bg-gray-100 dark:bg-neutral-900 rounded-lg p-1 mb-6">
-            {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
-              const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
-              return (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(rangeKey)}
-                  className={cn(
-                    "flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all w-full justify-center",
-                    timeRange === rangeKey
-                      ? "bg-white dark:bg-black shadow-sm text-primary"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-neutral-800/50"
-                  )}
-                >
-                  {range === 'Diario' && <Calendar className="h-4 w-4 mr-2" />}
-                  {range === 'Mensual' && <BarChart3 className="h-4 w-4 mr-2" />}
-                  {range === 'Anual' && <TrendingUp className="h-4 w-4 mr-2" />}
-                  {range}
-                </button>
-              )
-            })}
-          </div>
-          
-          <TimezoneClock />
+                 <div className="flex items-center gap-2 flex-wrap">
+                    {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
+                        const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
+                        return (
+                            <Button
+                            key={range}
+                            onClick={() => setTimeRange(rangeKey)}
+                            variant={timeRange === rangeKey ? "default" : "outline"}
+                            size="sm"
+                            >
+                            {range}
+                            </Button>
+                        )
+                    })}
+                     <Button onClick={() => setIsNewTradeOpen(true)} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Plus className="mr-2 h-4 w-4"/>
+                        Nueva Operación
+                     </Button>
+                      <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
+                        Añadir Saldo
+                     </Button>
+                      <Button onClick={() => setIsWithdrawalOpen(true)} size="sm" variant="outline">
+                        Registrar Retiro
+                     </Button>
+                </div>
+            </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
-            <StatCard title="Ganancias" value={formatCurrency(gains)} icon={<TrendingUp className="h-6 w-6 text-green-600" />} iconBgClass="bg-green-100 dark:bg-green-900/20" valueColorClass="text-green-600 dark:text-green-400" />
-            <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={<TrendingUp className="h-6 w-6 text-red-600 rotate-180" />} iconBgClass="bg-red-100 dark:bg-red-900/20" valueColorClass="text-red-600 dark:text-red-400" />
-            <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`Depósitos: ${formatCurrency(totalBalanceAdditions)} | Retiros: ${formatCurrency(totalWithdrawals)}`} icon={<BarChart3 className="h-6 w-6 text-primary" />} iconBgClass="bg-blue-100 dark:bg-blue-900/20" valueColorClass={netProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} />
-            <StatCard title="Tasa de Éxito" value={`${winRate.toFixed(1)}%`} description={`${totalTrades} operaciones`} icon={<Percent className="h-6 w-6 text-yellow-500" />} iconBgClass="bg-yellow-100 dark:bg-yellow-900/20" valueColorClass="text-yellow-600 dark:text-yellow-500" />
-          </div>
+            <main className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={Wallet} iconBg="bg-blue-100 dark:bg-blue-900/20" valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"} description={`${totalTrades} operaciones`}/>
+                    <StatCard title="Ganancias" value={formatCurrency(gains)} icon={TrendingUp} iconBg="bg-green-100 dark:bg-green-900/20" valueColor="text-green-500" description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} />
+                    <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={TrendingUp} iconBg="bg-red-100 dark:bg-red-900/20" valueColor="text-red-500" description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} />
+                </div>
+                
+                <PerformanceCharts trades={filteredTrades} />
 
-          <div className="space-y-8" id="level-dashboard">
-            <LevelDashboard playerStats={playerStats} onResetLevel={handleResetLevel} />
-            {level >= 10 && !playerStats.class && (
-                <ClassSelection onSelectClass={handleSelectClass} />
-            )}
-            <BestiaryDashboard creatures={creatures} />
-            <CurrencyConverter />
-            <WithdrawalsDashboard withdrawals={withdrawals} formatCurrency={formatCurrency} />
-            <StrategyPerformance trades={filteredTrades} />
-            <PairAssertiveness trades={filteredTrades} />
-            <PerformanceCharts trades={filteredTrades} />
-            <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
-          </div>
+                <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+
+            </main>
         </div>
-      </div>
-       <footer className="bg-gray-900 text-white py-4">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="flex items-center justify-center gap-4">
-            Síguenos en todas las redes como @olimpo.trading
-            <a href="https://instagram.com/olimpo.trading" target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://youtube.com/@olimpo.trading" target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://facebook.com/olimpo.trading" target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 hover:text-primary" /></a>
-            <a href="https://tiktok.com/@olimpo.trading" target="_blank" rel="noopener noreferrer"><TikTokIcon className="h-5 w-5 hover:text-primary" /></a>
-          </p>
-        </div>
-      </footer>
+      </SidebarInset>
+      
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} />
       <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
-    </>
+    </SidebarProvider>
   );
 }
