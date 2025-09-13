@@ -23,14 +23,46 @@ import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 import { Progress } from '@/components/ui/progress';
 import DailyPerformance from '@/components/dashboard/daily-performance';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-const PlayerLevelCard = ({ xp }: { xp: number }) => {
+const PlayerLevelCard = ({ xp, onReset }: { xp: number; onReset: () => void; }) => {
     const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Nivel del Jugador</CardTitle>
+                <CardTitle className="flex justify-between items-center">
+                    <span>Nivel del Jugador</span>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>¿Reiniciar Nivel y XP?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Esta acción restablecerá tu experiencia (XP) a 0 y tu nivel a 1. No afectará a tus misiones, bestiario o bitácora.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={onReset} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -160,11 +192,11 @@ export default function DashboardPage() {
     }
   }, [isDarkMode]);
   
- const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
+  const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
     const newTrade = { ...trade, id: crypto.randomUUID() };
-    const newTrades = [newTrade, ...trades];
-    setTrades(newTrades);
-    localStorage.setItem('trades', JSON.stringify(newTrades));
+    const updatedTrades = [newTrade, ...trades];
+    setTrades(updatedTrades);
+    localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
     if (trade.creatureId && trade.status === 'win') {
         const achievementTiers = [1, 5, 10, 25, 50, 100];
@@ -174,17 +206,9 @@ export default function DashboardPage() {
         let oldEncounterCount = 0;
         let xpGained = 0;
 
-        // Base XP for hunting the creature
         const getXpForCreature = (creatureId: string) => {
           return (parseInt(creatureId, 10) / 17) * 50 + 10;
         };
-        const baseCreatureXp = getXpForCreature(trade.creatureId);
-        xpGained += baseCreatureXp;
-        
-        toast({
-            title: "¡Bestia Cazada!",
-            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
-        });
 
         const updatedCreatures = creatures.map(c => {
             if (c.id === trade.creatureId) {
@@ -194,6 +218,14 @@ export default function DashboardPage() {
                 return {...c, encounters: [...c.encounters, newEncounter]};
             }
             return c;
+        });
+
+        const baseCreatureXp = getXpForCreature(trade.creatureId);
+        xpGained += baseCreatureXp;
+        
+        toast({
+            title: "¡Bestia Cazada!",
+            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
         });
 
         const newEncounterCount = oldEncounterCount + 1;
@@ -207,6 +239,9 @@ export default function DashboardPage() {
             });
         }
         
+        setCreatures(updatedCreatures); // Update creatures state
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+        
         if (xpGained > 0) {
             setPlayerStats(prevStats => {
                 const newXp = (prevStats.xp || 0) + xpGained;
@@ -215,9 +250,6 @@ export default function DashboardPage() {
                 return newPlayerStats;
             });
         }
-
-        setCreatures(updatedCreatures);
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
     }
   };
 
@@ -323,6 +355,18 @@ export default function DashboardPage() {
             title: "¡Clase seleccionada!",
             description: `Ahora eres un ${newClass}.`
         })
+        return newPlayerStats;
+    });
+  };
+
+  const handleResetLevel = () => {
+    setPlayerStats(prevStats => {
+        const newPlayerStats = { ...prevStats, xp: 0 };
+        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+        toast({
+            title: "Nivel Reiniciado",
+            description: "Tu experiencia (XP) ha sido restablecida a 0."
+        });
         return newPlayerStats;
     });
   };
@@ -454,7 +498,7 @@ export default function DashboardPage() {
                         </Card>
                     </div>
                     <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <PlayerLevelCard xp={playerStats.xp} />
+                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} />
                        <ClassSelectionCard currentClass={playerStats.class} onClassChange={handleClassChange} />
                     </div>
                 </div>
