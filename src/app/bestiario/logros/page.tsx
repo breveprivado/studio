@@ -4,10 +4,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Award, BookHeart, ShieldCheck, Star } from 'lucide-react';
+import { ArrowLeft, Award, BookHeart, ShieldCheck, Star, RotateCcw } from 'lucide-react';
 import { type Creature } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 const achievementTiers = [1, 5, 10, 25, 50, 100];
 const XP_PER_ACHIEVEMENT = 250;
@@ -15,6 +27,7 @@ const XP_PER_ACHIEVEMENT = 250;
 const AchievementsPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -46,6 +59,24 @@ const AchievementsPage = () => {
     };
   }, [creatures, isClient, totalPossibleAchievements]);
 
+  const handleResetAchievements = () => {
+    const storedCreatures = localStorage.getItem('bestiaryCreatures');
+    if (storedCreatures) {
+        let currentCreatures: Creature[] = JSON.parse(storedCreatures);
+        const resetCreatures = currentCreatures.map(c => ({ ...c, encounters: [] }));
+        
+        setCreatures(resetCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(resetCreatures));
+        
+        window.dispatchEvent(new StorageEvent('storage', { key: 'bestiaryCreatures' }));
+        
+        toast({
+            title: "Salón de Héroes Reiniciado",
+            description: "El progreso de caza de todas las bestias ha sido restablecido a cero.",
+        });
+    }
+  };
+
   if (!isClient) {
     return null; // or a loading spinner
   }
@@ -61,12 +92,34 @@ const AchievementsPage = () => {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Tu progreso cazando las bestias del mercado.</p>
           </div>
-          <Link href="/">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reiniciar Logros
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro de reiniciar el Salón de Héroes?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción restablecerá a cero los contadores de encuentros para todas las bestias. Perderás el progreso de los logros de caza, pero no tu XP, nivel o nombres de bestias personalizados.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetAchievements} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Link href="/">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Dashboard
+              </Button>
+            </Link>
+          </div>
         </header>
 
         <Card className="mb-8">
