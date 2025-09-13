@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, BarChart3, TrendingUp, Calendar, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, RotateCcw, Users, Trophy, Store, LayoutGrid, ArrowRightLeft, Wallet, Settings, HelpCircle, LogOut, PiggyBank } from 'lucide-react';
+import { Plus, BarChart3, TrendingUp, Calendar, FileDown, Instagram, Youtube, Facebook, Moon, Sun, BookOpen, Target, Award, Layers3, ClipboardCheck, Percent, Banknote, Landmark, BookHeart, Shield, Gamepad2, Star, RotateCcw, Users, Trophy, Store, LayoutGrid, ArrowRightLeft, Wallet, Settings, HelpCircle, LogOut, PiggyBank, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, type JournalEntry } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -21,6 +21,7 @@ import RecentTrades from '@/components/dashboard/recent-trades';
 import { Sidebar, SidebarHeader, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarContent, SidebarFooter, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import StrategyPerformance from '@/components/dashboard/strategy-performance';
 import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
+import { Progress } from '@/components/ui/progress';
 
 const StatCard = ({ title, value, description, valueColor }: { title: string; value: string; description?: string; valueColor?: string }) => (
     <Card className="bg-card">
@@ -33,6 +34,61 @@ const StatCard = ({ title, value, description, valueColor }: { title: string; va
         </CardContent>
     </Card>
 );
+
+const PlayerLevelCard = ({ xp, onClassChange }: { xp: number, onClassChange: (newClass: PlayerStats['class']) => void }) => {
+    const { level, xpForNextLevel, progressPercentage } = useLeveling(xp);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Nivel del Jugador</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <span className="text-4xl font-bold">Nivel {level}</span>
+                    <Trophy className="h-8 w-8 text-amber-400" />
+                </div>
+                <Progress value={progressPercentage} />
+                <div className="text-center text-sm text-muted-foreground">
+                    <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+const ClassSelectionCard = ({ currentClass, onClassChange }: { currentClass: PlayerStats['class'], onClassChange: (newClass: PlayerStats['class']) => void }) => {
+    const classes = [
+        { name: 'Invocador', icon: Layers3, description: 'Maestro de la estrategia y la paciencia.' },
+        { name: 'Arquero', icon: Target, description: 'Preciso, rápido y letal en sus entradas.' },
+        { name: 'Espadachín', icon: Shield, description: 'Resistente y disciplinado, protege su capital.' },
+    ] as const;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Clase de Trader</CardTitle>
+                <CardDescription>Elige tu arquetipo de combate.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {classes.map(c => (
+                    <Button 
+                        key={c.name}
+                        variant={currentClass === c.name ? 'default' : 'outline'}
+                        className="w-full justify-start gap-4"
+                        onClick={() => onClassChange(c.name)}
+                    >
+                        <c.icon className="h-5 w-5" />
+                        <div className="text-left">
+                            <p className="font-semibold">{c.name}</p>
+                        </div>
+                    </Button>
+                ))}
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -234,14 +290,24 @@ export default function DashboardPage() {
     setSelectedTrade(trade);
   }
 
+  const handleClassChange = (newClass: PlayerStats['class']) => {
+    const newPlayerStats = { ...playerStats, class: newClass };
+    setPlayerStats(newPlayerStats);
+    localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+    toast({
+        title: "¡Clase seleccionada!",
+        description: `Ahora eres un ${newClass}.`
+    })
+  };
+
   const navItems = [
       { href: "/", label: "Dashboard", icon: LayoutGrid },
-      { href: "/bestiario", label: "Bestiario", icon: BookHeart },
-      { href: "/misiones", label: "Misiones", icon: Gamepad2 },
-      { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck },
-      { href: "/journal", label: "Bitácora", icon: BookOpen },
-      { href: "/gremio", label: "Gremio", icon: BookOpen, color: 'bg-purple-600 dark:bg-purple-600' },
-      { href: "/tienda", label: "Tienda", icon: Trophy, color: 'bg-amber-500' },
+      { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: 'dark:bg-red-600' },
+      { href: "/misiones", label: "Misiones", icon: Gamepad2, color: 'dark:bg-orange-500' },
+      { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: 'dark:bg-white dark:text-black' },
+      { href: "/journal", label: "Bitácora", icon: BookOpen, color: 'dark:bg-yellow-400 dark:text-black' },
+      { href: "/gremio", label: "Gremio", icon: Users, color: 'dark:bg-purple-600' },
+      { href: "/tienda", label: "Tienda", icon: Trophy, color: 'bg-gradient-to-r from-amber-400 to-orange-500 text-black' },
   ];
 
   return (
@@ -252,7 +318,6 @@ export default function DashboardPage() {
             <Button variant="ghost" size="icon" className="h-8 w-8"><Shield className="h-6 w-6 text-primary" /></Button>
             <span className="text-lg font-semibold text-foreground">Olimpo Wallet</span>
           </div>
-          <SidebarTrigger className="absolute top-3.5 right-2" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -261,7 +326,7 @@ export default function DashboardPage() {
                     <Link href={item.href}>
                         <SidebarMenuButton 
                          isActive={item.label === 'Dashboard'}
-                         className={cn(item.color && !isDarkMode ? `${item.color} text-white` : '', item.color && isDarkMode ? `${item.color} text-white` : '')}
+                         className={cn(item.color, item.label !== 'Dashboard' && 'text-white')}
                         >
                             <item.icon/>
                             {item.label}
@@ -287,9 +352,12 @@ export default function DashboardPage() {
       <SidebarInset>
         <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8">
             <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground">Una vista detallada de tu situación financiera</p>
+                <div className="flex items-center gap-4">
+                    <SidebarTrigger className="md:hidden"/>
+                    <div>
+                        <h1 className="text-3xl font-bold">Dashboard</h1>
+                        <p className="text-muted-foreground">Una vista detallada de tu situación financiera</p>
+                    </div>
                 </div>
                  <div className="flex items-center gap-2 flex-wrap">
                     {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
@@ -319,17 +387,23 @@ export default function DashboardPage() {
             </header>
 
             <main className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`${totalTrades} operaciones`} valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"}/>
-                    <StatCard title="Ganancias" value={formatCurrency(gains)} description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} valueColor="text-green-500" />
-                    <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} valueColor="text-red-500" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`${filteredTrades.length} operaciones`} valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"}/>
+                        <StatCard title="Ganancias" value={formatCurrency(gains)} description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} valueColor="text-green-500" />
+                        <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} valueColor="text-red-500" />
+                    </div>
+                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                       <PlayerLevelCard xp={playerStats.xp} onClassChange={handleClassChange}/>
+                       <ClassSelectionCard currentClass={playerStats.class} onClassChange={handleClassChange} />
+                    </div>
                 </div>
                 
                 <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <StrategyPerformance trades={trades} />
-                  <PairAssertiveness trades={trades} />
+                  <StrategyPerformance trades={filteredTrades} />
+                  <PairAssertiveness trades={filteredTrades} />
                 </div>
 
                 <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
