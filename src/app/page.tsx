@@ -33,6 +33,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Custom hook to get the previous value of a prop or state
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+
+
 const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => void; level: number }) => {
     const { xpForNextLevel, progressPercentage } = useLeveling(xp);
 
@@ -92,19 +102,17 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   const { level } = useLeveling(playerStats.xp);
-  const isInitialLoad = useRef(true);
+  const prevLevel = usePrevious(level);
 
-   useEffect(() => {
-    if (isInitialLoad.current) {
-        isInitialLoad.current = false;
-        return;
-    }
-
-    if (level > 0) {
+  useEffect(() => {
+    // Check if the level has increased and it's not the initial load
+    if (prevLevel !== undefined && level > prevLevel) {
         const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/10/18/audio_1416d860d5.mp3');
-        audio.play();
+        audio.play().catch(error => {
+            console.error("Audio playback failed:", error);
+        });
     }
-  }, [level]);
+  }, [level, prevLevel]);
 
   
   const loadAllData = () => {
