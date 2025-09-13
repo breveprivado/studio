@@ -1,22 +1,26 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, CartesianGrid, XAxis, YAxis, Bar, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar } from 'recharts';
 import { Trade } from '@/lib/types';
-import { Layers3 } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Progress } from "@/components/ui/progress"
-
 
 interface StrategyPerformanceProps {
   trades: Trade[];
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
+          <p className="font-bold text-base">{label}</p>
+          <p className="text-sm text-primary">{`Asertividad: ${payload[0].value.toFixed(1)}%`}</p>
+        </div>
+      );
+    }
+    return null;
+};
+
 
 const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ trades }) => {
 
@@ -24,7 +28,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ trades }) => 
     const strategies: { [key: string]: { wins: number; total: number } } = {};
 
     trades.forEach(trade => {
-      if (trade.strategy) {
+      if (trade.strategy && (trade.status === 'win' || trade.status === 'loss')) {
         if (!strategies[trade.strategy]) {
           strategies[trade.strategy] = { wins: 0, total: 0 };
         }
@@ -38,43 +42,61 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ trades }) => 
     return Object.entries(strategies).map(([name, data]) => ({
       name,
       winRate: (data.wins / data.total) * 100,
-      total: data.total
     })).sort((a, b) => b.winRate - a.winRate);
 
   }, [trades]);
 
   if (strategyData.length === 0) {
-    return null;
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Rendimiento por Estrategia</CardTitle>
+                <CardDescription>Tu tasa de acierto para cada estrategia de trading.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-center h-48 text-muted-foreground">
+                    No hay datos suficientes para mostrar.
+                </div>
+            </CardContent>
+        </Card>
+    );
   }
 
   return (
-     <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-      <AccordionItem value="item-1">
-        <AccordionTrigger>
-           <div className="flex items-center">
-             <Layers3 className="h-6 w-6 text-primary mr-3" />
-             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Rendimiento por Estrategia</h2>
-           </div>
-        </AccordionTrigger>
-        <AccordionContent>
-            <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <CardContent className="pt-6">
-                 <div className="space-y-4">
-                    {strategyData.map(strategy => (
-                        <div key={strategy.name}>
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{strategy.name} ({strategy.total} trades)</span>
-                            <span className="text-sm font-semibold text-primary">{strategy.winRate.toFixed(1)}%</span>
-                        </div>
-                        <Progress value={strategy.winRate} className="h-2" />
-                        </div>
-                    ))}
-                 </div>
-                </CardContent>
-            </Card>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <Card>
+        <CardHeader>
+            <CardTitle>Rendimiento por Estrategia</CardTitle>
+            <CardDescription>Tu tasa de acierto para cada estrategia de trading.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={strategyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                    <XAxis 
+                        dataKey="name" 
+                        fontSize={12}
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                        fontSize={12} 
+                        tickFormatter={(value) => `${value}%`}
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
+                    <Bar 
+                        dataKey="winRate" 
+                        fill="hsl(var(--primary))" 
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={40}
+                    />
+                </BarChart>
+            </ResponsiveContainer>
+        </CardContent>
+    </Card>
   );
 };
 

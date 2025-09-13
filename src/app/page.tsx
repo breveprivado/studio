@@ -19,25 +19,16 @@ import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
 import { useLeveling } from '@/hooks/use-leveling';
 import RecentTrades from '@/components/dashboard/recent-trades';
 import { Sidebar, SidebarHeader, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarContent, SidebarFooter, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import StrategyPerformance from '@/components/dashboard/strategy-performance';
+import PairAssertiveness from '@/components/dashboard/pair-assertiveness';
 
-const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M21 7.4V12a4 4 0 0 1-4 4H8" />
-    <path d="M12 16V4a4 4 0 0 1 4 4v0" />
-    <path d="M4 12a4 4 0 0 0 4 4h0" />
-    <circle cx="8.5" cy="8.5" r="0.5" fill="currentColor" />
-    <circle cx="16.5" cy="4.5" r="0.5" fill="currentColor" />
-  </svg>
-);
-
-const StatCard = ({ title, value, change, description, icon: Icon, iconBg, valueColor }: { title: string; value: string; change?: string; description?: string; icon: React.ElementType; iconBg: string; valueColor: string; }) => (
+const StatCard = ({ title, value, description, valueColor }: { title: string; value: string; description?: string; valueColor?: string }) => (
     <Card className="bg-card">
         <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-            {change && <p className={`text-xs ${parseFloat(change) > 0 ? 'text-green-500' : 'text-red-500'}`}>{change}</p>}
+            <div className={cn("text-2xl font-bold", valueColor)}>{value}</div>
             {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </CardContent>
     </Card>
@@ -129,6 +120,24 @@ export default function DashboardPage() {
     const newTrades = [newTrade, ...trades];
     setTrades(newTrades);
     localStorage.setItem('trades', JSON.stringify(newTrades));
+
+    if (trade.creatureId && trade.status === 'win') {
+        setCreatures(prevCreatures => {
+            const newCreatures = prevCreatures.map(c => {
+                if (c.id === trade.creatureId) {
+                    const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString() };
+                    return {...c, encounters: [...c.encounters, newEncounter]};
+                }
+                return c;
+            });
+            localStorage.setItem('bestiaryCreatures', JSON.stringify(newCreatures));
+            return newCreatures;
+        });
+        toast({
+            title: "¡Bestia Cazada!",
+            description: `Has registrado un nuevo encuentro. Revisa tu bestiario y logros.`
+        })
+    }
   };
 
 
@@ -225,40 +234,14 @@ export default function DashboardPage() {
     setSelectedTrade(trade);
   }
 
-  const exportToXlsx = () => {
-    const dataToExport = trades.map(trade => ({
-        'ID': trade.id,
-        'Divisa': trade.pair,
-        'Resultado': trade.status,
-        'Pips': trade.pips ?? '',
-        'Lote': trade.lotSize ?? '',
-        'Beneficio (US$)': trade.profit,
-        'Fecha': new Date(trade.date).toLocaleString('es-ES'),
-        'Estrategia': trade.strategy ?? '',
-        'Notas': trade.notes ?? '',
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Historial de Trades");
-
-    XLSX.writeFile(workbook, "historial_trades.xlsx");
-
-    toast({
-      title: "Exportación Completa",
-      description: "Tu historial de trades ha sido exportado a un archivo XLSX.",
-    });
-  }
-
   const navItems = [
       { href: "/", label: "Dashboard", icon: LayoutGrid },
       { href: "/bestiario", label: "Bestiario", icon: BookHeart },
       { href: "/misiones", label: "Misiones", icon: Gamepad2 },
-      { href: "/tienda", label: "Tienda", icon: Trophy },
       { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck },
       { href: "/journal", label: "Bitácora", icon: BookOpen },
-      { href: "/gremio", label: "Gremio", icon: Users },
-      { href: "/settings", label: "Ajustes", icon: Settings },
+      { href: "/gremio", label: "Gremio", icon: BookOpen, color: 'bg-purple-600 dark:bg-purple-600' },
+      { href: "/tienda", label: "Tienda", icon: Trophy, color: 'bg-amber-500' },
   ];
 
   return (
@@ -276,7 +259,10 @@ export default function DashboardPage() {
             {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                     <Link href={item.href}>
-                        <SidebarMenuButton isActive={item.label === 'Dashboard'}>
+                        <SidebarMenuButton 
+                         isActive={item.label === 'Dashboard'}
+                         className={cn(item.color && !isDarkMode ? `${item.color} text-white` : '', item.color && isDarkMode ? `${item.color} text-white` : '')}
+                        >
                             <item.icon/>
                             {item.label}
                         </SidebarMenuButton>
@@ -307,7 +293,7 @@ export default function DashboardPage() {
                 </div>
                  <div className="flex items-center gap-2 flex-wrap">
                     {(['Diario', 'Mensual', 'Anual'] as const).map(range => {
-                        const rangeKey = range.toLowerCase().replace('anual', 'anual') as TimeRange;
+                        const rangeKey = range.toLowerCase() as TimeRange;
                         return (
                             <Button
                             key={range}
@@ -334,12 +320,17 @@ export default function DashboardPage() {
 
             <main className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} icon={Wallet} iconBg="bg-blue-100 dark:bg-blue-900/20" valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"} description={`${totalTrades} operaciones`}/>
-                    <StatCard title="Ganancias" value={formatCurrency(gains)} icon={TrendingUp} iconBg="bg-green-100 dark:bg-green-900/20" valueColor="text-green-500" description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} />
-                    <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} icon={TrendingUp} iconBg="bg-red-100 dark:bg-red-900/20" valueColor="text-red-500" description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} />
+                    <StatCard title="Beneficio Neto" value={formatCurrency(netProfit)} description={`${totalTrades} operaciones`} valueColor={netProfit >= 0 ? "text-green-500" : "text-red-500"}/>
+                    <StatCard title="Ganancias" value={formatCurrency(gains)} description={`${filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas`} valueColor="text-green-500" />
+                    <StatCard title="Pérdidas" value={formatCurrency(Math.abs(losses))} description={`${filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas`} valueColor="text-red-500" />
                 </div>
                 
                 <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <StrategyPerformance trades={trades} />
+                  <PairAssertiveness trades={trades} />
+                </div>
 
                 <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
