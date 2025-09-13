@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star } from 'lucide-react';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star, RotateCcw } from 'lucide-react';
 import { type Creature, type PlayerStats } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,19 @@ import CompoundInterestTable from '@/components/bestiary/compound-interest-table
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DollarSign } from 'lucide-react';
 import { initialCreatures } from '@/lib/data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from '@/lib/utils';
+
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
     const [name, setName] = useState(creature.name);
@@ -137,6 +150,17 @@ const BestiaryPage = () => {
       return (parseInt(creatureId, 10) / 17) * 50 + 10;
   }
 
+  const handleResetBestiary = () => {
+    setCreatures(initialCreatures);
+    localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
+    // We dispatch a storage event so other open tabs/pages using this data can update themselves.
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bestiaryCreatures' }));
+    toast({
+      title: "Bestiario Reiniciado",
+      description: "La lista de bestias ha sido restaurada a su estado original.",
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -149,6 +173,26 @@ const BestiaryPage = () => {
             <p className="text-gray-600 dark:text-gray-400 mt-2">Registra y analiza los "monstruos" que afectan tu operativa.</p>
           </div>
           <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reiniciar Bestiario
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro de reiniciar el Bestiario?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción restaurará la lista de bestias a su estado original. Se perderán todos los nombres personalizados, descripciones, imágenes y contadores de encuentros. Esta acción no afecta tu XP ni tu nivel.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleResetBestiary} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Link href="/bestiario/logros">
                 <Button variant="outline" className="bg-amber-500 hover:bg-amber-600 text-white">
                     <Award className="h-4 w-4 mr-2" />
