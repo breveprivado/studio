@@ -1,4 +1,5 @@
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -38,6 +39,7 @@ export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'with
 export interface Encounter {
   id: string;
   date: string;
+  status?: 'win' | 'loss';
 }
 
 export interface Creature {

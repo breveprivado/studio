@@ -195,7 +195,7 @@ export default function DashboardPage() {
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
-    if (trade.creatureId && trade.status === 'win') {
+    if (trade.creatureId && (trade.status === 'win' || trade.status === 'loss')) {
         const achievementTiers = [1, 5, 10, 25, 50, 100];
         const XP_PER_HUNTING_MISSION = 500;
         
@@ -207,40 +207,42 @@ export default function DashboardPage() {
           return (parseInt(creatureId, 10) / 17) * 50 + 10;
         };
         
-        let finalCreatures: Creature[] = [];
-
         setCreatures(currentCreatures => {
             const updatedCreatures = currentCreatures.map(c => {
                 if (c.id === trade.creatureId) {
                     creatureName = c.name;
-                    oldEncounterCount = c.encounters.length;
-                    const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString() };
-                    return {...c, encounters: [...c.encounters, newEncounter]};
+                    const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString(), status: trade.status };
+                    const encounters = c.encounters || [];
+                    if (trade.status === 'win') {
+                        oldEncounterCount = encounters.filter(e => e.status === 'win').length;
+                    }
+                    return {...c, encounters: [...encounters, newEncounter]};
                 }
                 return c;
             });
-            finalCreatures = updatedCreatures;
             localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
             return updatedCreatures;
         });
 
-        const baseCreatureXp = getXpForCreature(trade.creatureId);
-        xpGained += baseCreatureXp;
-        
-        toast({
-            title: "¡Bestia Cazada!",
-            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
-        });
-
-        const newEncounterCount = oldEncounterCount + 1;
-        const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
-
-        if (unlockedTier) {
-            xpGained += XP_PER_HUNTING_MISSION;
+        if (trade.status === 'win') {
+            const baseCreatureXp = getXpForCreature(trade.creatureId);
+            xpGained += baseCreatureXp;
+            
             toast({
-                title: "¡Misión de Caza Completada!",
-                description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
+                title: "¡Bestia Cazada!",
+                description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
             });
+
+            const newEncounterCount = oldEncounterCount + 1;
+            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
+
+            if (unlockedTier) {
+                xpGained += XP_PER_HUNTING_MISSION;
+                toast({
+                    title: "¡Misión de Caza Completada!",
+                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
+                });
+            }
         }
         
         if (xpGained > 0) {
@@ -346,15 +348,15 @@ export default function DashboardPage() {
   }
 
   const handleResetLevel = () => {
-    setPlayerStats(prev => {
-        const newPlayerStats = { ...prev, xp: 0 };
-        localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-        return newPlayerStats;
-    });
-    toast({
-        title: "Nivel Reiniciado",
-        description: "Tu experiencia (XP) ha sido restablecida a 0."
-    });
+      setPlayerStats(prev => {
+          const newPlayerStats = { ...prev, xp: 0 };
+          localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+          return newPlayerStats;
+      });
+      toast({
+          title: "Nivel Reiniciado",
+          description: "Tu experiencia (XP) ha sido restablecida a 0."
+      });
   };
 
   return (

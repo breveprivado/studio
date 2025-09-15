@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star, RotateCcw, Trophy, Skull } from 'lucide-react';
 import { type Creature, type PlayerStats } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
@@ -161,6 +163,9 @@ const BestiaryPage = () => {
       description: "La lista de bestias ha sido restaurada a su estado original.",
     });
   }
+  
+  const defeatedCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'win'));
+  const summonedCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'loss'));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -216,32 +221,29 @@ const BestiaryPage = () => {
       <Card>
           <CardHeader>
               <CardTitle>Listado de Bestias</CardTitle>
-              <CardDescription>Un resumen de todos los monstruos que has enfrentado y su recompensa.</CardDescription>
+              <CardDescription>Un resumen de todos los monstruos que has enfrentado.</CardDescription>
           </CardHeader>
           <CardContent>
-              <div className="space-y-4">
-                  {creatures.sort((a, b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
-                      <div 
-                          key={creature.id} 
-                          className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
-                          onClick={() => handleOpenSheet(creature)}
-                      >
-                          <div className="flex-1">
-                              <CreatureNameEditor creature={creature} onSave={handleNameSave} />
-                              <div className="flex items-center gap-4">
-                              <p className="text-sm text-muted-foreground mt-1">Encuentros: {creature.encounters.length}</p>
-                              <div className="flex items-center gap-1 text-sm text-amber-500 mt-1">
-                                  <Star className="h-4 w-4" />
-                                  <span>{getXpForCreature(creature.id).toFixed(0)} XP</span>
-                              </div>
-                              </div>
-                          </div>
-                          <div className="font-bold text-xl w-10 text-center">
-                              {creature.encounters.length}
-                          </div>
-                      </div>
-                  ))}
-              </div>
+            <Tabs defaultValue="defeated" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="defeated">Bestias Derrotadas</TabsTrigger>
+                <TabsTrigger value="summoned">Bestias Invocadas</TabsTrigger>
+              </TabsList>
+              <TabsContent value="defeated" className="mt-4">
+                <div className="space-y-4">
+                  {defeatedCreatures.length > 0 ? defeatedCreatures.map(creature => (
+                      <CreatureListItem key={`defeated-${creature.id}`} creature={creature} handleOpenSheet={handleOpenSheet} handleNameSave={handleNameSave} getXpForCreature={getXpForCreature} />
+                  )) : <p className="text-center text-muted-foreground py-4">Aún no has derrotado a ninguna bestia.</p>}
+                </div>
+              </TabsContent>
+              <TabsContent value="summoned" className="mt-4">
+                <div className="space-y-4">
+                  {summonedCreatures.length > 0 ? summonedCreatures.map(creature => (
+                      <CreatureListItem key={`summoned-${creature.id}`} creature={creature} handleOpenSheet={handleOpenSheet} handleNameSave={handleNameSave} getXpForCreature={getXpForCreature} />
+                  )) : <p className="text-center text-muted-foreground py-4">Ninguna bestia ha sido asociada a una pérdida.</p>}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
       </Card>
       
@@ -279,8 +281,11 @@ const BestiaryPage = () => {
                           <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                               {selectedCreature.encounters.length > 0 ? (
                                   selectedCreature.encounters.map(encounter => (
-                                      <div key={encounter.id} className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-neutral-800/50 rounded-md">
-                                          {format(new Date(encounter.date), "dd MMM yyyy, HH:mm", { locale: es })}
+                                      <div key={encounter.id} className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-neutral-800/50 rounded-md flex justify-between items-center">
+                                          <span>{format(new Date(encounter.date), "dd MMM yyyy, HH:mm", { locale: es })}</span>
+                                          <span className={cn('font-semibold', encounter.status === 'win' ? 'text-green-500' : 'text-red-500')}>
+                                            {encounter.status === 'win' ? 'VICTORIA' : 'DERROTA'}
+                                          </span>
                                       </div>
                                   )).reverse()
                               ) : (
@@ -308,6 +313,40 @@ const BestiaryPage = () => {
     </div>
   );
 };
+
+const CreatureListItem = ({ creature, handleOpenSheet, handleNameSave, getXpForCreature }: { creature: Creature, handleOpenSheet: (creature: Creature) => void, handleNameSave: (id: string, newName: string) => void, getXpForCreature: (id: string) => number }) => {
+    const wins = creature.encounters.filter(e => e.status === 'win').length;
+    const losses = creature.encounters.filter(e => e.status === 'loss').length;
+    return (
+        <div 
+            key={creature.id} 
+            className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-gray-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+            onClick={() => handleOpenSheet(creature)}
+        >
+            <div className="flex-1">
+                <CreatureNameEditor creature={creature} onSave={handleNameSave} />
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-1 text-sm text-green-500 mt-1">
+                        <Trophy className="h-4 w-4" />
+                        <span>Victorias: {wins}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-red-500 mt-1">
+                        <Skull className="h-4 w-4" />
+                        <span>Derrotas: {losses}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-amber-500 mt-1">
+                        <Star className="h-4 w-4" />
+                        <span>{getXpForCreature(creature.id).toFixed(0)} XP</span>
+                    </div>
+                </div>
+            </div>
+            <div className="font-bold text-xl w-10 text-center text-muted-foreground">
+                {creature.encounters.length}
+            </div>
+        </div>
+    );
+};
+
 
 export default BestiaryPage;
 
