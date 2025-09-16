@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bot, BarChart, Percent, BrainCircuit, TrendingUp } from 'lucide-react';
+import { Bot, BarChart, Percent, BrainCircuit, TrendingUp, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
@@ -60,7 +60,8 @@ const BotPage = () => {
                     <CardDescription>{item.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={item.action} className="w-full">
+                    <Button onClick={item.action} className="w-full" disabled>
+                        <Lock className="mr-2 h-4 w-4" />
                         Ejecutar Análisis
                     </Button>
                 </CardContent>
