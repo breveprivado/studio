@@ -162,13 +162,14 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Añadir Nueva Operación</DialogTitle>
           <DialogDescription>
             Registra los detalles de tu operación para analizar tu rendimiento.
           </DialogDescription>
         </DialogHeader>
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
              <FormField
@@ -443,11 +444,12 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     </FormItem>
                 )}
                 />
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="submit">Guardar Operación</Button>
             </DialogFooter>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
     <Dialog open={isEditStrategiesOpen} onOpenChange={setIsEditStrategiesOpen}>
