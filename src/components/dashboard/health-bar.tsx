@@ -57,8 +57,8 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="flex justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-                <div className="relative w-12 h-[54px]">
+            <div className="flex items-center gap-2 min-w-0">
+                <div className="relative w-12 h-12 flex-shrink-0">
                     <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
                         <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
                     </svg>
@@ -66,7 +66,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                         <Skull className="h-6 w-6 text-foreground" />
                     </div>
                 </div>
-                <span className="font-bold text-sm">{playerClass}</span>
+                <div className="font-bold text-sm truncate">{playerClass}</div>
             </div>
 
             <div className="flex items-center gap-2 flex-1 min-w-0">
