@@ -236,7 +236,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                                         {Array.from({ length: count }).map((_, i) => (
                                             <Tooltip key={i}>
                                                 <TooltipTrigger>
-                                                    <HeartCrack className="h-4 w-4 text-green-500 animate-pulse" />
+                                                    <HeartCrack className="h-4 w-4 text-green-500 fill-green-500/30 animate-pulse" />
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     <p>Pérdida en {pair}</p>
