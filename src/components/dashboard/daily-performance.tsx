@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -63,7 +64,7 @@ const DailyPerformance: React.FC<DailyPerformanceProps> = ({ trades }) => {
                 <CardDescription>Comparación de tus resultados diarios.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center justify-center h-48 text-muted-foreground">
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                     No hay datos suficientes para mostrar en este período.
                 </div>
             </CardContent>

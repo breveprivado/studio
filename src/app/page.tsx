@@ -40,6 +40,7 @@ import { es } from 'date-fns/locale';
 import PlayerStatusCard from '@/components/dashboard/health-bar';
 import WorstStrategyPerformance from '@/components/dashboard/worst-strategy-performance';
 import WorstPairAssertiveness from '@/components/dashboard/worst-pair-assertiveness';
+import PrideVsWorstTrades from '@/components/dashboard/pride-vs-worst-trades';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -597,7 +598,10 @@ export default function DashboardPage() {
                 <WorstPairAssertiveness trades={filteredTrades} />
               </div>
               
-              <DailyPerformance trades={filteredTrades} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DailyPerformance trades={filteredTrades} />
+                <PrideVsWorstTrades trades={filteredTrades} />
+              </div>
 
               <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
