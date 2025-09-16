@@ -18,6 +18,7 @@ export interface Trade {
   creatureId?: string;
   isPrideTrade?: boolean;
   isWorstTrade?: boolean;
+  imageUrl?: string | null;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';

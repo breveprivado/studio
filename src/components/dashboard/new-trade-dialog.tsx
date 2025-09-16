@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Skull, Trophy, Pencil, Trash2 } from 'lucide-react';
+import { CalendarIcon, Skull, Trophy, Pencil, Trash2, Upload, XCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -29,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida').toUpperCase(),
@@ -43,6 +44,7 @@ const formSchema = z.object({
   creatureId: z.string().optional(),
   isPrideTrade: z.boolean().optional(),
   isWorstTrade: z.boolean().optional(),
+  imageUrl: z.string().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -64,6 +66,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
   const [strategyOptions, setStrategyOptions] = useState<string[]>(defaultStrategies);
   const [newStrategy, setNewStrategy] = useState('');
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storedStrategies = localStorage.getItem('strategyOptions');
@@ -108,6 +111,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       creatureId: '',
       isPrideTrade: false,
       isWorstTrade: false,
+      imageUrl: '',
     },
   });
   
@@ -123,6 +127,18 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
     }
     return color;
   }
+  
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue('imageUrl', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   function onSubmit(data: NewTradeFormValues) {
     const [hours, minutes] = data.time.split(':');
@@ -155,10 +171,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       creatureId: '',
       isPrideTrade: false,
       isWorstTrade: false,
+      imageUrl: ''
     });
     onOpenChange(false);
   }
   
+  const imageUrl = form.watch('imageUrl');
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -374,6 +393,22 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 </FormItem>
               )}
             />
+            <div>
+              <FormLabel>Imagen (Opcional)</FormLabel>
+                {imageUrl ? (
+                  <div className="relative mt-2">
+                    <Image src={imageUrl} alt="Vista previa de la operación" width={400} height={200} className="rounded-lg object-cover w-full" />
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => form.setValue('imageUrl', '')}>
+                      <XCircle className="h-4 w-4"/>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" className="w-full mt-2" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Adjuntar Imagen
+                  </Button>
+                )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
@@ -487,6 +522,13 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
             </DialogFooter>
         </DialogContent>
     </Dialog>
+    <input 
+      type="file" 
+      ref={fileInputRef} 
+      onChange={handleImageUpload} 
+      className="hidden" 
+      accept="image/*"
+    />
     </>
   );
 };

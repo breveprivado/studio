@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -14,6 +15,7 @@ import { es } from 'date-fns/locale';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { Smile, Meh, Frown, Star } from 'lucide-react';
+import Image from 'next/image';
 
 interface TradeDetailDialogProps {
   isOpen: boolean;
@@ -51,6 +53,11 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {trade.imageUrl && (
+            <div className="relative aspect-video w-full">
+              <Image src={trade.imageUrl} alt={`Imagen de ${trade.pair}`} layout="fill" className="rounded-lg object-cover" />
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Resultado</span>
             <Badge variant={isWin ? "default" : "destructive"} className={cn(isWin ? 'bg-green-600' : 'bg-red-600', 'text-white')}>
