@@ -16,8 +16,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
           <p className="font-bold text-base">{label}</p>
-          <p className="text-sm text-destructive">{`Asertividad: ${data.winRate.toFixed(1)}%`}</p>
-          <p className="text-sm text-muted-foreground">{`Operaciones: ${data.total}`}</p>
+          <p className="text-sm text-destructive">{`Pérdida Total: $${Math.abs(data.totalLoss).toFixed(2)}`}</p>
+          <p className="text-sm text-muted-foreground">{`Operaciones perdedoras: ${data.lossCount}`}</p>
         </div>
       );
     }
@@ -28,25 +28,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const WorstStrategyPerformance: React.FC<WorstStrategyPerformanceProps> = ({ trades }) => {
 
   const strategyData = useMemo(() => {
-    const strategies: { [key: string]: { wins: number; total: number } } = {};
+    const strategies: { [key: string]: { totalLoss: number; lossCount: number } } = {};
 
     trades.forEach(trade => {
-      if (trade.strategy && (trade.status === 'win' || trade.status === 'loss')) {
+      if (trade.strategy && trade.status === 'loss') {
         if (!strategies[trade.strategy]) {
-          strategies[trade.strategy] = { wins: 0, total: 0 };
+          strategies[trade.strategy] = { totalLoss: 0, lossCount: 0 };
         }
-        strategies[trade.strategy].total++;
-        if (trade.status === 'win') {
-          strategies[trade.strategy].wins++;
-        }
+        strategies[trade.strategy].totalLoss += trade.profit;
+        strategies[trade.strategy].lossCount++;
       }
     });
 
     return Object.entries(strategies).map(([name, data]) => ({
       name,
-      winRate: (data.wins / data.total) * 100,
-      total: data.total,
-    })).sort((a, b) => a.winRate - b.winRate);
+      totalLoss: data.totalLoss,
+      lossCount: data.lossCount,
+    })).sort((a, b) => a.totalLoss - b.totalLoss); // Sorts by most negative profit
 
   }, [trades]);
 
@@ -54,12 +52,12 @@ const WorstStrategyPerformance: React.FC<WorstStrategyPerformanceProps> = ({ tra
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Peor Rendimiento por Estrategia</CardTitle>
-                <CardDescription>Tus estrategias con la tasa de acierto más baja.</CardDescription>
+                <CardTitle>Estrategias con Mayor Pérdida</CardTitle>
+                <CardDescription>Tus estrategias que generan mayores pérdidas monetarias.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    No hay datos suficientes para mostrar.
+                    No hay operaciones perdedoras con estrategias asignadas.
                 </div>
             </CardContent>
         </Card>
@@ -69,8 +67,8 @@ const WorstStrategyPerformance: React.FC<WorstStrategyPerformanceProps> = ({ tra
   return (
     <Card>
         <CardHeader>
-            <CardTitle>Peor Rendimiento por Estrategia</CardTitle>
-            <CardDescription>Tus estrategias con la tasa de acierto más baja.</CardDescription>
+            <CardTitle>Estrategias con Mayor Pérdida</CardTitle>
+            <CardDescription>Tus estrategias que generan mayores pérdidas monetarias.</CardDescription>
         </CardHeader>
         <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -85,17 +83,18 @@ const WorstStrategyPerformance: React.FC<WorstStrategyPerformanceProps> = ({ tra
                     />
                     <YAxis 
                         fontSize={12} 
-                        tickFormatter={(value) => `${value}%`}
+                        tickFormatter={(value) => `$${Math.abs(value)}`}
                         tick={{ fill: 'hsl(var(--muted-foreground))' }} 
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                         tickLine={{ stroke: 'hsl(var(--border))' }}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
                     <Bar 
-                        dataKey="winRate" 
+                        dataKey="totalLoss" 
                         fill="hsl(var(--destructive))" 
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
+                        name="Pérdida Total"
                     />
                 </BarChart>
             </ResponsiveContainer>

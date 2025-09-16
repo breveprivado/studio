@@ -16,8 +16,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
           <p className="font-bold text-base">{label}</p>
-          <p className="text-sm text-destructive">{`Asertividad: ${payload[0].value.toFixed(1)}%`}</p>
-          <p className="text-sm text-muted-foreground">{`Operaciones: ${data.total}`}</p>
+          <p className="text-sm text-destructive">{`Pérdida Total: $${Math.abs(data.totalLoss).toFixed(2)}`}</p>
+          <p className="text-sm text-muted-foreground">{`Operaciones perdedoras: ${data.lossCount}`}</p>
         </div>
       );
     }
@@ -26,35 +26,34 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const WorstPairAssertiveness: React.FC<WorstPairAssertivenessProps> = ({ trades }) => {
   const assertivenessByPair = useMemo(() => {
-    const pairStats: { [key: string]: { wins: number; total: number } } = {};
+    const pairStats: { [key: string]: { totalLoss: number; lossCount: number } } = {};
     trades.forEach(trade => {
-      if (trade.status !== 'win' && trade.status !== 'loss') return;
-      if (!pairStats[trade.pair]) {
-        pairStats[trade.pair] = { wins: 0, total: 0 };
-      }
-      pairStats[trade.pair].total++;
-      if (trade.status === 'win') {
-        pairStats[trade.pair].wins++;
+      if (trade.status === 'loss') {
+        if (!pairStats[trade.pair]) {
+          pairStats[trade.pair] = { totalLoss: 0, lossCount: 0 };
+        }
+        pairStats[trade.pair].totalLoss += trade.profit;
+        pairStats[trade.pair].lossCount++;
       }
     });
 
     return Object.entries(pairStats).map(([pair, stats]) => ({
       name: pair,
-      winRate: (stats.wins / stats.total) * 100,
-      total: stats.total,
-    })).sort((a,b) => a.winRate - b.winRate);
+      totalLoss: stats.totalLoss,
+      lossCount: stats.lossCount,
+    })).sort((a,b) => a.totalLoss - b.totalLoss); // Sorts by most negative profit
   }, [trades]);
 
   if (assertivenessByPair.length === 0) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Peor Asertividad por Divisa</CardTitle>
-                <CardDescription>Tu tasa de acierto más baja para cada par.</CardDescription>
+                <CardTitle>Divisas con Mayor Pérdida</CardTitle>
+                <CardDescription>Los pares de divisas que te generan mayores pérdidas.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    No hay datos suficientes para mostrar.
+                    No se han registrado operaciones perdedoras.
                 </div>
             </CardContent>
         </Card>
@@ -64,8 +63,8 @@ const WorstPairAssertiveness: React.FC<WorstPairAssertivenessProps> = ({ trades 
   return (
     <Card>
         <CardHeader>
-            <CardTitle>Peor Asertividad por Divisa</CardTitle>
-            <CardDescription>Tu tasa de acierto más baja para cada par.</CardDescription>
+            <CardTitle>Divisas con Mayor Pérdida</CardTitle>
+            <CardDescription>Los pares de divisas que te generan mayores pérdidas.</CardDescription>
         </CardHeader>
         <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -80,17 +79,18 @@ const WorstPairAssertiveness: React.FC<WorstPairAssertivenessProps> = ({ trades 
                     />
                     <YAxis 
                         fontSize={12} 
-                        tickFormatter={(value) => `${value}%`}
+                        tickFormatter={(value) => `$${Math.abs(value)}`}
                         tick={{ fill: 'hsl(var(--muted-foreground))' }} 
                         axisLine={{ stroke: 'hsl(var(--border))' }}
                         tickLine={{ stroke: 'hsl(var(--border))' }}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
                     <Bar 
-                        dataKey="winRate" 
+                        dataKey="totalLoss" 
                         fill="hsl(var(--destructive))" 
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
+                        name="Pérdida Total"
                     />
                 </BarChart>
             </ResponsiveContainer>
