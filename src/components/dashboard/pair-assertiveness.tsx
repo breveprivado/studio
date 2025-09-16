@@ -11,10 +11,12 @@ interface PairAssertivenessProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
           <p className="font-bold text-base">{label}</p>
           <p className="text-sm text-primary">{`Asertividad: ${payload[0].value.toFixed(1)}%`}</p>
+          <p className="text-sm text-muted-foreground">{`Operaciones: ${data.total}`}</p>
         </div>
       );
     }
@@ -38,6 +40,7 @@ const PairAssertiveness: React.FC<PairAssertivenessProps> = ({ trades }) => {
     return Object.entries(pairStats).map(([pair, stats]) => ({
       name: pair,
       winRate: (stats.wins / stats.total) * 100,
+      total: stats.total,
     })).sort((a,b) => b.winRate - a.winRate);
   }, [trades]);
 
