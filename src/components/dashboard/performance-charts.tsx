@@ -152,6 +152,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
                     tickFormatter={(value) => formatCurrency(value)}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                     tickLine={{ stroke: 'hsl(var(--border))' }}
+                    domain={['dataMin', 'dataMax']}
                 />
                 <Tooltip 
                     content={<CustomTooltip />} 
