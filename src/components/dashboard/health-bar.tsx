@@ -69,19 +69,19 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 <span className="font-bold text-sm">{playerClass}</span>
             </div>
 
-            <div className="flex-1 flex flex-col items-end">
-                <div className="flex items-center gap-1 flex-wrap justify-end mb-1">
+            <div className="flex-1 flex justify-end items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1 flex-wrap justify-end">
                     {Array.from({ length: lives }).map((_, i) => (
                         <Heart key={i} className="h-5 w-5 text-red-500 fill-red-500" />
                     ))}
                     {lives === 0 && <span className="text-xs text-muted-foreground">Sin vidas</span>}
                 </div>
-                <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-7 w-7">
-                        <Minus className="h-4 w-4" />
+                <div className="flex flex-col gap-1">
+                    <Button variant="ghost" size="icon" onClick={onAddLife} className="h-6 w-6">
+                        <Plus className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={onAddLife} className="h-7 w-7">
-                        <Plus className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-6 w-6">
+                        <Minus className="h-3 w-3" />
                     </Button>
                 </div>
             </div>

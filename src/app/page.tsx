@@ -85,7 +85,7 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
                         <Trophy className="h-8 w-8 text-amber-400" />
                         <span className="text-2xl font-bold">Nivel {level}</span>
                     </div>
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1 min-w-0">
                         <Progress value={progressPercentage} />
                         <div className="text-center text-xs text-muted-foreground">
                             <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
@@ -535,5 +535,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
