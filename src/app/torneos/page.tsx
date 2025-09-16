@@ -35,9 +35,41 @@ const TorneosPage = () => {
     if (storedPosts) {
       setPosts(JSON.parse(storedPosts));
     }
-  }, []);
+
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setNewPostImage(reader.result as string);
+               toast({
+                title: 'Imagen Pegada',
+                description: 'La imagen de tu portapapeles ha sido añadida.',
+              });
+            };
+            reader.readAsDataURL(file);
+          }
+          event.preventDefault();
+          return;
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+
+  }, [toast]);
 
   useEffect(() => {
+    // Avoid saving an empty array on initial load if localStorage is empty
     if (posts.length > 0) {
         localStorage.setItem('tournamentPosts', JSON.stringify(posts));
     }
@@ -90,7 +122,12 @@ const TorneosPage = () => {
   const handleDeletePost = (postId: string) => {
     const updatedPosts = posts.filter(p => p.id !== postId);
     setPosts(updatedPosts);
-    localStorage.setItem('tournamentPosts', JSON.stringify(updatedPosts));
+    // If last post is deleted, clear from local storage
+    if (updatedPosts.length === 0) {
+        localStorage.removeItem('tournamentPosts');
+    } else {
+        localStorage.setItem('tournamentPosts', JSON.stringify(updatedPosts));
+    }
      toast({
       title: 'Publicación Eliminada',
       variant: 'destructive'
@@ -107,7 +144,7 @@ const TorneosPage = () => {
               <Swords className="h-8 w-8 mr-3 text-yellow-500" />
               Torneos de Trading
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Documenta y compara tus análisis de torneo.</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Documenta y compara tus análisis de torneo. Puedes pegar imágenes directamente.</p>
           </div>
         </div>
       </header>
