@@ -27,7 +27,6 @@ interface PlayerStatusCardProps {
 }
 
 const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
-  const totalHearts = 3;
 
   return (
     <Card>
@@ -71,13 +70,11 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
             <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-8 w-8">
                 <Minus className="h-5 w-5" />
             </Button>
-            {Array.from({ length: totalHearts }).map((_, index) => {
-            if (index < lives) {
-                return <Heart key={index} className="h-8 w-8 text-red-500 fill-red-500 animate-pulse" style={{ animationDuration: '2s' }} />;
-            }
-            return <HeartCrack key={index} className="h-8 w-8 text-muted-foreground/50" />;
-            })}
-            <Button variant="ghost" size="icon" onClick={onAddLife} disabled={lives >= 3} className="h-8 w-8">
+            <div className="flex items-center gap-2">
+              <Heart className="h-8 w-8 text-red-500 fill-red-500" />
+              <span className="text-xl font-bold">x {lives}</span>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onAddLife} className="h-8 w-8">
                 <Plus className="h-5 w-5" />
             </Button>
         </div>

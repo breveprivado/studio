@@ -378,7 +378,7 @@ export default function DashboardPage() {
 
   const handleAddLife = () => {
     setDailyHealth(prev => {
-        const newLives = Math.min(prev.lives + 1, 3);
+        const newLives = prev.lives + 1;
         const newHealth = { ...prev, lives: newLives };
         localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
         return newHealth;
