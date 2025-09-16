@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot } from 'lucide-react';
+import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ const navItems = [
     { href: "/bestiario/logros", label: "Panel de Logros", icon: Award, color: "bg-amber-500 text-white" },
     { href: "/gremio", label: "Gremio", icon: Users, color: "bg-cyan-500 text-white" },
     { href: "/bot", label: "Bot", icon: Bot, color: "bg-gray-600 text-white" },
+    { href: "/noticias", label: "Noticias", icon: Newspaper, color: "bg-green-600 text-white" },
 ];
 
 export function SidebarWrapper({ children }: { children: React.ReactNode }) {
