@@ -11,10 +11,12 @@ interface StrategyPerformanceProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
           <p className="font-bold text-base">{label}</p>
-          <p className="text-sm text-primary">{`Asertividad: ${payload[0].value.toFixed(1)}%`}</p>
+          <p className="text-sm text-primary">{`Asertividad: ${data.winRate.toFixed(1)}%`}</p>
+          <p className="text-sm text-muted-foreground">{`Operaciones: ${data.total}`}</p>
         </div>
       );
     }
@@ -42,6 +44,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ trades }) => 
     return Object.entries(strategies).map(([name, data]) => ({
       name,
       winRate: (data.wins / data.total) * 100,
+      total: data.total,
     })).sort((a, b) => b.winRate - a.winRate);
 
   }, [trades]);
