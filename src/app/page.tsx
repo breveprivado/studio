@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
@@ -36,6 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import HealthBar from '@/components/dashboard/health-bar';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -91,23 +92,6 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
     );
 };
 
-const HexagonCard = ({ className, children }: { className?: string, children: React.ReactNode }) => {
-    return (
-        <div className={cn("relative flex items-center justify-center w-[160px] h-[184px]", className)}>
-            <svg className="absolute w-full h-full" viewBox="0 0 100 115.47">
-                <path
-                    d="M50 0 L100 28.87 L100 86.6 L50 115.47 L0 86.6 L0 28.87 Z"
-                    className="fill-card stroke-border"
-                    strokeWidth="2"
-                />
-            </svg>
-            <div className="relative z-10 text-center">
-                {children}
-            </div>
-        </div>
-    );
-};
-
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -115,6 +99,7 @@ export default function DashboardPage() {
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [creatures, setCreatures] = useState<Creature[]>([]);
+  const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [viewDate, setViewDate] = useState<Date>(new Date());
@@ -165,6 +150,16 @@ export default function DashboardPage() {
       setCreatures(initialCreatures);
       localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
     }
+    
+    const storedHealth = localStorage.getItem('dailyHealth');
+    if (storedHealth) {
+        const healthData: DailyHealth = JSON.parse(storedHealth);
+        if (isSameDay(new Date(healthData.date), new Date())) {
+            setDailyHealth(healthData);
+        } else {
+            handleResetLives();
+        }
+    }
 
     const isDataInitialized = localStorage.getItem('data_initialized');
     if (!isDataInitialized) {
@@ -181,7 +176,7 @@ export default function DashboardPage() {
     loadAllData();
 
      const handleStorageChange = (e: StorageEvent) => {
-        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated'];
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated', 'dailyHealth'];
         if (e.key && keysToWatch.includes(e.key)) {
             loadAllData();
         }
@@ -200,6 +195,17 @@ export default function DashboardPage() {
     const updatedTrades = [newTrade, ...trades];
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
+
+    if (trade.status === 'loss' && dailyHealth.lives > 0) {
+        const newHealth = { lives: dailyHealth.lives - 1, date: new Date().toISOString() };
+        setDailyHealth(newHealth);
+        localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
+        toast({
+            title: "¡Vida Perdida!",
+            description: "Has perdido un corazón. ¡Ten cuidado!",
+            variant: "destructive"
+        })
+    }
 
     if (trade.creatureId && (trade.status === 'win' || trade.status === 'loss')) {
         const achievementTiers = [1, 5, 10, 25, 50, 100];
@@ -364,6 +370,16 @@ export default function DashboardPage() {
       });
   };
 
+  const handleResetLives = () => {
+    const newHealth = { lives: 3, date: new Date().toISOString() };
+    setDailyHealth(newHealth);
+    localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
+    toast({
+      title: "Vidas Restauradas",
+      description: "Tus corazones han sido restaurados para el día."
+    })
+  }
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setViewDate(date);
@@ -471,13 +487,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                      <div className="flex justify-center">
-                        <HexagonCard className="animate-pulse-slow">
-                            <Skull className="h-10 w-10 text-primary mb-2 mx-auto" />
-                            <h3 className="text-sm font-bold text-foreground">{playerStats.class}</h3>
-                            <p className="text-xs text-muted-foreground">Clase de Trader</p>
-                        </HexagonCard>
-                      </div>
+                      <HealthBar lives={dailyHealth.lives} onReset={handleResetLives} />
                   </div>
               </div>
               
@@ -502,8 +512,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-
-    
-
-    

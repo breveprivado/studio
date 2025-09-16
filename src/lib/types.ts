@@ -65,4 +65,8 @@ export interface JournalEntry {
   imageUrl?: string | null;
 }
 
+export interface DailyHealth {
+    lives: number;
+    date: string;
+}
     
