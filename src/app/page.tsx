@@ -132,6 +132,9 @@ export default function DashboardPage() {
     const storedTrades = localStorage.getItem('trades');
     setTrades(storedTrades ? JSON.parse(storedTrades) : []);
     
+    const storedCreatures = localStorage.getItem('bestiaryCreatures');
+    setCreatures(storedCreatures ? JSON.parse(storedCreatures) : []);
+    
     const storedWithdrawals = localStorage.getItem('withdrawals');
     setWithdrawals(storedWithdrawals ? JSON.parse(storedWithdrawals) : []);
     
@@ -146,7 +149,6 @@ export default function DashboardPage() {
     }
     setPlayerStats(stats);
 
-    const storedCreatures = localStorage.getItem('bestiaryCreatures');
     if (storedCreatures) {
       setCreatures(JSON.parse(storedCreatures));
     } else {
@@ -265,6 +267,18 @@ export default function DashboardPage() {
             });
         }
     }
+  };
+
+  const handleUpdateTrade = (tradeId: string, updatedData: Partial<Trade>) => {
+    const updatedTrades = trades.map(trade => 
+      trade.id === tradeId ? { ...trade, ...updatedData } : trade
+    );
+    setTrades(updatedTrades);
+    localStorage.setItem('trades', JSON.stringify(updatedTrades));
+    toast({
+      title: "Operación Actualizada",
+      description: "El par de divisas ha sido modificado."
+    });
   };
 
 
@@ -521,7 +535,7 @@ export default function DashboardPage() {
               
               <DailyPerformance trades={filteredTrades} />
 
-              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
           </main>
       </div>

@@ -9,13 +9,14 @@ interface RecentTradesProps {
   activities: Activity[];
   creatures: Creature[];
   onDeleteTrade: (id: string) => void;
+  onUpdateTrade: (id: string, updatedData: Partial<Trade>) => void;
   onDeleteWithdrawal: (id: string) => void;
   onDeleteBalance: (id: string) => void;
   onSelectTrade: (trade: Trade) => void;
   formatCurrency: (value: number) => string;
 }
 
-const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDeleteTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
+const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDeleteTrade, onUpdateTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
   return (
     <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <CardHeader className="p-0 mb-4">
@@ -31,7 +32,7 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDe
           ) : (
             activities.map(activity => {
               if (activity.type === 'trade') {
-                return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+                return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
               } else if (activity.type === 'withdrawal') {
                 return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} formatCurrency={formatCurrency} />
               } else {
