@@ -61,7 +61,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                     <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <Skull className="h-10 w-10 text-foreground" />
+                    <Skull className="h-10 w-10 text-foreground mx-auto" />
                 </div>
             </div>
             <span className="font-bold text-lg">{playerClass}</span>
@@ -70,9 +70,11 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
             <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-8 w-8">
                 <Minus className="h-5 w-5" />
             </Button>
-            <div className="flex items-center gap-2">
-              <Heart className="h-8 w-8 text-red-500 fill-red-500" />
-              <span className="text-xl font-bold">x {lives}</span>
+            <div className="flex items-center gap-1 flex-wrap justify-center">
+                {Array.from({ length: lives }).map((_, i) => (
+                    <Heart key={i} className="h-6 w-6 text-red-500 fill-red-500" />
+                ))}
+                {lives === 0 && <span className="text-sm text-muted-foreground">Sin vidas</span>}
             </div>
             <Button variant="ghost" size="icon" onClick={onAddLife} className="h-8 w-8">
                 <Plus className="h-5 w-5" />
