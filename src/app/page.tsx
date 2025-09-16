@@ -1,8 +1,7 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy, Skull } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -33,6 +32,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, isSameDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+
 
 // Custom hook to get the previous value of a prop or state
 function usePrevious<T>(value: T): T | undefined {
@@ -113,6 +117,8 @@ export default function DashboardPage() {
   const [creatures, setCreatures] = useState<Creature[]>([]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
@@ -258,21 +264,20 @@ export default function DashboardPage() {
 
 
   const filteredTrades = useMemo(() => {
-    const now = new Date();
     return trades.filter(trade => {
       const tradeDate = new Date(trade.date);
       switch (timeRange) {
         case 'daily':
-          return tradeDate.toDateString() === now.toDateString();
+          return isSameDay(tradeDate, viewDate);
         case 'monthly':
-          return tradeDate.getMonth() === now.getMonth() && tradeDate.getFullYear() === now.getFullYear();
+          return tradeDate.getMonth() === viewDate.getMonth() && tradeDate.getFullYear() === viewDate.getFullYear();
         case 'anual':
-          return tradeDate.getFullYear() === now.getFullYear();
+          return tradeDate.getFullYear() === viewDate.getFullYear();
         default:
           return true;
       }
     });
-  }, [trades, timeRange]);
+  }, [trades, timeRange, viewDate]);
 
   const activities = useMemo((): Activity[] => {
     const combined = [
@@ -359,6 +364,13 @@ export default function DashboardPage() {
       });
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setViewDate(date);
+      setTimeRange('daily');
+    }
+  }
+
   return (
     <>
       <div className="p-4 sm:p-6 lg:p-8">
@@ -367,7 +379,9 @@ export default function DashboardPage() {
                   <SidebarTrigger className="md:hidden"/>
                   <div>
                       <h1 className="text-3xl font-bold">Dashboard</h1>
-                      <p className="text-muted-foreground">Una vista detallada de tu situación financiera</p>
+                      <p className="text-muted-foreground">
+                        {timeRange === 'daily' ? `Mostrando resultados para ${format(viewDate, "PPP", { locale: es })}` : 'Una vista detallada de tu situación financiera'}
+                      </p>
                   </div>
               </div>
                 <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:flex-wrap">
@@ -385,6 +399,29 @@ export default function DashboardPage() {
                               </Button>
                           )
                       })}
+                       <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            size="sm"
+                            className={cn(
+                              "w-[240px] justify-start text-left font-normal",
+                              !viewDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {viewDate ? format(viewDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={viewDate}
+                            onSelect={handleDateSelect}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                   </div>
                   <div className='flex gap-2'>
                       <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
