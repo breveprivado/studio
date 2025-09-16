@@ -1,6 +1,7 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,11 +13,12 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Skull, Trophy } from 'lucide-react';
+import { CalendarIcon, Skull, Trophy, Pencil, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -26,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida').toUpperCase(),
@@ -44,6 +47,11 @@ const formSchema = z.object({
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
 
+const defaultStrategies = [
+    '1G', '2G', '3G', '4G', '5G',
+    '1C', '2C', '3C', '4C'
+];
+
 interface NewTradeDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -51,12 +59,42 @@ interface NewTradeDialogProps {
   creatures: Creature[];
 }
 
-const strategyOptions = [
-    '1G', '2G', '3G', '4G', '5G',
-    '1C', '2C', '3C', '4C'
-];
-
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade, creatures }) => {
+  const [isEditStrategiesOpen, setIsEditStrategiesOpen] = useState(false);
+  const [strategyOptions, setStrategyOptions] = useState<string[]>(defaultStrategies);
+  const [newStrategy, setNewStrategy] = useState('');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const storedStrategies = localStorage.getItem('strategyOptions');
+    if (storedStrategies) {
+      setStrategyOptions(JSON.parse(storedStrategies));
+    } else {
+      localStorage.setItem('strategyOptions', JSON.stringify(defaultStrategies));
+    }
+  }, []);
+
+  const handleAddStrategy = () => {
+    if (newStrategy && !strategyOptions.includes(newStrategy.toUpperCase())) {
+      const updatedStrategies = [...strategyOptions, newStrategy.toUpperCase()];
+      setStrategyOptions(updatedStrategies);
+      localStorage.setItem('strategyOptions', JSON.stringify(updatedStrategies));
+      setNewStrategy('');
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "La estrategia ya existe o el campo está vacío.",
+        })
+    }
+  };
+
+  const handleDeleteStrategy = (strategyToDelete: string) => {
+    const updatedStrategies = strategyOptions.filter(s => s !== strategyToDelete);
+    setStrategyOptions(updatedStrategies);
+    localStorage.setItem('strategyOptions', JSON.stringify(updatedStrategies));
+  };
+
 
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
@@ -122,6 +160,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
   }
   
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -236,7 +275,12 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     name="strategy"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Estrategia</FormLabel>
+                            <div className="flex items-center gap-2">
+                                <FormLabel>Estrategia</FormLabel>
+                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditStrategiesOpen(true)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            </div>
                              <FormControl>
                                 <RadioGroup
                                     onValueChange={field.onChange}
@@ -406,7 +450,45 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
         </Form>
       </DialogContent>
     </Dialog>
+    <Dialog open={isEditStrategiesOpen} onOpenChange={setIsEditStrategiesOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Editar Estrategias</DialogTitle>
+                <DialogDescription>
+                    Añade o elimina las estrategias disponibles en el formulario.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="flex gap-2">
+                    <Input 
+                        value={newStrategy}
+                        onChange={(e) => setNewStrategy(e.target.value)}
+                        placeholder="Nueva estrategia (ej: 6G)"
+                    />
+                    <Button onClick={handleAddStrategy}>Añadir</Button>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {strategyOptions.map(strategy => (
+                        <div key={strategy} className="flex items-center justify-between rounded-md border p-3">
+                            <span className="font-medium">{strategy}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteStrategy(strategy)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cerrar</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
 export default NewTradeDialog;
+
+    
