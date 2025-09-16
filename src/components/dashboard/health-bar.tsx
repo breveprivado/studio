@@ -219,29 +219,32 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                     </div>
 
                     {poisonedHearts.length > 0 && (
-                        <div className="border-t-2 border-dashed border-destructive/50 w-full my-3 pt-3 flex flex-col items-center gap-2">
+                        <div className="border-t-2 border-dashed border-destructive/50 w-full my-3 pt-3 flex flex-col items-center gap-3">
                              <Tooltip>
                                 <TooltipTrigger asChild>
                                     <h4 className="text-sm font-semibold text-destructive cursor-help">Corazones Envenenados</h4>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Recuento de pérdidas por cada par de divisas.</p>
+                                    <p>Cada corazón representa una pérdida en un par de divisas.</p>
                                 </TooltipContent>
                             </Tooltip>
-                            <div className="flex flex-wrap items-center justify-center gap-2">
+                            <div className="w-full space-y-2">
                                 {poisonedHearts.map(({ pair, count }) => (
-                                    <Tooltip key={pair}>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 p-1 rounded-md bg-destructive/10 border border-destructive/20">
-                                                <HeartCrack className="h-4 w-4 text-destructive" />
-                                                <span className="text-xs font-bold text-destructive/80">{pair}</span>
-                                                <Badge variant="destructive" className="h-4 px-1 text-xs">{count}</Badge>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{count} {count === 1 ? 'pérdida' : 'pérdidas'} en {pair}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
+                                    <div key={pair} className="flex flex-col items-center">
+                                        <div className="text-xs font-bold text-destructive/80 mb-1">{pair}</div>
+                                        <div className="flex flex-wrap justify-center gap-1">
+                                        {Array.from({ length: count }).map((_, i) => (
+                                            <Tooltip key={i}>
+                                                <TooltipTrigger>
+                                                    <HeartCrack className="h-4 w-4 text-green-500 animate-pulse" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Pérdida en {pair}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ))}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -295,3 +298,5 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
 };
 
 export default PlayerStatusCard;
+
+    
