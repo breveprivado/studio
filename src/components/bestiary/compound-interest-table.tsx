@@ -64,8 +64,9 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
     const interestData = useMemo(() => {
         const balance = initialBalance;
         const rate = parseFloat(exchangeRate);
+        const gain = parseFloat(gainPercentage) / 100;
 
-        if (isNaN(balance) || isNaN(rate) || balance <= 0 || rate <= 0) {
+        if (isNaN(balance) || isNaN(rate) || isNaN(gain) || balance <= 0 || rate <= 0) {
             return [];
         }
 
@@ -76,7 +77,7 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 
         for (let i = 1; i <= 17; i++) {
             const escalerasCapital = balance + gananciaTotalAcumulada;
-            const gananciaCruda = i === 1 ? balance * 0.8 : gananciaTotalAcumulada * 0.87;
+            const gananciaCruda = escalerasCapital * gain;
             
             gananciaTotalAcumulada += gananciaCruda;
             
@@ -94,7 +95,7 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
         }
 
         return data;
-    }, [initialBalance, exchangeRate, creatures]);
+    }, [initialBalance, exchangeRate, gainPercentage, creatures]);
 
     const formatNumber = (value: number, digits = 2) => {
         if (isNaN(value)) return '0,00';
@@ -109,7 +110,7 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
     return (
         <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <CardContent className="pt-6">
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
                     <div>
                         <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
                         <Input
@@ -119,6 +120,16 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                             onChange={handleBalanceInputChange}
                             onBlur={handleBalanceBlur}
                             placeholder="100"
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="gain-percentage">Ganancia (%)</Label>
+                        <Input
+                            id="gain-percentage"
+                            type="number"
+                            value={gainPercentage}
+                            onChange={(e) => setGainPercentage(e.target.value)}
+                            placeholder="80"
                         />
                     </div>
                     <div>
