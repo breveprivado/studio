@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { JournalEntry, PlayerStats } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import DisciplineSpells from '@/components/journal/discipline-spells';
 
 const levelMilestones: { [key: number]: number } = {
     1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
@@ -437,6 +438,7 @@ export default function JournalPage() {
                   </CardContent>
               </Card>
               <div className="space-y-4">
+                  <DisciplineSpells />
                   <RatingRules />
                   <RatingsDashboard entries={entries} viewDate={selectedDate} />
               </div>
