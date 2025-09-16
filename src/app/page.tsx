@@ -55,8 +55,8 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="flex justify-between items-center text-base">
+            <CardHeader className="p-4 pb-2">
+                <CardTitle className="flex justify-between items-center text-sm font-medium text-muted-foreground">
                     <span>Nivel del Jugador</span>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -79,9 +79,9 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
                     </AlertDialog>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 p-4 pt-0">
                 <div className="flex justify-between items-center">
-                    <span className="text-3xl font-bold">Nivel {level}</span>
+                    <span className="text-2xl font-bold">Nivel {level}</span>
                     <Trophy className="h-8 w-8 text-amber-400" />
                 </div>
                 <Progress value={progressPercentage} />

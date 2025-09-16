@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -30,8 +31,8 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center text-base">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="flex justify-between items-center text-sm font-medium text-muted-foreground">
           <span>Estado del Personaje</span>
            <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -54,31 +55,36 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
           </AlertDialog>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col items-center justify-center space-y-2">
-            <div className="relative w-20 h-24 mx-auto animate-pulse-slow" style={{ animationDuration: '4s' }}>
-                <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
-                    <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <Skull className="h-10 w-10 text-foreground mx-auto" />
+      <CardContent className="p-4 pt-0">
+        <div className="flex justify-between items-center gap-4">
+            <div className="flex flex-col items-center justify-center space-y-1">
+                <div className="relative w-16 h-[72px] mx-auto animate-pulse-slow" style={{ animationDuration: '4s' }}>
+                    <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
+                        <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Skull className="h-8 w-8 text-foreground mx-auto" />
+                    </div>
+                </div>
+                <span className="font-bold text-sm">{playerClass}</span>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center">
+                <div className="flex items-center gap-1 flex-wrap justify-center mb-2">
+                    {Array.from({ length: lives }).map((_, i) => (
+                        <Heart key={i} className="h-6 w-6 text-red-500 fill-red-500" />
+                    ))}
+                    {lives === 0 && <span className="text-sm text-muted-foreground">Sin vidas</span>}
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-7 w-7">
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={onAddLife} className="h-7 w-7">
+                        <Plus className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
-            <span className="font-bold text-lg">{playerClass}</span>
-        </div>
-        <div className="flex justify-center items-center gap-2 pt-2">
-            <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-8 w-8">
-                <Minus className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-1 flex-wrap justify-center">
-                {Array.from({ length: lives }).map((_, i) => (
-                    <Heart key={i} className="h-6 w-6 text-red-500 fill-red-500" />
-                ))}
-                {lives === 0 && <span className="text-sm text-muted-foreground">Sin vidas</span>}
-            </div>
-            <Button variant="ghost" size="icon" onClick={onAddLife} className="h-8 w-8">
-                <Plus className="h-5 w-5" />
-            </Button>
         </div>
       </CardContent>
     </Card>
