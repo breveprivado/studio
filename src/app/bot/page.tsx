@@ -2,7 +2,36 @@
 
 import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bot } from 'lucide-react';
+import { Bot, BarChart, Percent, BrainCircuit, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+const botActions = [
+    {
+        title: "Porcentaje de Asertividad sin Gale",
+        description: "Calcula tu tasa de acierto real excluyendo operaciones de martingala.",
+        icon: Percent,
+        action: () => console.log("Calculando asertividad sin gale..."),
+    },
+    {
+        title: "Análisis de Racha de Pérdidas",
+        description: "La IA analiza tus peores rachas para encontrar patrones y errores comunes.",
+        icon: BarChart,
+        action: () => console.log("Analizando racha de pérdidas..."),
+    },
+    {
+        title: "Proyección de Rentabilidad",
+        description: "Proyecta tu crecimiento potencial basado en tu rendimiento actual.",
+        icon: TrendingUp,
+        action: () => console.log("Proyectando rentabilidad..."),
+    },
+    {
+        title: "Consejo de la Semana",
+        description: "Obtén un consejo práctico de la IA para tu próxima semana de trading.",
+        icon: BrainCircuit,
+        action: () => console.log("Generando consejo..."),
+    },
+]
 
 const BotPage = () => {
   return (
@@ -20,10 +49,23 @@ const BotPage = () => {
         </div>
       </header>
       
-      {/* Contenido futuro de la página del bot */}
-      <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <h2 className="text-xl font-semibold text-muted-foreground">Próximamente...</h2>
-          <p className="text-muted-foreground mt-2">El asistente de IA se está preparando para la batalla.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {botActions.map((item) => (
+            <Card key={item.title}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <item.icon className="h-6 w-6 text-primary" />
+                        {item.title}
+                    </CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={item.action} className="w-full">
+                        Ejecutar Análisis
+                    </Button>
+                </CardContent>
+            </Card>
+        ))}
       </div>
     </div>
   );
