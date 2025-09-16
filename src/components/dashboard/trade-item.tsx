@@ -137,7 +137,8 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
   
   const handleDateUpdate = (newDate: Date) => {
     const originalDate = new Date(trade.date);
-    newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+    // Preserve seconds and milliseconds from original date
+    newDate.setSeconds(originalDate.getSeconds(), originalDate.getMilliseconds());
     onUpdate(trade.id, { date: newDate.toISOString() });
   };
   

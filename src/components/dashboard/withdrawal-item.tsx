@@ -17,7 +17,8 @@ const WithdrawalItem: React.FC<WithdrawalItemProps> = ({ withdrawal, onDelete, o
   
   const handleDateUpdate = (newDate: Date) => {
     const originalDate = new Date(withdrawal.date);
-    newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+    // Preserve seconds and milliseconds from original date
+    newDate.setSeconds(originalDate.getSeconds(), originalDate.getMilliseconds());
     onUpdate(withdrawal.id, { date: newDate.toISOString() });
   };
   

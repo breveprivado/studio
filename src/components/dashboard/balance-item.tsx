@@ -17,7 +17,8 @@ const BalanceItem: React.FC<BalanceItemProps> = ({ balance, onDelete, onUpdate, 
   
   const handleDateUpdate = (newDate: Date) => {
     const originalDate = new Date(balance.date);
-    newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+    // Preserve seconds and milliseconds from original date
+    newDate.setSeconds(originalDate.getSeconds(), originalDate.getMilliseconds());
     onUpdate(balance.id, { date: newDate.toISOString() });
   };
   
