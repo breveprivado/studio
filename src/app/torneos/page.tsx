@@ -1,14 +1,104 @@
-
 "use client";
 
-import React from 'react';
-import { Swords } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Swords, Upload, X, Trash2, Image as ImageIcon } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
+import { type TournamentPost } from '@/lib/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const TorneosPage = () => {
+  const [posts, setPosts] = useState<TournamentPost[]>([]);
+  const [newPostText, setNewPostText] = useState('');
+  const [newPostImage, setNewPostImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const storedPosts = localStorage.getItem('tournamentPosts');
+    if (storedPosts) {
+      setPosts(JSON.parse(storedPosts));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (posts.length > 0) {
+        localStorage.setItem('tournamentPosts', JSON.stringify(posts));
+    }
+  }, [posts]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewPostImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreatePost = () => {
+    if (!newPostText && !newPostImage) {
+      toast({
+        variant: 'destructive',
+        title: 'Entrada vacía',
+        description: 'Debes añadir texto o una imagen para publicar.',
+      });
+      return;
+    }
+
+    const newPost: TournamentPost = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      text: newPostText,
+      imageUrl: newPostImage,
+    };
+
+    const updatedPosts = [newPost, ...posts];
+    setPosts(updatedPosts);
+    localStorage.setItem('tournamentPosts', JSON.stringify(updatedPosts));
+
+    setNewPostText('');
+    setNewPostImage(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+
+    toast({
+      title: '¡Publicación Creada!',
+      description: 'Tu entrada en el torneo ha sido registrada.',
+    });
+  };
+
+  const handleDeletePost = (postId: string) => {
+    const updatedPosts = posts.filter(p => p.id !== postId);
+    setPosts(updatedPosts);
+    localStorage.setItem('tournamentPosts', JSON.stringify(updatedPosts));
+     toast({
+      title: 'Publicación Eliminada',
+      variant: 'destructive'
+    });
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <SidebarTrigger className="md:hidden"/>
@@ -17,26 +107,103 @@ const TorneosPage = () => {
               <Swords className="h-8 w-8 mr-3 text-yellow-500" />
               Torneos de Trading
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Compite, demuestra tu habilidad y gana recompensas.</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Documenta y compara tus análisis de torneo.</p>
           </div>
         </div>
       </header>
       
-      <main className="flex items-center justify-center">
-        <Card className="w-full max-w-lg text-center">
+      <main className="space-y-8">
+        <Card>
             <CardHeader>
-                <CardTitle>¡Próximamente!</CardTitle>
+                <CardTitle>Crear Nueva Publicación</CardTitle>
+                <CardDescription>Añade texto y una imagen para crear una nueva entrada en tu bitácora de torneo.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">La arena de torneos se está preparando. ¡Vuelve pronto para demostrar que eres el mejor trader del Olimpo!</p>
+            <CardContent className="space-y-4">
+                <Textarea 
+                    placeholder="Escribe aquí tu análisis o comentario..."
+                    value={newPostText}
+                    onChange={(e) => setNewPostText(e.target.value)}
+                    rows={4}
+                />
+                {newPostImage && (
+                    <div className="relative">
+                        <Image src={newPostImage} alt="Vista previa" width={500} height={300} className="rounded-lg object-contain w-full h-auto" />
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setNewPostImage(null)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {newPostImage ? 'Cambiar Imagen' : 'Subir Imagen'}
+                    </Button>
+                    <Button onClick={handleCreatePost}>
+                        Publicar
+                    </Button>
+                </div>
             </CardContent>
         </Card>
+
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Muro del Torneo</h2>
+            {posts.length > 0 ? (
+                posts.map(post => (
+                    <Card key={post.id}>
+                        <CardContent className="pt-6">
+                            <div className="flex justify-between items-start">
+                                <p className="text-sm text-muted-foreground mb-4">{format(new Date(post.date), "PPPp", { locale: es })}</p>
+                                 <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                          <Trash2 className="h-4 w-4" />
+                                       </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>¿Eliminar Publicación?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                            Esta acción es irreversible y eliminará la publicación de tu muro.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeletePost(post.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                           
+                            {post.imageUrl && (
+                                <div className="mb-4">
+                                     <Image src={post.imageUrl} alt="Publicación de torneo" width={800} height={500} className="rounded-lg object-contain w-full h-auto" />
+                                </div>
+                            )}
+                            {post.text && (
+                                 <p className="text-foreground whitespace-pre-wrap">{post.text}</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">No hay publicaciones todavía</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Empieza por crear tu primera entrada.</p>
+                </div>
+            )}
+        </div>
       </main>
 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+        className="hidden"
+        accept="image/*"
+      />
     </div>
   );
 };
 
 export default TorneosPage;
-
-    

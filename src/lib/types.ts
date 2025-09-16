@@ -72,4 +72,11 @@ export interface DailyHealth {
     lives: number;
     date: string;
 }
+
+export interface TournamentPost {
+  id: string;
+  date: string;
+  text: string;
+  imageUrl: string | null;
+}
     
