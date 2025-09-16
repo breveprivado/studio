@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Trophy } from 'lucide-react';
+import { CalendarIcon, Skull, Trophy } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -39,6 +39,7 @@ const formSchema = z.object({
   notes: z.string().optional(),
   creatureId: z.string().optional(),
   isPrideTrade: z.boolean().optional(),
+  isWorstTrade: z.boolean().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -68,6 +69,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       notes: '',
       creatureId: '',
       isPrideTrade: false,
+      isWorstTrade: false,
     },
   });
   
@@ -114,6 +116,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       notes: '',
       creatureId: '',
       isPrideTrade: false,
+      isWorstTrade: false,
     });
     onOpenChange(false);
   }
@@ -326,26 +329,48 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 </FormItem>
               )}
             />
-             <FormField
-                control={form.control}
-                name="isPrideTrade"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-amber-500" />
-                        Orgulloso
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
+            <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="isPrideTrade"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow">
+                        <FormControl>
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                            <Trophy className="h-4 w-4 text-amber-500" />
+                            Orgulloso
+                        </FormLabel>
+                        </div>
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="isWorstTrade"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow">
+                        <FormControl>
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                            <Skull className="h-4 w-4 text-destructive" />
+                            La peor operación
+                        </FormLabel>
+                        </div>
+                    </FormItem>
+                    )}
+                />
+            </div>
             <FormField
                 control={form.control}
                 name="creatureId"

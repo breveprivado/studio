@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trade, Creature } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Trash2, Minus, Target, Pencil, Save, Trophy } from 'lucide-react';
+import { TrendingUp, Trash2, Minus, Target, Pencil, Save, Trophy, Skull } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '../ui/input';
@@ -173,6 +173,12 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
                 <Trophy className="h-4 w-4 text-amber-500" />
                 </>
             )}
+            {trade.isWorstTrade && (
+                <>
+                <span>•</span>
+                <Skull className="h-4 w-4 text-destructive" />
+                </>
+            )}
             {huntedCreature && (
                 <>
                 <span>•</span>
@@ -198,5 +204,3 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 };
 
 export default TradeItem;
-
-    

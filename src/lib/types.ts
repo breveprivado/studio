@@ -17,6 +17,7 @@ export interface Trade {
   emotion?: 'happy' | 'neutral' | 'sad';
   creatureId?: string;
   isPrideTrade?: boolean;
+  isWorstTrade?: boolean;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';
