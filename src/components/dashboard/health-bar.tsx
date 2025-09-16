@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus, Target, Anchor, ShieldOff, BrainCircuit, BookCheck, Scale, ShieldQuestion, Zap, BookUp, Hourglass, HeartPulse, Mountain } from 'lucide-react';
@@ -18,8 +19,9 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PlayerStats } from '@/lib/types';
+import { PlayerStats, Trade } from '@/lib/types';
 import Image from 'next/image';
+import { Badge } from '../ui/badge';
 
 
 interface MandatoryRule {
@@ -56,11 +58,12 @@ interface PlayerStatusCardProps {
   onAddLife: () => void;
   onRemoveLife: () => void;
   playerClass: PlayerStats['class'];
+  trades: Trade[];
 }
 
 const MAX_LIVES = 3;
 
-const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
+const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass, trades }) => {
   const [tradingSpells, setTradingSpells] = useState<MandatoryRule[]>([]);
   const [personajeSpells, setPersonajeSpells] = useState<MandatoryRule[]>([]);
 
@@ -83,6 +86,18 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
     }
   }, []);
 
+  const poisonedHearts = useMemo(() => {
+    const lossesByPair: { [key: string]: number } = {};
+    trades.forEach(trade => {
+        if (trade.status === 'loss') {
+            lossesByPair[trade.pair] = (lossesByPair[trade.pair] || 0) + 1;
+        }
+    });
+    return Object.entries(lossesByPair)
+        .map(([pair, count]) => ({ pair, count }))
+        .sort((a,b) => b.count - a.count);
+  }, [trades]);
+
 
   return (
     <Card className="bg-gradient-to-br from-card to-background border-2 border-border/40">
@@ -93,7 +108,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <TooltipProvider>
-            <div className="grid grid-cols-3 items-center gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
 
                 {/* Trading Spells */}
                 <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -203,6 +218,34 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                         </Button>
                     </div>
 
+                    {poisonedHearts.length > 0 && (
+                        <div className="border-t-2 border-dashed border-destructive/50 w-full my-3 pt-3 flex flex-col items-center gap-2">
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <h4 className="text-sm font-semibold text-destructive cursor-help">Corazones Envenenados</h4>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Recuento de pérdidas por cada par de divisas.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                {poisonedHearts.map(({ pair, count }) => (
+                                    <Tooltip key={pair}>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 p-1 rounded-md bg-destructive/10 border border-destructive/20">
+                                                <HeartCrack className="h-4 w-4 text-destructive" />
+                                                <span className="text-xs font-bold text-destructive/80">{pair}</span>
+                                                <Badge variant="destructive" className="h-4 px-1 text-xs">{count}</Badge>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{count} {count === 1 ? 'pérdida' : 'pérdidas'} en {pair}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 
                 {/* Personaje Spells */}

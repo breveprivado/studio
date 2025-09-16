@@ -298,15 +298,18 @@ export default function DashboardPage() {
         setCreatures(updatedCreatures);
         localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
 
-        const newEncounterCount = oldEncounterCount + 1;
-        const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
+        // We only grant mission XP for wins
+        if (trade.status === 'win') {
+            const newEncounterCount = oldEncounterCount + 1;
+            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
 
-        if (unlockedTier) {
-            xpChange += XP_PER_HUNTING_MISSION;
-            toast({
-                title: "¡Misión de Caza Completada!",
-                description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
-            });
+            if (unlockedTier) {
+                xpChange += XP_PER_HUNTING_MISSION;
+                toast({
+                    title: "¡Misión de Caza Completada!",
+                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
+                });
+            }
         }
     }
 
@@ -614,6 +617,7 @@ export default function DashboardPage() {
                 onReset={handleResetLives}
                 onAddLife={handleAddLife}
                 onRemoveLife={handleRemoveLife}
+                trades={trades}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                   <Card className="bg-card">
@@ -703,8 +707,6 @@ export default function DashboardPage() {
   );
 }
 
-
-    
 
     
 
