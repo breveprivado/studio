@@ -38,6 +38,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PlayerStatusCard from '@/components/dashboard/health-bar';
+import WorstStrategyPerformance from '@/components/dashboard/worst-strategy-performance';
+import WorstPairAssertiveness from '@/components/dashboard/worst-pair-assertiveness';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -306,6 +308,18 @@ export default function DashboardPage() {
     });
   };
 
+ const handleResetAccountData = () => {
+    setTrades([]);
+    setWithdrawals([]);
+    setBalanceAdditions([]);
+    localStorage.removeItem('trades');
+    localStorage.removeItem('withdrawals');
+    localStorage.removeItem('balanceAdditions');
+    toast({
+      title: "Datos de Cuenta Restablecidos",
+      description: "Todas las operaciones, retiros y depósitos han sido eliminados.",
+    });
+  };
 
   const filteredTrades = useMemo(() => {
     return trades.filter(trade => {
@@ -496,6 +510,26 @@ export default function DashboardPage() {
                       </Popover>
                   </div>
                   <div className='flex gap-2'>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button size="sm" variant="destructive">
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              Restablecer Datos
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Restablecer Datos de Cuenta?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción es irreversible y eliminará permanentemente todas las operaciones, depósitos y retiros.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleResetAccountData} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, restablecer</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
                           Añadir Saldo
                       </Button>
@@ -557,6 +591,11 @@ export default function DashboardPage() {
                 <StrategyPerformance trades={filteredTrades} />
                 <PairAssertiveness trades={filteredTrades} />
               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <WorstStrategyPerformance trades={filteredTrades} />
+                <WorstPairAssertiveness trades={filteredTrades} />
+              </div>
               
               <DailyPerformance trades={filteredTrades} />
 
@@ -578,8 +617,4 @@ export default function DashboardPage() {
 
     
 
-
-
     
-
-  
