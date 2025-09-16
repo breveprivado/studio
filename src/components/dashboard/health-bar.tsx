@@ -63,8 +63,6 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
   const [tradingSpells, setTradingSpells] = useState<MandatoryRule[]>([]);
   const [personajeSpells, setPersonajeSpells] = useState<MandatoryRule[]>([]);
 
-  const [selectedSpell, setSelectedSpell] = useState<MandatoryRule | null>(null);
-
   useEffect(() => {
     const storedTradingItems = localStorage.getItem('mandatoryItems_trading');
     if (storedTradingItems) {
@@ -86,7 +84,6 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
 
 
   return (
-    <>
     <Card>
       <CardHeader className="p-4 pb-2">
         <CardTitle className="flex justify-between items-center text-sm font-medium text-muted-foreground">
@@ -131,14 +128,29 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 {tradingSpells.map((spell, index) => {
                     const Icon = TradingIconMap[spell.id] || defaultTradingIcons[index % defaultTradingIcons.length] || ShieldQuestion;
                     return (
-                        <DialogTrigger asChild key={spell.id}>
-                            <div 
-                                className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 cursor-pointer"
-                                onClick={() => setSelectedSpell(spell)}
-                            >
-                                <Icon className="h-6 w-6 text-primary" />
-                            </div>
-                        </DialogTrigger>
+                        <Dialog key={spell.id}>
+                            <DialogTrigger asChild>
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 cursor-pointer">
+                                    <Icon className="h-6 w-6 text-primary" />
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>{spell.text}</DialogTitle>
+                                    <DialogDescription>{spell.description}</DialogDescription>
+                                </DialogHeader>
+                                {spell.imageUrl && (
+                                    <div className="py-4">
+                                        <Image src={spell.imageUrl} alt={`Imagen de ${spell.text}`} width={400} height={200} className="rounded-lg object-cover w-full" />
+                                    </div>
+                                )}
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Cerrar</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     )
                 })}
                 </div>
@@ -146,14 +158,29 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 {personajeSpells.map((spell, index) => {
                     const Icon = PersonajeIconMap[spell.id] || defaultPersonajeIcons[index % defaultPersonajeIcons.length] || ShieldQuestion;
                     return (
-                        <DialogTrigger asChild key={spell.id}>
-                            <div 
-                                className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border-2 border-purple-500/20 hover:bg-purple-500/20 cursor-pointer"
-                                onClick={() => setSelectedSpell(spell)}
-                            >
-                                <Icon className="h-6 w-6 text-purple-500" />
-                            </div>
-                        </DialogTrigger>
+                        <Dialog key={spell.id}>
+                             <DialogTrigger asChild>
+                                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border-2 border-purple-500/20 hover:bg-purple-500/20 cursor-pointer">
+                                    <Icon className="h-6 w-6 text-purple-500" />
+                                </div>
+                            </DialogTrigger>
+                             <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>{spell.text}</DialogTitle>
+                                    <DialogDescription>{spell.description}</DialogDescription>
+                                </DialogHeader>
+                                {spell.imageUrl && (
+                                    <div className="py-4">
+                                        <Image src={spell.imageUrl} alt={`Imagen de ${spell.text}`} width={400} height={200} className="rounded-lg object-cover w-full" />
+                                    </div>
+                                )}
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Cerrar</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     )
                 })}
                 </div>
@@ -180,32 +207,6 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
         </div>
       </CardContent>
     </Card>
-
-     <Dialog open={!!selectedSpell} onOpenChange={() => setSelectedSpell(null)}>
-        <DialogContent className="sm:max-w-md">
-            {selectedSpell && (
-                <>
-                <DialogHeader>
-                    <DialogTitle>{selectedSpell.text}</DialogTitle>
-                    <DialogDescription>
-                    {selectedSpell.description}
-                    </DialogDescription>
-                </DialogHeader>
-                {selectedSpell.imageUrl && (
-                    <div className="py-4">
-                        <Image src={selectedSpell.imageUrl} alt={`Imagen de ${selectedSpell.text}`} width={400} height={200} className="rounded-lg object-cover w-full" />
-                    </div>
-                )}
-                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Cerrar</Button>
-                    </DialogClose>
-                </DialogFooter>
-                </>
-            )}
-        </DialogContent>
-     </Dialog>
-    </>
   );
 };
 
