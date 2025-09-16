@@ -1,10 +1,10 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus } from 'lucide-react';
+import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus, Target, Anchor, ShieldOff, BrainCircuit, BookCheck, Scale, ShieldQuestion } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +16,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PlayerStats } from '@/lib/types';
+
+interface MandatoryRule {
+  id: string;
+  text: string;
+  description: string;
+  imageUrl?: string | null;
+}
+
+const IconMap: { [key: string]: React.ElementType } = {
+  't1': Target,
+  't2': ShieldOff,
+  't3': Scale,
+  't4': BrainCircuit,
+  't5': BookCheck,
+  't6': BrainCircuit,
+};
+const defaultIcons = [Target, ShieldOff, Anchor, BrainCircuit, BookCheck, Scale];
+
 
 interface PlayerStatusCardProps {
   lives: number;
@@ -28,6 +47,19 @@ interface PlayerStatusCardProps {
 }
 
 const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
+  const [spells, setSpells] = useState<MandatoryRule[]>([]);
+
+  useEffect(() => {
+    const storedItems = localStorage.getItem('mandatoryItems_trading');
+    if (storedItems) {
+      try {
+        setSpells(JSON.parse(storedItems));
+      } catch (e) {
+        console.error("Failed to parse spells from localStorage", e);
+      }
+    }
+  }, []);
+
 
   return (
     <Card>
@@ -56,7 +88,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex justify-between items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2 min-w-0">
                 <div className="relative w-12 h-12 flex-shrink-0">
                     <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
@@ -69,8 +101,28 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 <div className="font-bold text-sm truncate">{playerClass}</div>
             </div>
 
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="overflow-x-auto flex-1">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {spells.map((spell, index) => {
+                const Icon = IconMap[spell.id] || defaultIcons[index % defaultIcons.length] || ShieldQuestion;
+                return (
+                  <TooltipProvider key={spell.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 cursor-pointer">
+                            <Icon className="h-6 w-6 text-primary" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">{spell.text}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )
+              })}
+            </div>
+
+            <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+                <div className="overflow-x-auto flex-1 md:flex-none">
                     <div className="flex items-center gap-1">
                         {Array.from({ length: lives }).map((_, i) => (
                             <Heart key={i} className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0" />
