@@ -2,9 +2,9 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area, Line } from 'recharts';
+import { AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area, Line, Dot } from 'recharts';
 import { Trade, BalanceAddition, Withdrawal } from '@/lib/types';
-import { format, subDays, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { format, subDays, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface PerformanceChartsProps {
@@ -13,12 +13,26 @@ interface PerformanceChartsProps {
   withdrawals: Withdrawal[];
 }
 
+const CustomizedDot = (props: any) => {
+    const { cx, cy, stroke, payload, value } = props;
+  
+    if (payload.recarga) {
+      return (
+        <svg x={cx - 8} y={cy - 8} width={16} height={16} fill="hsl(var(--accent))" viewBox="0 0 1024 1024">
+            <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 704c-141.4 0-256-114.6-256-256s114.6-256 256-256 256 114.6 256 256-114.6 256-256 256z"/>
+        </svg>
+      );
+    }
+  
+    return null;
+  };
+
 const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAdditions, withdrawals }) => {
 
   const performanceData = useMemo(() => {
     const allActivities = [
       ...trades.map(t => ({ date: new Date(t.date), amount: t.profit })),
-      ...balanceAdditions.map(b => ({ date: new Date(b.date), amount: b.amount })),
+      ...balanceAdditions.map(b => ({ date: new Date(b.date), amount: b.amount, type: 'balance' })),
       ...withdrawals.map(w => ({ date: new Date(w.date), amount: -w.amount })),
     ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -30,31 +44,56 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
 
     let cumulativeBalance = 0;
     const dailyBalances: { [key: string]: number } = {};
+    const rechargeDays = new Set<string>();
+
+    balanceAdditions.forEach(b => {
+        rechargeDays.add(format(new Date(b.date), 'yyyy-MM-dd'));
+    });
 
     allActivities.forEach(activity => {
-        cumulativeBalance += activity.amount;
         const dayKey = format(activity.date, 'yyyy-MM-dd');
-        dailyBalances[dayKey] = cumulativeBalance;
+        // We calculate cumulative balance for each activity, not for each day
+        cumulativeBalance += activity.amount;
+        dailyBalances[dayKey] = cumulativeBalance; // Overwrite to get the last balance of the day
     });
     
     let lastKnownBalance = 0;
     return dateRange.map(date => {
         const dayKey = format(date, 'yyyy-MM-dd');
-        if (dailyBalances[dayKey]) {
-            lastKnownBalance = dailyBalances[dayKey];
-        }
         
-        // Simulate "last month" data by offsetting and adding some noise
-        const fakeLastMonthBalance = lastKnownBalance * (0.8 + Math.random() * 0.3);
+        let activitiesOnThisDay = allActivities.filter(a => isSameDay(a.date, date));
+        
+        if (activitiesOnThisDay.length === 0) {
+            // No activity, carry over last balance
+        } else {
+            // Find the balance at the END of this day by re-calculating up to it
+            let tempBalance = 0;
+            for(const act of allActivities) {
+                if(act.date <= endOfDay(date)) {
+                    tempBalance += act.amount;
+                } else {
+                    break;
+                }
+            }
+            lastKnownBalance = tempBalance;
+        }
+
+        const isRechargeDay = rechargeDays.has(dayKey);
 
         return {
             date: format(date, 'dd MMM'),
             "Balance Actual": lastKnownBalance,
-            "Balance Mes Anterior": fakeLastMonthBalance
+            recarga: isRechargeDay ? lastKnownBalance : null,
         };
     });
 
   }, [trades, balanceAdditions, withdrawals]);
+
+  const endOfDay = (date: Date) => {
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      return end;
+  }
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -67,10 +106,13 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const value = payload[0].value;
+      const balanceValue = payload.find(p => p.dataKey === "Balance Actual")?.value;
+      
+      if (balanceValue === undefined) return null;
+
       return (
         <div className="p-2 bg-background/90 backdrop-blur-sm border rounded-md shadow-lg">
-          <p className="font-bold text-lg">{formatCurrency(value)}</p>
+          <p className="font-bold text-lg">{formatCurrency(balanceValue)}</p>
           <p className="text-sm text-muted-foreground">{label}</p>
         </div>
       );
@@ -120,10 +162,6 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
                     align="right" 
                     iconType="circle"
                     wrapperStyle={{ paddingBottom: '20px' }}
-                    formatter={(value, entry) => {
-                        const color = entry.color === '#ccc' ? 'text-muted-foreground' : 'text-primary';
-                        return <span className={color}>{value}</span>
-                    }}
                 />
                 <Area 
                     type="monotone" 
@@ -134,13 +172,14 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
                     dot={false}
                     activeDot={{ r: 6, strokeWidth: 2, fill: 'hsl(var(--background))', stroke: 'hsl(var(--primary))' }}
                 />
-                 <Line
+                 <Area
                     type="monotone"
-                    dataKey="Balance Mes Anterior"
-                    stroke="#ccc"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={false}
+                    dataKey="recarga"
+                    stroke="none"
+                    fill="none"
+                    dot={<CustomizedDot />}
+                    activeDot={false}
+                    legendType="none"
                  />
                 </AreaChart>
             </ResponsiveContainer>
