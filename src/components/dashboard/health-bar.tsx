@@ -69,7 +69,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 <span className="font-bold text-sm">{playerClass}</span>
             </div>
 
-            <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="overflow-x-auto flex-1">
                     <div className="flex items-center gap-1">
                         {Array.from({ length: lives }).map((_, i) => (
