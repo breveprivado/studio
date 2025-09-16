@@ -470,7 +470,7 @@ export default function DashboardPage() {
           </header>
 
           <main className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-start">
                   <Card className="bg-card lg:col-span-1">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
@@ -498,7 +498,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas</p>
                       </CardContent>
                   </Card>
-                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                       <PlayerStatusCard 
                         playerClass={playerStats.class} 
