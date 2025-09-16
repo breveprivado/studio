@@ -13,7 +13,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Creature } from '@/lib/types';
-import { Button } from '../ui/button';
 
 interface CompoundInterestTableProps {
     creatures: Creature[];
@@ -24,9 +23,9 @@ interface CompoundInterestTableProps {
 const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures, initialBalance, onBalanceChange }) => {
     const [gainPercentage, setGainPercentage] = useState(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('ci_gainPercentage') || '0.86';
+            return localStorage.getItem('ci_gainPercentage') || '80';
         }
-        return '0.86';
+        return '80';
     });
     const [exchangeRate, setExchangeRate] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -73,38 +72,41 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 
         let data = [];
         let accumulatedGain = 0;
+        let escalerasCapital = balance;
         
         const sortedCreatures = [...creatures].sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
         for (let i = 1; i <= 17; i++) {
-            const currentCapital = balance + accumulatedGain;
-            const rawGain = currentCapital * percentage;
+            const gananciaCruda = escalerasCapital * percentage;
+            const gananciaTotalAcumulada = accumulatedGain + gananciaCruda;
             
-            const percentageSoFar = ((currentCapital + rawGain) / balance - 1) * 100;
             const creature = sortedCreatures[i - 1];
             const creatureName = creature?.name || `Bestia #${i}`;
-
-            accumulatedGain += rawGain;
-
-
+            
             data.push({
                 level: i,
                 name: creatureName,
-                percentage: `${percentageSoFar.toFixed(2)}%`,
-                rawGain: rawGain.toFixed(2),
-                totalGain: (balance + accumulatedGain).toFixed(2),
-                gainPerStep: accumulatedGain.toFixed(2),
-                gainInCOP: (accumulatedGain * rate).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+                escaleras: escalerasCapital,
+                gananciaCruda: gananciaCruda,
+                gananciaTotal: gananciaTotalAcumulada,
+                gananciaEnCOP: (gananciaTotalAcumulada * rate),
             });
+
+            escalerasCapital += gananciaCruda;
+            accumulatedGain = gananciaTotalAcumulada;
         }
 
         return data;
     }, [initialBalance, gainPercentage, exchangeRate, creatures]);
 
-    const formatNumber = (value: string) => {
-        const num = parseFloat(value);
-        if (isNaN(num)) return '0,00';
-        return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatNumber = (value: number, digits = 2) => {
+        if (isNaN(value)) return '0,00';
+        return value.toLocaleString('es-CO', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
+    
+    const formatInteger = (value: number) => {
+        if (isNaN(value)) return '0';
+        return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
     return (
@@ -123,13 +125,13 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                         />
                     </div>
                     <div>
-                        <Label htmlFor="gain-percentage">Ganancia por Op. (%)</Label>
+                        <Label htmlFor="gain-percentage">Ganancia (%)</Label>
                         <Input
                             id="gain-percentage"
                             type="number"
                             value={gainPercentage}
                             onChange={(e) => setGainPercentage(e.target.value)}
-                            placeholder="0.86"
+                            placeholder="80"
                         />
                     </div>
                     <div>
@@ -148,10 +150,9 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="text-center">Nivel Bestia</TableHead>
-                                <TableHead className="text-center">Balance Total ($)</TableHead>
-                                <TableHead className="text-center">% Acumulado</TableHead>
-                                <TableHead className="text-center">Ganancia cruda ($)</TableHead>
+                                <TableHead className="text-center">Total Bestias</TableHead>
+                                <TableHead className="text-center">Escaleras</TableHead>
+                                <TableHead className="text-center">Ganancia Cruda</TableHead>
                                 <TableHead className="text-center">GANANCIA POR ESCALERA ($)</TableHead>
                                 <TableHead className="text-center">GANANCIA EN COP</TableHead>
                             </TableRow>
@@ -159,16 +160,11 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                         <TableBody>
                             {interestData.map((row) => (
                                 <TableRow key={row.level} className={row.level <= 6 ? 'bg-amber-50 dark:bg-amber-950/50' : ''}>
-                                    <TableCell className="text-center font-medium">
-                                       <div className="flex items-center justify-center gap-2">
-                                            <span>{row.name}</span>
-                                       </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">{formatNumber(row.totalGain)}</TableCell>
-                                    <TableCell className="text-center">{row.percentage}</TableCell>
-                                    <TableCell className="text-center">{formatNumber(row.rawGain)}</TableCell>
-                                    <TableCell className={`text-center font-bold ${row.level <= 11 ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-emerald-200 dark:bg-emerald-800/50'}`}>$ {formatNumber(row.gainPerStep)}</TableCell>
-                                    <TableCell className={`text-center font-bold ${row.level <= 8 ? 'bg-amber-200 dark:bg-amber-700/40' : 'bg-orange-300 dark:bg-orange-700/50'}`}>$ {row.gainInCOP}</TableCell>
+                                    <TableCell className="text-center font-medium">{row.name}</TableCell>
+                                    <TableCell className="text-center">{formatNumber(row.escaleras)}</TableCell>
+                                    <TableCell className="text-center">{formatNumber(row.gananciaCruda, 5)}</TableCell>
+                                    <TableCell className={`text-center font-bold ${row.level <= 11 ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-emerald-200 dark:bg-emerald-800/50'}`}>$ {formatNumber(row.gananciaTotal)}</TableCell>
+                                    <TableCell className={`text-center font-bold ${row.level <= 8 ? 'bg-amber-200 dark:bg-amber-700/40' : 'bg-orange-300 dark:bg-orange-700/50'}`}>$ {formatInteger(row.gananciaEnCOP)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
