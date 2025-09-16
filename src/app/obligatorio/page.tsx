@@ -30,18 +30,19 @@ interface MandatoryRule {
 
 const defaultMandatoryItems: { [key: string]: MandatoryRule[] } = {
   trading: [
-    { id: 't1', text: "Seguir el plan de trading sin desviaciones emocionales.", description: "", imageUrl: null },
-    { id: 't2', text: "Respetar el Stop Loss una vez establecido. No moverlo en contra.", description: "", imageUrl: null },
-    { id: 't3', text: "No sobre-apalancarse. Gestionar el riesgo en cada operación.", description: "", imageUrl: null },
-    { id: 't4', text: "Analizar el mercado antes de entrar, no durante la operación.", description: "", imageUrl: null },
-    { id: 't5', text: "Aceptar las pérdidas como parte del negocio y aprender de ellas.", description: "", imageUrl: null },
+    { id: 't1', text: "Seguir el plan de trading sin desviaciones emocionales.", description: "La disciplina emocional es la clave. Ejecuta tu plan sin dudar y sin dejar que el miedo o la codicia tomen el control.", imageUrl: null },
+    { id: 't2', text: "Respetar el Stop Loss una vez establecido. No moverlo en contra.", description: "Tu Stop Loss es tu escudo. Confía en tu análisis inicial y acepta la pérdida si el mercado va en tu contra. Moverlo solo aumenta el riesgo.", imageUrl: null },
+    { id: 't3', text: "No sobre-apalancarse. Gestionar el riesgo en cada operación.", description: "El apalancamiento es un arma de doble filo. Usa un tamaño de lote que te permita sobrevivir a una racha de pérdidas sin destruir tu cuenta.", imageUrl: null },
+    { id: 't4', text: "Analizar el mercado antes de entrar, no durante la operación.", description: "La claridad mental se obtiene fuera del mercado. Una vez dentro, tu único trabajo es gestionar la operación, no re-analizarla.", imageUrl: null },
+    { id: 't5', text: "Aceptar las pérdidas como parte del negocio y aprender de ellas.", description: "Cada pérdida es una lección pagada. No te castigues por ella; en su lugar, extráele la sabiduría que te ofrece para mejorar.", imageUrl: null },
+    { id: 't6', text: "Revisar operaciones pasadas para mejorar.", description: "Tu historial es tu mejor maestro. Analiza tanto tus victorias como tus derrotas para encontrar patrones, refinar tu estrategia y crecer como trader.", imageUrl: null },
   ],
   personaje: [
-    { id: 'p1', text: "Mantener la disciplina dentro y fuera del mercado.", description: "", imageUrl: null },
-    { id: 'p2', text: "Estudiar constantemente y buscar la mejora continua.", description: "", imageUrl: null },
-    { id: 'p3', text: "Tener paciencia y esperar las oportunidades correctas.", description: "", imageUrl: null },
-    { id: 'p4', text: "Cuidar la salud física y mental para un rendimiento óptimo.", description: "", imageUrl: null },
-    { id: 'p5', text: "Ser humilde en las ganancias y resiliente en las pérdidas.", description: "", imageUrl: null },
+    { id: 'p1', text: "Mantener la disciplina dentro y fuera del mercado.", description: "La disciplina es un músculo. Lo que haces en tu vida diaria (ejercicio, dieta, hábitos) se refleja directamente en tu rendimiento frente a las pantallas.", imageUrl: null },
+    { id: 'p2', text: "Estudiar constantemente y buscar la mejora continua.", description: "El mercado está en constante evolución, y tú también debes estarlo. Dedica tiempo a aprender, leer y mantener tu mente afilada.", imageUrl: null },
+    { id: 'p3', text: "Tener paciencia y esperar las oportunidades correctas.", description: "Ser un trader rentable no significa operar todo el tiempo. Significa esperar con la paciencia de un cazador el momento exacto para actuar.", imageUrl: null },
+    { id: 'p4', text: "Cuidar la salud física y mental para un rendimiento óptimo.", description: "Un cuerpo y una mente sanos son tus mayores activos. Duerme bien, come bien y gestiona el estrés para tomar decisiones claras y objetivas.", imageUrl: null },
+    { id: 'p5', text: "Ser humilde en las ganancias y resiliente en las pérdidas.", description: "Ni una victoria te hace un genio, ni una pérdida te hace un fracasado. Mantén el equilibrio emocional y enfócate en el proceso, no en el resultado individual.", imageUrl: null },
   ],
 };
 
