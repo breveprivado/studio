@@ -29,6 +29,12 @@ const CustomizedDot = (props: any) => {
 
 const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAdditions, withdrawals }) => {
 
+  const endOfDay = (date: Date) => {
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      return end;
+  }
+
   const performanceData = useMemo(() => {
     const allActivities = [
       ...trades.map(t => ({ date: new Date(t.date), amount: t.profit })),
@@ -88,12 +94,6 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
     });
 
   }, [trades, balanceAdditions, withdrawals]);
-
-  const endOfDay = (date: Date) => {
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
-      return end;
-  }
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
