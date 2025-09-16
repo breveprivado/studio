@@ -486,6 +486,13 @@ export default function DashboardPage() {
           </header>
 
           <main className="space-y-6">
+              <PlayerStatusCard 
+                playerClass={playerStats.class} 
+                lives={dailyHealth.lives} 
+                onReset={handleResetLives}
+                onAddLife={handleAddLife}
+                onRemoveLife={handleRemoveLife}
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
                   <Card className="bg-card lg:col-span-1">
                       <CardHeader className="p-4 pb-2">
@@ -517,15 +524,6 @@ export default function DashboardPage() {
                   <div className="lg:col-span-1">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                   </div>
-                   <div className="lg:col-span-4">
-                        <PlayerStatusCard 
-                            playerClass={playerStats.class} 
-                            lives={dailyHealth.lives} 
-                            onReset={handleResetLives}
-                            onAddLife={handleAddLife}
-                            onRemoveLife={handleRemoveLife}
-                        />
-                   </div>
               </div>
               
               <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
@@ -554,3 +552,4 @@ export default function DashboardPage() {
     
 
     
+
