@@ -80,16 +80,14 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-                 <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="h-8 w-8 text-amber-400" />
-                        <span className="text-2xl font-bold">Nivel {level}</span>
-                    </div>
-                    <div className="flex-1 space-y-1 min-w-0">
-                        <Progress value={progressPercentage} />
-                        <div className="text-center text-xs text-muted-foreground">
-                            <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
-                        </div>
+                <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="h-8 w-8 text-amber-400" />
+                    <span className="text-2xl font-bold">Nivel {level}</span>
+                </div>
+                <div className="space-y-1">
+                    <Progress value={progressPercentage} />
+                    <div className="text-center text-xs text-muted-foreground">
+                        <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
                     </div>
                 </div>
             </CardContent>
@@ -535,3 +533,6 @@ export default function DashboardPage() {
     </>
   );
 }
+
+
+    
