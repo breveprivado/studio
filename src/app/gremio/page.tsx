@@ -19,27 +19,58 @@ const guildData = {
   invitees: [
     {
       name: 'Sombra_Rys',
-      level: 98,
+      level: 110,
       role: 'Miembro',
       avatar: '/avatars/02.png',
       class: 'Espadachín',
       invitees: [
-        { name: 'Kael', level: 92, role: 'Miembro', avatar: '/avatars/05.png', class: 'Invocador', invitees: [] },
-        { name: 'Zephyr', level: 85, role: 'Miembro', avatar: '/avatars/04.png', class: 'Espadachín', invitees: [] },
+        { name: 'Kael', level: 92, role: 'Miembro', avatar: '/avatars/05.png', class: 'Invocador', invitees: [
+          { name: 'Riven', level: 88, role: 'Miembro', avatar: '/avatars/11.png', class: 'Espadachín', invitees: [] },
+          { name: 'Lyra', level: 85, role: 'Miembro', avatar: '/avatars/12.png', class: 'Arquero', invitees: [] }
+        ] },
+        { name: 'Zephyr', level: 85, role: 'Miembro', avatar: '/avatars/04.png', class: 'Espadachín', invitees: [
+          { name: 'Gale', level: 80, role: 'Miembro', avatar: '/avatars/13.png', class: 'Mago', invitees: [] }
+        ] },
       ]
     },
     {
       name: 'Aetheria',
-      level: 110,
+      level: 115,
       role: 'Miembro',
       avatar: '/avatars/03.png',
       class: 'Arquero',
-      invitees: []
+      invitees: [
+        { name: 'Ignis', level: 99, role: 'Miembro', avatar: '/avatars/06.png', class: 'Mago', invitees: [] },
+        { name: 'Terra', level: 95, role: 'Miembro', avatar: '/avatars/07.png', class: 'Clérigo', invitees: [
+           { name: 'Fulgur', level: 90, role: 'Miembro', avatar: '/avatars/14.png', class: 'Pícaro', invitees: [] },
+           { name: 'Lux', level: 89, role: 'Miembro', avatar: '/avatars/15.png', class: 'Invocador', invitees: [] }
+        ] }
+      ]
     },
+    {
+        name: 'IronHeart',
+        level: 105,
+        role: 'Miembro',
+        avatar: '/avatars/08.png',
+        class: 'Bárbaro',
+        invitees: [
+          { name: 'Vortex', level: 98, role: 'Miembro', avatar: '/avatars/09.png', class: 'Pícaro', invitees: [
+            { name: 'Cinder', level: 91, role: 'Miembro', avatar: '/avatars/16.png', class: 'Mago', invitees: [] }
+          ] },
+          { name: 'Nyx', level: 96, role: 'Miembro', avatar: '/avatars/10.png', class: 'Espadachín', invitees: [] },
+        ]
+    }
   ]
 };
 
-type Member = typeof guildData;
+type Member = {
+  name: string;
+  level: number;
+  role: 'Líder' | 'Miembro';
+  avatar: string;
+  class: string;
+  invitees: Member[];
+};
 
 const MemberCard = ({ member, isChild }: { member: Member, isChild?: boolean }) => {
     const isLeader = member.role === 'Líder';
@@ -88,7 +119,7 @@ const ReferralTree = ({ member }: { member: Member }) => {
                     {/* Vertical line down */}
                     <div className="w-px h-8 bg-border" />
                     {/* Horizontal line across */}
-                    <div className="w-1/2 h-px bg-border" />
+                    {member.invitees.length > 1 && <div className="w-1/2 h-px bg-border" />}
                     <div className="flex justify-center gap-8 md:gap-16">
                         {member.invitees.map((invitee, index) => (
                              <div key={index} className="flex flex-col items-center relative">
