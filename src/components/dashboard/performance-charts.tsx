@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area, Line, Dot } from 'recharts';
 import { Trade, BalanceAddition, Withdrawal } from '@/lib/types';
-import { format, subDays, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, startOfDay } from 'date-fns';
+import { format, subDays, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface PerformanceChartsProps {
@@ -29,16 +29,10 @@ const CustomizedDot = (props: any) => {
 
 const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAdditions, withdrawals }) => {
 
-  const endOfDay = (date: Date) => {
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
-      return end;
-  }
-
   const performanceData = useMemo(() => {
     const allActivities = [
       ...trades.map(t => ({ date: new Date(t.date), amount: t.profit })),
-      ...balanceAdditions.map(b => ({ date: new Date(b.date), amount: b.amount, type: 'balance' })),
+      ...balanceAdditions.map(b => ({ date: new Date(b.date), amount: b.amount, type: 'balance' as const })),
       ...withdrawals.map(w => ({ date: new Date(w.date), amount: -w.amount })),
     ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -46,50 +40,27 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
     
     const startDate = allActivities[0].date;
     const endDate = new Date();
-    const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+    const dateRange = eachDayOfInterval({ start: startOfDay(startDate), end: startOfDay(endDate) });
 
-    let cumulativeBalance = 0;
-    const dailyBalances: { [key: string]: number } = {};
     const rechargeDays = new Set<string>();
-
     balanceAdditions.forEach(b => {
         rechargeDays.add(format(new Date(b.date), 'yyyy-MM-dd'));
     });
 
-    allActivities.forEach(activity => {
-        const dayKey = format(activity.date, 'yyyy-MM-dd');
-        // We calculate cumulative balance for each activity, not for each day
-        cumulativeBalance += activity.amount;
-        dailyBalances[dayKey] = cumulativeBalance; // Overwrite to get the last balance of the day
-    });
-    
-    let lastKnownBalance = 0;
     return dateRange.map(date => {
-        const dayKey = format(date, 'yyyy-MM-dd');
+        const endOfCurrentDay = endOfDay(date);
         
-        let activitiesOnThisDay = allActivities.filter(a => isSameDay(a.date, date));
-        
-        if (activitiesOnThisDay.length === 0) {
-            // No activity, carry over last balance
-        } else {
-            // Find the balance at the END of this day by re-calculating up to it
-            let tempBalance = 0;
-            for(const act of allActivities) {
-                if(act.date <= endOfDay(date)) {
-                    tempBalance += act.amount;
-                } else {
-                    break;
-                }
-            }
-            lastKnownBalance = tempBalance;
-        }
+        const balanceAtEndOfDay = allActivities
+            .filter(activity => activity.date <= endOfCurrentDay)
+            .reduce((acc, activity) => acc + activity.amount, 0);
 
+        const dayKey = format(date, 'yyyy-MM-dd');
         const isRechargeDay = rechargeDays.has(dayKey);
 
         return {
             date: format(date, 'dd MMM'),
-            "Balance Actual": lastKnownBalance,
-            recarga: isRechargeDay ? lastKnownBalance : null,
+            "Balance Actual": balanceAtEndOfDay,
+            recarga: isRechargeDay ? balanceAtEndOfDay : null,
         };
     });
 
