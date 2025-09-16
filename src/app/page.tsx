@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
@@ -41,6 +41,7 @@ import PlayerStatusCard from '@/components/dashboard/health-bar';
 import WorstStrategyPerformance from '@/components/dashboard/worst-strategy-performance';
 import WorstPairAssertiveness from '@/components/dashboard/worst-pair-assertiveness';
 import PrideVsWorstTrades from '@/components/dashboard/pride-vs-worst-trades';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -168,8 +169,6 @@ export default function DashboardPage() {
     if (!stats.class) {
         stats.class = 'Nigromante';
     }
-    // Don't set player stats from storage directly, wait for recalculation.
-    // setPlayerStats(stats);
     
     const storedHealth = localStorage.getItem('dailyHealth');
     if (storedHealth) {
@@ -188,7 +187,6 @@ export default function DashboardPage() {
         localStorage.setItem('data_initialized', 'true');
     }
 
-    // --- XP RECALCULATION ---
     recalculateAndSetXp(currentTrades, currentCreatures, stats);
   };
 
@@ -221,10 +219,8 @@ export default function DashboardPage() {
           const ratedDays = entries.filter((e) => e.rating === 3 || e.rating === 5);
           const ratedDaysCount = ratedDays.length;
 
-          // Grant XP for each survival day
           totalXp += ratedDaysCount * XP_PER_SURVIVAL_DAY;
 
-          // Grant XP for milestone missions
           Object.values(levelMilestones).forEach(milestone => {
             if (ratedDaysCount >= milestone) {
                 totalXp += XP_PER_SURVIVAL_MISSION;
@@ -262,13 +258,13 @@ export default function DashboardPage() {
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
-    let xpGained = 0;
+    let xpChange = 0;
     let toastMessage = "";
     let finalToastTitle = "";
 
     if (trade.status === 'loss') {
-        xpGained -= XP_PENALTY_PER_LOSS;
-        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`;
+        xpChange = -XP_PENALTY_PER_LOSS;
+        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta derrota.`;
 
         if (dailyHealth.lives > 0) {
             handleRemoveLife();
@@ -278,6 +274,12 @@ export default function DashboardPage() {
                 variant: "destructive"
             })
         }
+    } else if (trade.status === 'win' && trade.creatureId) {
+        const baseCreatureXp = getXpForCreature(trade.creatureId);
+        xpChange += baseCreatureXp;
+        
+        const creatureName = creatures.find(c => c.id === trade.creatureId)?.name || 'una bestia';
+        toastMessage = `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`;
     }
 
     if (trade.creatureId) {
@@ -295,19 +297,12 @@ export default function DashboardPage() {
         });
         setCreatures(updatedCreatures);
         localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
-        
-        // ONLY grant XP for creature if it was NOT a loss
-        if (trade.status === 'win') {
-            const baseCreatureXp = getXpForCreature(trade.creatureId);
-            xpGained += baseCreatureXp;
-            toastMessage += ` Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`;
-        }
 
         const newEncounterCount = oldEncounterCount + 1;
         const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
 
         if (unlockedTier) {
-            xpGained += XP_PER_HUNTING_MISSION;
+            xpChange += XP_PER_HUNTING_MISSION;
             toast({
                 title: "¡Misión de Caza Completada!",
                 description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
@@ -315,20 +310,20 @@ export default function DashboardPage() {
         }
     }
 
-    if (xpGained !== 0) {
+    if (xpChange !== 0) {
         setPlayerStats(prevStats => {
-            const newXp = (prevStats.xp || 0) + xpGained;
+            const newXp = (prevStats.xp || 0) + xpChange;
             const newPlayerStats = { ...prevStats, xp: newXp };
             localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
             return newPlayerStats;
         });
 
         if (toastMessage) {
-            finalToastTitle = xpGained > 0 ? "¡XP Ganada!" : "¡Penalización de XP!";
+            finalToastTitle = xpChange > 0 ? "¡XP Ganada!" : "¡Penalización de XP!";
             toast({
                 title: finalToastTitle,
                 description: toastMessage.trim(),
-                variant: xpGained > 0 ? "default" : "destructive"
+                variant: xpChange > 0 ? "default" : "destructive"
             });
         }
     }
@@ -408,15 +403,21 @@ export default function DashboardPage() {
     return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [trades, withdrawals, balanceAdditions]);
 
-  const { gains, losses, netProfit } = useMemo(() => {
+  const { gains, losses, netProfit, totalLossesCount, totalXpLost } = useMemo(() => {
     const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
     const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
     const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
     const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
     const totalBalanceAdditions = balanceAdditions.reduce((acc, b) => acc + b.amount, 0);
     const netProfit = totalBalanceAdditions + gains + losses - totalWithdrawals;
-    return { gains, losses, netProfit };
-  }, [filteredTrades, withdrawals, balanceAdditions]);
+    
+    // Calculate total losses for the new card
+    const allTimeLosses = trades.filter(t => t.status === 'loss');
+    const totalLossesCount = allTimeLosses.length;
+    const totalXpLost = totalLossesCount * XP_PENALTY_PER_LOSS;
+
+    return { gains, losses, netProfit, totalLossesCount, totalXpLost };
+  }, [filteredTrades, trades, withdrawals, balanceAdditions]);
 
   const formatCurrency = (value: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
@@ -646,6 +647,31 @@ export default function DashboardPage() {
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                   </div>
               </div>
+
+              <Card>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1" className="border-b-0">
+                      <AccordionTrigger className="p-6">
+                          <div className="flex items-center">
+                              <ShieldOff className="h-6 w-6 text-destructive mr-3" />
+                              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Análisis de Pérdidas Totales</h2>
+                          </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6">
+                          <div className="space-y-2 rounded-lg bg-muted p-4">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">Total de Operaciones Perdidas:</span>
+                              <span className="font-bold text-lg">{totalLossesCount}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">Total de XP Perdida:</span>
+                              <span className="font-bold text-lg text-red-500">-{totalXpLost.toLocaleString()} XP</span>
+                            </div>
+                          </div>
+                      </AccordionContent>
+                  </AccordionItem>
+              </Accordion>
+              </Card>
               
               <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
               
@@ -677,6 +703,8 @@ export default function DashboardPage() {
   );
 }
 
+
+    
 
     
 
