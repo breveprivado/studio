@@ -66,7 +66,7 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onSel
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:underline flex items-center gap-2">
             {trade.pair}
-            {isWin && huntedCreature && (
+            {huntedCreature && (
                 <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400">
                     <Target className="h-3 w-3" />
                     {huntedCreature.name}
