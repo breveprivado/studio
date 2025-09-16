@@ -70,11 +70,13 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
             </div>
 
             <div className="flex-1 flex justify-end items-center gap-2 min-w-0">
-                <div className="flex items-center gap-1 flex-wrap justify-end">
-                    {Array.from({ length: lives }).map((_, i) => (
-                        <Heart key={i} className="h-5 w-5 text-red-500 fill-red-500" />
-                    ))}
-                    {lives === 0 && <span className="text-xs text-muted-foreground">Sin vidas</span>}
+                <div className="overflow-x-auto flex-1">
+                    <div className="flex items-center gap-1 justify-end">
+                        {Array.from({ length: lives }).map((_, i) => (
+                            <Heart key={i} className="h-5 w-5 text-red-500 fill-red-500 flex-shrink-0" />
+                        ))}
+                        {lives === 0 && <span className="text-xs text-muted-foreground">Sin vidas</span>}
+                    </div>
                 </div>
                 <div className="flex flex-col gap-1">
                     <Button variant="ghost" size="icon" onClick={onAddLife} className="h-6 w-6">
