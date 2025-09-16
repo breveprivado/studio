@@ -57,24 +57,24 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="flex justify-between items-center gap-4">
-            <div className="flex flex-col items-center justify-center space-y-1">
-                <div className="relative w-16 h-[72px] mx-auto animate-pulse-slow" style={{ animationDuration: '4s' }}>
+            <div className="flex items-center gap-2">
+                <div className="relative w-12 h-[54px]">
                     <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
                         <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Skull className="h-8 w-8 text-foreground mx-auto" />
+                        <Skull className="h-6 w-6 text-foreground" />
                     </div>
                 </div>
                 <span className="font-bold text-sm">{playerClass}</span>
             </div>
 
-            <div className="flex-1 flex flex-col items-center">
-                <div className="flex items-center gap-1 flex-wrap justify-center mb-2">
+            <div className="flex-1 flex flex-col items-end">
+                <div className="flex items-center gap-1 flex-wrap justify-end mb-1">
                     {Array.from({ length: lives }).map((_, i) => (
-                        <Heart key={i} className="h-6 w-6 text-red-500 fill-red-500" />
+                        <Heart key={i} className="h-5 w-5 text-red-500 fill-red-500" />
                     ))}
-                    {lives === 0 && <span className="text-sm text-muted-foreground">Sin vidas</span>}
+                    {lives === 0 && <span className="text-xs text-muted-foreground">Sin vidas</span>}
                 </div>
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-7 w-7">

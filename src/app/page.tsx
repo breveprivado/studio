@@ -79,14 +79,18 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
                     </AlertDialog>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 p-4 pt-0">
-                <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold">Nivel {level}</span>
-                    <Trophy className="h-8 w-8 text-amber-400" />
-                </div>
-                <Progress value={progressPercentage} />
-                <div className="text-center text-xs text-muted-foreground">
-                    <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
+            <CardContent className="p-4 pt-0">
+                 <div className="flex justify-between items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="h-8 w-8 text-amber-400" />
+                        <span className="text-2xl font-bold">Nivel {level}</span>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <Progress value={progressPercentage} />
+                        <div className="text-center text-xs text-muted-foreground">
+                            <p>{xp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -96,10 +100,10 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [creatures, setCreatures] = useState<Creature[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
-  const [creatures, setCreatures] = useState<Creature[]>([]);
   const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
