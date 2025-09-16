@@ -281,6 +281,30 @@ export default function DashboardPage() {
     });
   };
 
+  const handleUpdateWithdrawal = (withdrawalId: string, updatedData: Partial<Withdrawal>) => {
+    const updatedWithdrawals = withdrawals.map(w => 
+      w.id === withdrawalId ? { ...w, ...updatedData } : w
+    );
+    setWithdrawals(updatedWithdrawals);
+    localStorage.setItem('withdrawals', JSON.stringify(updatedWithdrawals));
+    toast({
+      title: "Retiro Actualizado",
+      description: "La fecha del retiro ha sido modificada."
+    });
+  };
+
+  const handleUpdateBalance = (balanceId: string, updatedData: Partial<BalanceAddition>) => {
+    const updatedBalances = balanceAdditions.map(b => 
+      b.id === balanceId ? { ...b, ...updatedData } : b
+    );
+    setBalanceAdditions(updatedBalances);
+    localStorage.setItem('balanceAdditions', JSON.stringify(updatedBalances));
+    toast({
+      title: "Depósito Actualizado",
+      description: "La fecha del depósito ha sido modificada."
+    });
+  };
+
 
   const filteredTrades = useMemo(() => {
     return trades.filter(trade => {
@@ -535,7 +559,7 @@ export default function DashboardPage() {
               
               <DailyPerformance trades={filteredTrades} />
 
-              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onDeleteBalance={handleDeleteBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
           </main>
       </div>

@@ -4,14 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Trash2, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import DateEditor from './date-editor';
 
 interface BalanceItemProps {
   balance: BalanceAddition;
   onDelete: (id: string) => void;
+  onUpdate: (id: string, updatedData: Partial<BalanceAddition>) => void;
   formatCurrency: (value: number) => string;
 }
 
-const BalanceItem: React.FC<BalanceItemProps> = ({ balance, onDelete, formatCurrency }) => {
+const BalanceItem: React.FC<BalanceItemProps> = ({ balance, onDelete, onUpdate, formatCurrency }) => {
+  
+  const handleDateUpdate = (newDate: Date) => {
+    const originalDate = new Date(balance.date);
+    newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+    onUpdate(balance.id, { date: newDate.toISOString() });
+  };
+  
   return (
     <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group bg-green-50/50 dark:bg-green-900/10">
       <div className="flex items-center space-x-4 flex-1 min-w-0">
@@ -24,7 +33,7 @@ const BalanceItem: React.FC<BalanceItemProps> = ({ balance, onDelete, formatCurr
             {balance.notes || 'Depósito de fondos'}
           </p>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            <span>{format(new Date(balance.date), 'dd MMM yyyy, HH:mm', { locale: es })}</span>
+             <DateEditor date={balance.date} onUpdate={handleDateUpdate} />
           </div>
         </div>
       </div>

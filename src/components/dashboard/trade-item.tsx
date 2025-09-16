@@ -5,6 +5,7 @@ import { TrendingUp, Trash2, Minus, Target, Pencil, Save, Trophy } from 'lucide-
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '../ui/input';
+import DateEditor from './date-editor';
 
 interface PairEditorProps {
   trade: Trade;
@@ -134,10 +135,16 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 
   const huntedCreature = trade.creatureId ? creatures.find(c => c.id === trade.creatureId) : null;
   
+  const handleDateUpdate = (newDate: Date) => {
+    const originalDate = new Date(trade.date);
+    newDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+    onUpdate(trade.id, { date: newDate.toISOString() });
+  };
+  
   return (
     <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
       <div 
-        className="flex items-center space-x-4 flex-1 min-w-0"
+        className="flex items-center space-x-4 flex-1 min-w-0 cursor-pointer"
         onClick={() => onSelect(trade)}
       >
         <div className={`p-2 rounded-full ${iconBgColor}`}>
@@ -158,7 +165,7 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
           </div>
 
           <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400 mt-1 flex-wrap">
-            <span>{format(new Date(trade.date), 'dd MMM yyyy, HH:mm', { locale: es })}</span>
+            <DateEditor date={trade.date} onUpdate={handleDateUpdate} />
              {trade.isPrideTrade && (
                 <>
                 <span>•</span>

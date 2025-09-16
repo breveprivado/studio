@@ -11,12 +11,25 @@ interface RecentTradesProps {
   onDeleteTrade: (id: string) => void;
   onUpdateTrade: (id: string, updatedData: Partial<Trade>) => void;
   onDeleteWithdrawal: (id: string) => void;
+  onUpdateWithdrawal: (id: string, updatedData: Partial<Withdrawal>) => void;
   onDeleteBalance: (id: string) => void;
+  onUpdateBalance: (id: string, updatedData: Partial<BalanceAddition>) => void;
   onSelectTrade: (trade: Trade) => void;
   formatCurrency: (value: number) => string;
 }
 
-const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDeleteTrade, onUpdateTrade, onDeleteWithdrawal, onDeleteBalance, onSelectTrade, formatCurrency }) => {
+const RecentTrades: React.FC<RecentTradesProps> = ({ 
+    activities, 
+    creatures, 
+    onDeleteTrade, 
+    onUpdateTrade, 
+    onDeleteWithdrawal,
+    onUpdateWithdrawal,
+    onDeleteBalance, 
+    onUpdateBalance,
+    onSelectTrade, 
+    formatCurrency 
+}) => {
   return (
     <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <CardHeader className="p-0 mb-4">
@@ -34,9 +47,9 @@ const RecentTrades: React.FC<RecentTradesProps> = ({ activities, creatures, onDe
               if (activity.type === 'trade') {
                 return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
               } else if (activity.type === 'withdrawal') {
-                return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} formatCurrency={formatCurrency} />
+                return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} onUpdate={onUpdateWithdrawal} formatCurrency={formatCurrency} />
               } else {
-                 return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} formatCurrency={formatCurrency} />
+                 return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} onUpdate={onUpdateBalance} formatCurrency={formatCurrency} />
               }
             })
           )}
