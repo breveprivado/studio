@@ -471,35 +471,33 @@ export default function DashboardPage() {
 
           <main className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                  <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <Card className="bg-card">
-                          <CardHeader className="p-4 pb-2">
-                              <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-0">
-                              <div className={cn("text-xl font-bold", netProfit >= 0 ? "text-green-500" : "text-red-500")}>{formatCurrency(netProfit)}</div>
-                              <p className="text-xs text-muted-foreground">{filteredTrades.length} operaciones</p>
-                          </CardContent>
-                      </Card>
-                      <Card className="bg-card">
-                          <CardHeader className="p-4 pb-2">
-                              <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-0">
-                              <div className="text-xl font-bold text-green-500">{formatCurrency(gains)}</div>
-                              <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
-                          </CardContent>
-                      </Card>
-                        <Card className="bg-card">
-                          <CardHeader className="p-4 pb-2">
-                              <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-0">
-                              <div className="text-xl font-bold text-red-500">{formatCurrency(Math.abs(losses))}</div>
-                              <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas</p>
-                          </CardContent>
-                      </Card>
-                  </div>
+                  <Card className="bg-card lg:col-span-1">
+                      <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                          <div className={cn("text-xl font-bold", netProfit >= 0 ? "text-green-500" : "text-red-500")}>{formatCurrency(netProfit)}</div>
+                          <p className="text-xs text-muted-foreground">{filteredTrades.length} operaciones</p>
+                      </CardContent>
+                  </Card>
+                  <Card className="bg-card lg:col-span-1">
+                      <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                          <div className="text-xl font-bold text-green-500">{formatCurrency(gains)}</div>
+                          <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
+                      </CardContent>
+                  </Card>
+                    <Card className="bg-card lg:col-span-1">
+                      <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                          <div className="text-xl font-bold text-red-500">{formatCurrency(Math.abs(losses))}</div>
+                          <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas</p>
+                      </CardContent>
+                  </Card>
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
                       <PlayerStatusCard 
