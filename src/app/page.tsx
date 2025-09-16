@@ -214,6 +214,20 @@ export default function DashboardPage() {
                 variant: "destructive"
             })
         }
+        
+        // XP Penalty for loss
+        const XP_PENALTY_PER_LOSS = 75;
+        setPlayerStats(prevStats => {
+            const newXp = (prevStats.xp || 0) - XP_PENALTY_PER_LOSS;
+            const newPlayerStats = { ...prevStats, xp: newXp };
+            localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+            return newPlayerStats;
+        });
+        toast({
+            title: "¡Penalización de XP!",
+            description: `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`,
+            variant: "destructive"
+        });
     }
 
     if (trade.creatureId) {
@@ -616,6 +630,8 @@ export default function DashboardPage() {
   );
 }
 
+
+    
 
     
 
