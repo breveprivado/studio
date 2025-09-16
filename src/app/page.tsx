@@ -207,8 +207,21 @@ export default function DashboardPage() {
 
     let xpGained = 0;
     let toastMessage = "";
+    let finalToastTitle = "";
 
+    const XP_PENALTY_PER_LOSS = 75;
+    const XP_PER_HUNTING_MISSION = 500;
+    const achievementTiers = [1, 5, 10, 25, 50, 100];
+
+    const getXpForCreature = (creatureId: string) => {
+        return (parseInt(creatureId, 10) / 17) * 50 + 10;
+    };
+
+    // Handle XP penalty for loss first
     if (trade.status === 'loss') {
+        xpGained -= XP_PENALTY_PER_LOSS;
+        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`;
+
         if (dailyHealth.lives > 0) {
             handleRemoveLife();
             toast({
@@ -217,42 +230,29 @@ export default function DashboardPage() {
                 variant: "destructive"
             })
         }
-        
-        const XP_PENALTY_PER_LOSS = 75;
-        xpGained -= XP_PENALTY_PER_LOSS;
-        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`;
     }
 
+    // Handle creature encounter
     if (trade.creatureId) {
-        const achievementTiers = [1, 5, 10, 25, 50, 100];
-        const XP_PER_HUNTING_MISSION = 500;
-        
         let creatureName = '';
         let oldEncounterCount = 0;
 
-        const getXpForCreature = (creatureId: string) => {
-          return (parseInt(creatureId, 10) / 17) * 50 + 10;
-        };
-        
-        setCreatures(currentCreatures => {
-            const updatedCreatures = currentCreatures.map(c => {
-                if (c.id === trade.creatureId) {
-                    creatureName = c.name;
-                    const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString(), status: trade.status };
-                    const encounters = c.encounters || [];
-                    oldEncounterCount = encounters.length;
-                    return {...c, encounters: [...encounters, newEncounter]};
-                }
-                return c;
-            });
-            localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
-            return updatedCreatures;
+        const updatedCreatures = creatures.map(c => {
+            if (c.id === trade.creatureId) {
+                creatureName = c.name;
+                const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString(), status: trade.status };
+                oldEncounterCount = c.encounters.length;
+                return {...c, encounters: [...c.encounters, newEncounter]};
+            }
+            return c;
         });
-
-        const baseCreatureXp = getXpForCreature(trade.creatureId);
-        xpGained += baseCreatureXp;
+        setCreatures(updatedCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
         
-        if(trade.status !== 'loss') {
+        // ONLY grant XP for creature if it was NOT a loss
+        if (trade.status !== 'loss') {
+            const baseCreatureXp = getXpForCreature(trade.creatureId);
+            xpGained += baseCreatureXp;
             toastMessage += ` Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`;
         }
 
@@ -275,10 +275,11 @@ export default function DashboardPage() {
             localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
             return newPlayerStats;
         });
-        
+
         if (toastMessage) {
-             toast({
-                title: xpGained > 0 ? "¡XP Ganada!" : "¡Penalización de XP!",
+            finalToastTitle = xpGained > 0 ? "¡XP Ganada!" : "¡Penalización de XP!";
+            toast({
+                title: finalToastTitle,
                 description: toastMessage.trim(),
                 variant: xpGained > 0 ? "default" : "destructive"
             });
