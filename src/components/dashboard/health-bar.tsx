@@ -38,7 +38,7 @@ const TradingIconMap: { [key: string]: React.ElementType } = {
   't6': BrainCircuit,
 };
 
-const PersonajeIconMap: { [key: string]: React.ElementType } = {
+const PersonajeIconMap: {  [key: string]: React.ElementType } = {
     'p1': Zap,
     'p2': BookUp,
     'p3': Hourglass,
@@ -57,6 +57,8 @@ interface PlayerStatusCardProps {
   onRemoveLife: () => void;
   playerClass: PlayerStats['class'];
 }
+
+const MAX_LIVES = 3;
 
 const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
   const [tradingSpells, setTradingSpells] = useState<MandatoryRule[]>([]);
@@ -98,7 +100,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                     {tradingSpells.map((spell, index) => {
                         const Icon = TradingIconMap[spell.id] || defaultTradingIcons[index % defaultTradingIcons.length] || ShieldQuestion;
                         return (
-                            <Dialog key={`trading-${spell.id}`}>
+                             <Dialog key={`trading-${spell.id}`}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <DialogTrigger asChild>
@@ -145,9 +147,31 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                     <div className="font-bold text-lg truncate">{playerClass}</div>
 
                     <div className="flex items-center gap-2">
-                        {Array.from({ length: lives }).map((_, i) => (
-                            <Heart key={i} className="h-6 w-6 text-red-500 fill-red-500 flex-shrink-0 animate-pulse-slow" />
-                        ))}
+                        {Array.from({ length: MAX_LIVES }).map((_, i) => {
+                            const isAlive = i < lives;
+                            if (isAlive) {
+                                return (
+                                    <Tooltip key={`life-${i}`}>
+                                        <TooltipTrigger>
+                                            <Heart className="h-6 w-6 text-red-500 fill-red-500 flex-shrink-0 animate-pulse-slow" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Vida activa</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            }
+                            return (
+                                <Tooltip key={`lost-life-${i}`}>
+                                    <TooltipTrigger>
+                                        <Heart className="h-6 w-6 text-red-500/50 flex-shrink-0" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Vida perdida</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            );
+                        })}
                         {lives === 0 && <span className="text-sm text-muted-foreground">Sin vidas</span>}
                     </div>
 
