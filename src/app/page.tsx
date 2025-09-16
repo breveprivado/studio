@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth } from '@/lib/types';
 import { initialTrades, initialCreatures } from '@/lib/data';
@@ -196,15 +196,15 @@ export default function DashboardPage() {
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
-    if (trade.status === 'loss' && dailyHealth.lives > 0) {
-        const newHealth = { lives: dailyHealth.lives - 1, date: new Date().toISOString() };
-        setDailyHealth(newHealth);
-        localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
-        toast({
-            title: "¡Vida Perdida!",
-            description: "Has perdido un corazón. ¡Ten cuidado!",
-            variant: "destructive"
-        })
+    if (trade.status === 'loss') {
+        if (dailyHealth.lives > 0) {
+            handleRemoveLife();
+            toast({
+                title: "¡Vida Perdida!",
+                description: "Has perdido un corazón. ¡Ten cuidado!",
+                variant: "destructive"
+            })
+        }
     }
 
     if (trade.creatureId) {
@@ -225,9 +225,7 @@ export default function DashboardPage() {
                     creatureName = c.name;
                     const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString(), status: trade.status };
                     const encounters = c.encounters || [];
-                    if (trade.status === 'win') {
-                        oldEncounterCount = encounters.filter(e => e.status === 'win').length;
-                    }
+                    oldEncounterCount = encounters.length;
                     return {...c, encounters: [...encounters, newEncounter]};
                 }
                 return c;
@@ -236,25 +234,23 @@ export default function DashboardPage() {
             return updatedCreatures;
         });
 
-        if (trade.status === 'win') {
-            const baseCreatureXp = getXpForCreature(trade.creatureId);
-            xpGained += baseCreatureXp;
-            
+        const baseCreatureXp = getXpForCreature(trade.creatureId);
+        xpGained += baseCreatureXp;
+        
+        toast({
+            title: `¡Bestia Enfrentada!`,
+            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`
+        });
+
+        const newEncounterCount = oldEncounterCount + 1;
+        const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
+
+        if (unlockedTier) {
+            xpGained += XP_PER_HUNTING_MISSION;
             toast({
-                title: "¡Bestia Cazada!",
-                description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por cazar a ${creatureName}.`
+                title: "¡Misión de Caza Completada!",
+                description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
             });
-
-            const newEncounterCount = oldEncounterCount + 1;
-            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
-
-            if (unlockedTier) {
-                xpGained += XP_PER_HUNTING_MISSION;
-                toast({
-                    title: "¡Misión de Caza Completada!",
-                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
-                });
-            }
         }
         
         if (xpGained > 0) {
@@ -380,6 +376,24 @@ export default function DashboardPage() {
     })
   }
 
+  const handleAddLife = () => {
+    setDailyHealth(prev => {
+        const newLives = Math.min(prev.lives + 1, 3);
+        const newHealth = { ...prev, lives: newLives };
+        localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
+        return newHealth;
+    });
+  }
+
+  const handleRemoveLife = () => {
+    setDailyHealth(prev => {
+        const newLives = Math.max(prev.lives - 1, 0);
+        const newHealth = { ...prev, lives: newLives };
+        localStorage.setItem('dailyHealth', JSON.stringify(newHealth));
+        return newHealth;
+    });
+  }
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setViewDate(date);
@@ -487,7 +501,13 @@ export default function DashboardPage() {
                   </div>
                   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                      <PlayerStatusCard playerClass={playerStats.class} lives={dailyHealth.lives} onReset={handleResetLives} />
+                      <PlayerStatusCard 
+                        playerClass={playerStats.class} 
+                        lives={dailyHealth.lives} 
+                        onReset={handleResetLives}
+                        onAddLife={handleAddLife}
+                        onRemoveLife={handleRemoveLife}
+                      />
                   </div>
               </div>
               

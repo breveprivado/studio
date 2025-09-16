@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartCrack, RotateCcw, Skull } from 'lucide-react';
+import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,10 +21,12 @@ import { PlayerStats } from '@/lib/types';
 interface PlayerStatusCardProps {
   lives: number;
   onReset: () => void;
+  onAddLife: () => void;
+  onRemoveLife: () => void;
   playerClass: PlayerStats['class'];
 }
 
-const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, playerClass }) => {
+const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
   const totalHearts = 3;
 
   return (
@@ -65,13 +67,19 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, pla
             </div>
             <span className="font-bold text-lg">{playerClass}</span>
         </div>
-        <div className="flex justify-center items-center gap-4 pt-2">
+        <div className="flex justify-center items-center gap-2 pt-2">
+            <Button variant="ghost" size="icon" onClick={onRemoveLife} disabled={lives <= 0} className="h-8 w-8">
+                <Minus className="h-5 w-5" />
+            </Button>
             {Array.from({ length: totalHearts }).map((_, index) => {
             if (index < lives) {
                 return <Heart key={index} className="h-8 w-8 text-red-500 fill-red-500 animate-pulse" style={{ animationDuration: '2s' }} />;
             }
             return <HeartCrack key={index} className="h-8 w-8 text-muted-foreground/50" />;
             })}
+            <Button variant="ghost" size="icon" onClick={onAddLife} disabled={lives >= 3} className="h-8 w-8">
+                <Plus className="h-5 w-5" />
+            </Button>
         </div>
       </CardContent>
     </Card>
