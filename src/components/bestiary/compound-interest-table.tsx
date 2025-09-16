@@ -63,22 +63,22 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
 
     const interestData = useMemo(() => {
         const balance = initialBalance;
-        const percentage = parseFloat(gainPercentage) / 100;
         const rate = parseFloat(exchangeRate);
 
-        if (isNaN(balance) || isNaN(percentage) || isNaN(rate) || balance <= 0 || percentage <= 0 || rate <= 0) {
+        if (isNaN(balance) || isNaN(rate) || balance <= 0 || rate <= 0) {
             return [];
         }
 
         let data = [];
-        let accumulatedGain = 0;
-        let escalerasCapital = balance;
+        let gananciaTotalAcumulada = 0;
         
         const sortedCreatures = [...creatures].sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
         for (let i = 1; i <= 17; i++) {
-            const gananciaCruda = escalerasCapital * percentage;
-            const gananciaTotalAcumulada = accumulatedGain + gananciaCruda;
+            const escalerasCapital = balance + gananciaTotalAcumulada;
+            const gananciaCruda = i === 1 ? balance * 0.8 : gananciaTotalAcumulada * 0.87;
+            
+            gananciaTotalAcumulada += gananciaCruda;
             
             const creature = sortedCreatures[i - 1];
             const creatureName = creature?.name || `Bestia #${i}`;
@@ -91,13 +91,10 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                 gananciaTotal: gananciaTotalAcumulada,
                 gananciaEnCOP: (gananciaTotalAcumulada * rate),
             });
-
-            escalerasCapital += gananciaCruda;
-            accumulatedGain = gananciaTotalAcumulada;
         }
 
         return data;
-    }, [initialBalance, gainPercentage, exchangeRate, creatures]);
+    }, [initialBalance, exchangeRate, creatures]);
 
     const formatNumber = (value: number, digits = 2) => {
         if (isNaN(value)) return '0,00';
@@ -112,7 +109,7 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
     return (
         <Card className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <CardContent className="pt-6">
-                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
                         <Input
@@ -122,16 +119,6 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                             onChange={handleBalanceInputChange}
                             onBlur={handleBalanceBlur}
                             placeholder="100"
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="gain-percentage">Ganancia (%)</Label>
-                        <Input
-                            id="gain-percentage"
-                            type="number"
-                            value={gainPercentage}
-                            onChange={(e) => setGainPercentage(e.target.value)}
-                            placeholder="80"
                         />
                     </div>
                     <div>
@@ -162,7 +149,7 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
                                 <TableRow key={row.level} className={row.level <= 6 ? 'bg-amber-50 dark:bg-amber-950/50' : ''}>
                                     <TableCell className="text-center font-medium">{row.name}</TableCell>
                                     <TableCell className="text-center">{formatNumber(row.escaleras)}</TableCell>
-                                    <TableCell className="text-center">{formatNumber(row.gananciaCruda, 5)}</TableCell>
+                                    <TableCell className="text-center">{formatNumber(row.gananciaCruda, 2)}</TableCell>
                                     <TableCell className={`text-center font-bold ${row.level <= 11 ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-emerald-200 dark:bg-emerald-800/50'}`}>$ {formatNumber(row.gananciaTotal)}</TableCell>
                                     <TableCell className={`text-center font-bold ${row.level <= 8 ? 'bg-amber-200 dark:bg-amber-700/40' : 'bg-orange-300 dark:bg-orange-700/50'}`}>$ {formatInteger(row.gananciaEnCOP)}</TableCell>
                                 </TableRow>
