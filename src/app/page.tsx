@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth } from '@/lib/types';
-import { initialTrades, initialCreatures } from '@/lib/data';
+import { initialCreatures } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
 import { cn } from '@/lib/utils';
@@ -168,8 +168,9 @@ export default function DashboardPage() {
 
     const isDataInitialized = localStorage.getItem('data_initialized');
     if (!isDataInitialized) {
-        setTrades(initialTrades);
-        localStorage.setItem('trades', JSON.stringify(initialTrades));
+        // On first load, ensure trades start empty instead of with demo data.
+        setTrades([]);
+        localStorage.setItem('trades', JSON.stringify([]));
         setCreatures(initialCreatures);
         localStorage.setItem('bestiaryCreatures', JSON.stringify(initialCreatures));
         localStorage.setItem('data_initialized', 'true');
@@ -580,3 +581,5 @@ export default function DashboardPage() {
 
 
     
+
+  
