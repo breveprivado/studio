@@ -165,7 +165,7 @@ const BestiaryPage = () => {
   }
   
   const defeatedCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'win'));
-  const summonedCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'loss'));
+  const defeatedByCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'loss'));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -227,7 +227,7 @@ const BestiaryPage = () => {
             <Tabs defaultValue="defeated" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="defeated">Bestias Derrotadas</TabsTrigger>
-                <TabsTrigger value="summoned">Bestias Invocadas</TabsTrigger>
+                <TabsTrigger value="defeatedBy">Derrotas</TabsTrigger>
               </TabsList>
               <TabsContent value="defeated" className="mt-4">
                 <div className="space-y-4">
@@ -236,11 +236,11 @@ const BestiaryPage = () => {
                   )) : <p className="text-center text-muted-foreground py-4">Aún no has derrotado a ninguna bestia.</p>}
                 </div>
               </TabsContent>
-              <TabsContent value="summoned" className="mt-4">
+              <TabsContent value="defeatedBy" className="mt-4">
                 <div className="space-y-4">
-                  {summonedCreatures.length > 0 ? summonedCreatures.map(creature => (
-                      <CreatureListItem key={`summoned-${creature.id}`} creature={creature} handleOpenSheet={handleOpenSheet} handleNameSave={handleNameSave} getXpForCreature={getXpForCreature} />
-                  )) : <p className="text-center text-muted-foreground py-4">Ninguna bestia ha sido asociada a una pérdida.</p>}
+                  {defeatedByCreatures.length > 0 ? defeatedByCreatures.map(creature => (
+                      <CreatureListItem key={`defeatedBy-${creature.id}`} creature={creature} handleOpenSheet={handleOpenSheet} handleNameSave={handleNameSave} getXpForCreature={getXpForCreature} />
+                  )) : <p className="text-center text-muted-foreground py-4">Ninguna bestia ha sido asociada a una derrota.</p>}
                 </div>
               </TabsContent>
             </Tabs>
@@ -349,5 +349,7 @@ const CreatureListItem = ({ creature, handleOpenSheet, handleNameSave, getXpForC
 
 
 export default BestiaryPage;
+
+    
 
     
