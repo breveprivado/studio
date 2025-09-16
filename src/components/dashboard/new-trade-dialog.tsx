@@ -15,20 +15,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Trade, Creature } from '@/lib/types';
 import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
-import { currencyPairs } from '@/lib/data';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
-  pair: z.string().min(1, 'La divisa es requerida'),
+  pair: z.string().min(1, 'La divisa es requerida').toUpperCase(),
   status: z.enum(['win', 'loss', 'doji'], { required_error: 'El resultado es requerido' }),
   profit: z.coerce.number(),
   pips: z.coerce.number().optional(),
@@ -55,7 +54,6 @@ const strategyOptions = [
 ];
 
 const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, onAddTrade, creatures }) => {
-  const [openCombobox, setOpenCombobox] = React.useState(false)
 
   const form = useForm<NewTradeFormValues>({
     resolver: zodResolver(formSchema),
@@ -116,15 +114,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
     onOpenChange(false);
   }
   
-  const handleCommandKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') {
-      if (!currencyPairs.some(p => p.value.toLowerCase() === form.getValues('pair').toLowerCase())) {
-        e.preventDefault();
-        setOpenCombobox(false);
-      }
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
@@ -142,59 +131,9 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Divisas</FormLabel>
-                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                    )}
-                                >
-                                    {field.value
-                                    ? field.value
-                                    : "Selecciona una divisa o escribe una nueva"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                           <Command onKeyDown={handleCommandKeyDown} shouldFilter={false}>
-                            <CommandInput
-                                placeholder="Busca o crea una divisa..."
-                                value={field.value}
-                                onValueChange={(value) => {
-                                    form.setValue('pair', value.toUpperCase(), { shouldValidate: true });
-                                }}
-                            />
-                            <CommandList>
-                                <CommandEmpty>No se encontró la divisa.</CommandEmpty>
-                                <CommandGroup>
-                                {currencyPairs.filter(pair => pair.value.toLowerCase().includes(form.getValues('pair').toLowerCase())).map((pair) => (
-                                    <CommandItem
-                                        value={pair.value}
-                                        key={pair.value}
-                                        onSelect={() => {
-                                            form.setValue("pair", pair.value)
-                                            setOpenCombobox(false)
-                                        }}
-                                        >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        pair.value === field.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {pair.label}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                             </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                     <FormControl>
+                      <Input placeholder="EURUSD" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -206,18 +145,38 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Resultado</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona el resultado" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="win">Ganada</SelectItem>
-                            <SelectItem value="loss">Perdida</SelectItem>
-                            <SelectItem value="doji">Empate/Doji</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <FormControl>
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex gap-2 pt-2"
+                        >
+                            <FormItem>
+                                <FormControl>
+                                    <Label className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 cursor-pointer", field.value === 'win' && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')}>
+                                        <RadioGroupItem value="win" className="sr-only" />
+                                        Ganada
+                                    </Label>
+                                </FormControl>
+                            </FormItem>
+                            <FormItem>
+                                <FormControl>
+                                     <Label className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 cursor-pointer", field.value === 'loss' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90')}>
+                                        <RadioGroupItem value="loss" className="sr-only" />
+                                        Perdida
+                                    </Label>
+                                </FormControl>
+                            </FormItem>
+                            <FormItem>
+                                <FormControl>
+                                     <Label className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 cursor-pointer", field.value === 'doji' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80')}>
+                                        <RadioGroupItem value="doji" className="sr-only" />
+                                        Doji
+                                    </Label>
+                                </FormControl>
+                            </FormItem>
+                        </RadioGroup>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -264,29 +223,37 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 )}
                 />
             </div>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-2">
                  <FormField
                     control={form.control}
                     name="strategy"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Estrategia</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona una estrategia" />
-                                </SelectTrigger>
+                            <FormLabel>Estrategia</FormLabel>
+                             <FormControl>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-wrap gap-2 pt-2"
+                                >
+                                    {strategyOptions.map(option => (
+                                        <FormItem key={option}>
+                                            <FormControl>
+                                                <Label className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-12 cursor-pointer", field.value === option && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')}>
+                                                    <RadioGroupItem value={option} className="sr-only" />
+                                                    {option}
+                                                </Label>
+                                            </FormControl>
+                                        </FormItem>
+                                    ))}
+                                </RadioGroup>
                             </FormControl>
-                            <SelectContent>
-                            {strategyOptions.map((option) => (
-                                <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                            <FormMessage />
                         </FormItem>
                     )}
                     />
+             </div>
+             <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
                     name="date"
@@ -328,20 +295,20 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                         </FormItem>
                     )}
                     />
+                 <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Hora (HH:MM)</FormLabel>
+                        <FormControl>
+                            <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
              </div>
-             <FormField
-              control={form.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hora (HH:MM)</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="notes"
@@ -355,33 +322,34 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
                 control={form.control}
                 name="creatureId"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Bestia Asociada (Opcional)</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una bestia del bestiario" />
-                            </SelectTrigger>
+                    <FormItem className="space-y-3">
+                        <FormLabel>Bestia Asociada (Opcional)</FormLabel>
+                         <FormControl>
+                            <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-3 sm:grid-cols-4 gap-2"
+                            >
+                                {creatures.sort((a,b) => parseInt(a.id) - parseInt(b.id)).map((creature) => (
+                                    <FormItem key={creature.id}>
+                                        <FormControl>
+                                            <Label className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground cursor-pointer [&:has([data-state=checked])]:border-primary", field.value === creature.id && "border-primary")}>
+                                                <RadioGroupItem value={creature.id} className="sr-only" />
+                                                <span className="font-semibold text-center text-sm">{creature.name}</span>
+                                            </Label>
+                                        </FormControl>
+                                    </FormItem>
+                                ))}
+                            </RadioGroup>
                         </FormControl>
-                        <SelectContent>
-                            <SelectItem value="none">Ninguna</SelectItem>
-                            {creatures.sort((a,b) => parseInt(a.id) - parseInt(b.id)).map((creature) => (
-                                <SelectItem key={creature.id} value={creature.id}>
-                                    <div className="flex items-center gap-2">
-                                        <span>{creature.name}</span>
-                                    </div>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                        <FormMessage />
+                    </FormItem>
                 )}
-              />
+                />
             <DialogFooter>
               <Button type="submit">Guardar Operación</Button>
             </DialogFooter>
@@ -393,3 +361,5 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
+
+    
