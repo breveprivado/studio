@@ -79,12 +79,12 @@ const CompoundInterestTable: React.FC<CompoundInterestTableProps> = ({ creatures
         for (let i = 1; i <= 17; i++) {
             const currentCapital = balance + accumulatedGain;
             const rawGain = currentCapital * percentage;
-            accumulatedGain += rawGain;
-
-            const percentageSoFar = (accumulatedGain / balance) * 100;
             
+            const percentageSoFar = ((currentCapital + rawGain) / balance - 1) * 100;
             const creature = sortedCreatures[i - 1];
             const creatureName = creature?.name || `Bestia #${i}`;
+
+            accumulatedGain += rawGain;
 
 
             data.push({
