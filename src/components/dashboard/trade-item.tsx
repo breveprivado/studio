@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trade, Creature } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Trash2, Minus, Target, Pencil, Save } from 'lucide-react';
+import { TrendingUp, Trash2, Minus, Target, Pencil, Save, Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '../ui/input';
@@ -118,6 +118,12 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 
           <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400 mt-1 flex-wrap">
             <span>{format(new Date(trade.date), 'dd MMM yyyy, HH:mm', { locale: es })}</span>
+             {trade.isPrideTrade && (
+                <>
+                <span>•</span>
+                <Trophy className="h-4 w-4 text-amber-500" />
+                </>
+            )}
             {huntedCreature && (
                 <>
                 <span>•</span>

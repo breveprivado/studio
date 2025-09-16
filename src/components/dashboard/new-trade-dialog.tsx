@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Trophy } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -25,6 +25,7 @@ import { es } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formSchema = z.object({
   pair: z.string().min(1, 'La divisa es requerida').toUpperCase(),
@@ -37,6 +38,7 @@ const formSchema = z.object({
   strategy: z.string().optional(),
   notes: z.string().optional(),
   creatureId: z.string().optional(),
+  isPrideTrade: z.boolean().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -65,6 +67,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       strategy: '',
       notes: '',
       creatureId: '',
+      isPrideTrade: false,
     },
   });
   
@@ -109,7 +112,8 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       time: format(new Date(), 'HH:mm'),
       strategy: '',
       notes: '',
-      creatureId: ''
+      creatureId: '',
+      isPrideTrade: false,
     });
     onOpenChange(false);
   }
@@ -322,6 +326,26 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 </FormItem>
               )}
             />
+             <FormField
+                control={form.control}
+                name="isPrideTrade"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-amber-500" />
+                        Orgullo de Operación
+                      </FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
             <FormField
                 control={form.control}
                 name="creatureId"
