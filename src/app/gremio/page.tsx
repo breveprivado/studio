@@ -9,7 +9,28 @@ import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
-// New hierarchical data structure
+// Helper to generate a large number of members for the demo
+const generateInvitees = (count: number) => {
+  const names = ["Blade", "Shadow", "Storm", "Iron", "Soul", "Reaper", "Void", "Fang", "Serpent", "Wraith", "Specter", "Rogue"];
+  const suffixes = ["strike", "fury", "wind", "heart", "render", "shade", "moon", "sun", "fire", "ice"];
+  const classes = ['Espadachín', 'Arquero', 'Mago', 'Clérigo', 'Pícaro', 'Bárbaro', 'Invocador'];
+  const members = [];
+  for (let i = 1; i <= count; i++) {
+    const name = `${names[i % names.length]}${suffixes[i % suffixes.length]}${i}`;
+    const member = {
+      name: name,
+      level: 70 + (i % 25), // Levels between 70 and 94
+      role: 'Miembro' as const,
+      avatar: `/avatars/${(i % 16) + 1}.png`,
+      class: classes[i % classes.length],
+      invitees: [],
+    };
+    members.push(member);
+  }
+  return members;
+}
+
+// New hierarchical data structure with one member having 100 invitees
 const guildData = {
   name: 'Titán_Axel',
   level: 125,
@@ -23,15 +44,7 @@ const guildData = {
       role: 'Miembro',
       avatar: '/avatars/02.png',
       class: 'Espadachín',
-      invitees: [
-        { name: 'Kael', level: 92, role: 'Miembro', avatar: '/avatars/05.png', class: 'Invocador', invitees: [
-          { name: 'Riven', level: 88, role: 'Miembro', avatar: '/avatars/11.png', class: 'Espadachín', invitees: [] },
-          { name: 'Lyra', level: 85, role: 'Miembro', avatar: '/avatars/12.png', class: 'Arquero', invitees: [] }
-        ] },
-        { name: 'Zephyr', level: 85, role: 'Miembro', avatar: '/avatars/04.png', class: 'Espadachín', invitees: [
-          { name: 'Gale', level: 80, role: 'Miembro', avatar: '/avatars/13.png', class: 'Mago', invitees: [] }
-        ] },
-      ]
+      invitees: generateInvitees(100) // This member has 100 direct referrals
     },
     {
       name: 'Aetheria',
@@ -39,13 +52,7 @@ const guildData = {
       role: 'Miembro',
       avatar: '/avatars/03.png',
       class: 'Arquero',
-      invitees: [
-        { name: 'Ignis', level: 99, role: 'Miembro', avatar: '/avatars/06.png', class: 'Mago', invitees: [] },
-        { name: 'Terra', level: 95, role: 'Miembro', avatar: '/avatars/07.png', class: 'Clérigo', invitees: [
-           { name: 'Fulgur', level: 90, role: 'Miembro', avatar: '/avatars/14.png', class: 'Pícaro', invitees: [] },
-           { name: 'Lux', level: 89, role: 'Miembro', avatar: '/avatars/15.png', class: 'Invocador', invitees: [] }
-        ] }
-      ]
+      invitees: []
     },
     {
         name: 'IronHeart',
@@ -53,12 +60,7 @@ const guildData = {
         role: 'Miembro',
         avatar: '/avatars/08.png',
         class: 'Bárbaro',
-        invitees: [
-          { name: 'Vortex', level: 98, role: 'Miembro', avatar: '/avatars/09.png', class: 'Pícaro', invitees: [
-            { name: 'Cinder', level: 91, role: 'Miembro', avatar: '/avatars/16.png', class: 'Mago', invitees: [] }
-          ] },
-          { name: 'Nyx', level: 96, role: 'Miembro', avatar: '/avatars/10.png', class: 'Espadachín', invitees: [] },
-        ]
+        invitees: []
     }
   ]
 };
