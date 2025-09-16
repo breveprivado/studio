@@ -36,7 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import HealthBar from '@/components/dashboard/health-bar';
+import PlayerStatusCard from '@/components/dashboard/health-bar';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -91,29 +91,6 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
         </Card>
     );
 };
-
-const PlayerClassCard = ({ playerClass }: { playerClass: PlayerStats['class'] }) => {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base">
-                    Clase de Trader
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center space-y-2">
-                 <div className="relative w-20 h-24 animate-pulse-slow" style={{ animationDuration: '4s' }}>
-                    <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
-                        <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                       <Skull className="h-10 w-10 text-foreground" />
-                    </div>
-                </div>
-                <span className="font-bold text-lg">{playerClass}</span>
-            </CardContent>
-        </Card>
-    )
-}
 
 
 export default function DashboardPage() {
@@ -230,7 +207,7 @@ export default function DashboardPage() {
         })
     }
 
-    if (trade.creatureId && (trade.status === 'win' || trade.status === 'loss')) {
+    if (trade.creatureId) {
         const achievementTiers = [1, 5, 10, 25, 50, 100];
         const XP_PER_HUNTING_MISSION = 500;
         
@@ -508,10 +485,9 @@ export default function DashboardPage() {
                           </CardContent>
                       </Card>
                   </div>
-                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6 items-start">
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                      <PlayerClassCard playerClass={playerStats.class} />
-                      <HealthBar lives={dailyHealth.lives} onReset={handleResetLives} />
+                      <PlayerStatusCard playerClass={playerStats.class} lives={dailyHealth.lives} onReset={handleResetLives} />
                   </div>
               </div>
               
@@ -536,5 +512,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartCrack, RotateCcw } from 'lucide-react';
+import { Heart, HeartCrack, RotateCcw, Skull } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,21 +16,23 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { PlayerStats } from '@/lib/types';
 
-interface HealthBarProps {
+interface PlayerStatusCardProps {
   lives: number;
   onReset: () => void;
+  playerClass: PlayerStats['class'];
 }
 
-const HealthBar: React.FC<HealthBarProps> = ({ lives, onReset }) => {
+const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, playerClass }) => {
   const totalHearts = 3;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>Vidas del Día</span>
-          <AlertDialog>
+        <CardTitle className="flex justify-between items-center text-base">
+          <span>Estado del Personaje</span>
+           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
                 <RotateCcw className="h-4 w-4" />
@@ -51,16 +53,29 @@ const HealthBar: React.FC<HealthBarProps> = ({ lives, onReset }) => {
           </AlertDialog>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex justify-center items-center gap-4 py-6">
-        {Array.from({ length: totalHearts }).map((_, index) => {
-          if (index < lives) {
-            return <Heart key={index} className="h-10 w-10 text-red-500 fill-red-500 animate-pulse" style={{ animationDuration: '2s' }} />;
-          }
-          return <HeartCrack key={index} className="h-10 w-10 text-muted-foreground/50" />;
-        })}
+      <CardContent className="space-y-4">
+        <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="relative w-20 h-24 mx-auto animate-pulse-slow" style={{ animationDuration: '4s' }}>
+                <svg viewBox="0 0 100 115.47" className="w-full h-full fill-current text-primary/20 dark:text-primary/10">
+                    <path d="M50 0L95.3 28.87v57.74L50 115.47l-45.3-28.86V28.87L50 0z" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <Skull className="h-10 w-10 text-foreground" />
+                </div>
+            </div>
+            <span className="font-bold text-lg">{playerClass}</span>
+        </div>
+        <div className="flex justify-center items-center gap-4 pt-2">
+            {Array.from({ length: totalHearts }).map((_, index) => {
+            if (index < lives) {
+                return <Heart key={index} className="h-8 w-8 text-red-500 fill-red-500 animate-pulse" style={{ animationDuration: '2s' }} />;
+            }
+            return <HeartCrack key={index} className="h-8 w-8 text-muted-foreground/50" />;
+            })}
+        </div>
       </CardContent>
     </Card>
   );
 };
 
-export default HealthBar;
+export default PlayerStatusCard;
