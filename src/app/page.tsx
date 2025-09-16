@@ -494,7 +494,7 @@ export default function DashboardPage() {
                 onRemoveLife={handleRemoveLife}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                  <Card className="bg-card lg:col-span-1">
+                  <Card className="bg-card">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
                       </CardHeader>
@@ -503,7 +503,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.length} operaciones</p>
                       </CardContent>
                   </Card>
-                  <Card className="bg-card lg:col-span-1">
+                  <Card className="bg-card">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
                       </CardHeader>
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
                       </CardContent>
                   </Card>
-                    <Card className="bg-card lg:col-span-1">
+                    <Card className="bg-card">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
                       </CardHeader>

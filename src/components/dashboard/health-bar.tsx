@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus, Target, Anchor, ShieldOff, BrainCircuit, BookCheck, Scale, ShieldQuestion } from 'lucide-react';
+import { Heart, HeartCrack, RotateCcw, Skull, Plus, Minus, Target, Anchor, ShieldOff, BrainCircuit, BookCheck, Scale, ShieldQuestion, Zap, BookUp, Hourglass, HeartPulse, Mountain } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +16,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PlayerStats } from '@/lib/types';
+import Image from 'next/image';
+
 
 interface MandatoryRule {
   id: string;
@@ -27,7 +30,7 @@ interface MandatoryRule {
   imageUrl?: string | null;
 }
 
-const IconMap: { [key: string]: React.ElementType } = {
+const TradingIconMap: { [key: string]: React.ElementType } = {
   't1': Target,
   't2': ShieldOff,
   't3': Scale,
@@ -35,7 +38,17 @@ const IconMap: { [key: string]: React.ElementType } = {
   't5': BookCheck,
   't6': BrainCircuit,
 };
-const defaultIcons = [Target, ShieldOff, Anchor, BrainCircuit, BookCheck, Scale];
+
+const PersonajeIconMap: { [key: string]: React.ElementType } = {
+    'p1': Zap,
+    'p2': BookUp,
+    'p3': Hourglass,
+    'p4': HeartPulse,
+    'p5': Mountain,
+};
+
+const defaultTradingIcons = [Target, ShieldOff, Anchor, BrainCircuit, BookCheck, Scale];
+const defaultPersonajeIcons = [Zap, BookUp, Hourglass, HeartPulse, Mountain, ShieldQuestion];
 
 
 interface PlayerStatusCardProps {
@@ -47,21 +60,33 @@ interface PlayerStatusCardProps {
 }
 
 const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onAddLife, onRemoveLife, playerClass }) => {
-  const [spells, setSpells] = useState<MandatoryRule[]>([]);
+  const [tradingSpells, setTradingSpells] = useState<MandatoryRule[]>([]);
+  const [personajeSpells, setPersonajeSpells] = useState<MandatoryRule[]>([]);
+
+  const [selectedSpell, setSelectedSpell] = useState<MandatoryRule | null>(null);
 
   useEffect(() => {
-    const storedItems = localStorage.getItem('mandatoryItems_trading');
-    if (storedItems) {
+    const storedTradingItems = localStorage.getItem('mandatoryItems_trading');
+    if (storedTradingItems) {
       try {
-        setSpells(JSON.parse(storedItems));
+        setTradingSpells(JSON.parse(storedTradingItems));
       } catch (e) {
-        console.error("Failed to parse spells from localStorage", e);
+        console.error("Failed to parse trading spells from localStorage", e);
+      }
+    }
+    const storedPersonajeItems = localStorage.getItem('mandatoryItems_personaje');
+    if (storedPersonajeItems) {
+      try {
+        setPersonajeSpells(JSON.parse(storedPersonajeItems));
+      } catch (e) {
+        console.error("Failed to parse personaje spells from localStorage", e);
       }
     }
   }, []);
 
 
   return (
+    <>
     <Card>
       <CardHeader className="p-4 pb-2">
         <CardTitle className="flex justify-between items-center text-sm font-medium text-muted-foreground">
@@ -101,24 +126,37 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
                 <div className="font-bold text-sm truncate">{playerClass}</div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              {spells.map((spell, index) => {
-                const Icon = IconMap[spell.id] || defaultIcons[index % defaultIcons.length] || ShieldQuestion;
-                return (
-                  <TooltipProvider key={spell.id}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 cursor-pointer">
-                            <Icon className="h-6 w-6 text-primary" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">{spell.text}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              })}
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                {tradingSpells.map((spell, index) => {
+                    const Icon = TradingIconMap[spell.id] || defaultTradingIcons[index % defaultTradingIcons.length] || ShieldQuestion;
+                    return (
+                        <DialogTrigger asChild key={spell.id}>
+                            <div 
+                                className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 cursor-pointer"
+                                onClick={() => setSelectedSpell(spell)}
+                            >
+                                <Icon className="h-6 w-6 text-primary" />
+                            </div>
+                        </DialogTrigger>
+                    )
+                })}
+                </div>
+                 <div className="flex items-center justify-center gap-2 flex-wrap">
+                {personajeSpells.map((spell, index) => {
+                    const Icon = PersonajeIconMap[spell.id] || defaultPersonajeIcons[index % defaultPersonajeIcons.length] || ShieldQuestion;
+                    return (
+                        <DialogTrigger asChild key={spell.id}>
+                            <div 
+                                className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border-2 border-purple-500/20 hover:bg-purple-500/20 cursor-pointer"
+                                onClick={() => setSelectedSpell(spell)}
+                            >
+                                <Icon className="h-6 w-6 text-purple-500" />
+                            </div>
+                        </DialogTrigger>
+                    )
+                })}
+                </div>
             </div>
 
             <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
@@ -142,6 +180,32 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
         </div>
       </CardContent>
     </Card>
+
+     <Dialog open={!!selectedSpell} onOpenChange={() => setSelectedSpell(null)}>
+        <DialogContent className="sm:max-w-md">
+            {selectedSpell && (
+                <>
+                <DialogHeader>
+                    <DialogTitle>{selectedSpell.text}</DialogTitle>
+                    <DialogDescription>
+                    {selectedSpell.description}
+                    </DialogDescription>
+                </DialogHeader>
+                {selectedSpell.imageUrl && (
+                    <div className="py-4">
+                        <Image src={selectedSpell.imageUrl} alt={`Imagen de ${selectedSpell.text}`} width={400} height={200} className="rounded-lg object-cover w-full" />
+                    </div>
+                )}
+                 <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cerrar</Button>
+                    </DialogClose>
+                </DialogFooter>
+                </>
+            )}
+        </DialogContent>
+     </Dialog>
+    </>
   );
 };
 
