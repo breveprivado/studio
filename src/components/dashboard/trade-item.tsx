@@ -51,6 +51,47 @@ const PairEditor: React.FC<PairEditorProps> = ({ trade, onUpdate }) => {
     );
 };
 
+interface ProfitEditorProps {
+    trade: Trade;
+    onUpdate: (id: string, updatedData: Partial<Trade>) => void;
+    formatCurrency: (value: number) => string;
+    profitColor: string;
+}
+
+const ProfitEditor: React.FC<ProfitEditorProps> = ({ trade, onUpdate, formatCurrency, profitColor }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [profit, setProfit] = useState(Math.abs(trade.profit));
+
+    const handleSave = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newProfit = trade.status === 'loss' ? -Math.abs(profit) : Math.abs(profit);
+        onUpdate(trade.id, { profit: newProfit });
+        setIsEditing(false);
+    };
+
+    if (isEditing) {
+        return (
+             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <Input
+                    type="number"
+                    step="0.01"
+                    value={profit}
+                    onChange={(e) => setProfit(parseFloat(e.target.value))}
+                    className="h-8 text-sm w-24"
+                />
+                <Button onClick={handleSave} size="icon" className="h-8 w-8">
+                    <Save className="h-4 w-4" />
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="text-right cursor-pointer" onClick={(e) => {e.stopPropagation(); setIsEditing(true);}}>
+          <span className={`text-lg font-bold ${profitColor}`}>{trade.status === 'win' ? '+' : ''}{formatCurrency(trade.profit)}</span>
+        </div>
+    );
+}
 
 interface TradeItemProps {
   trade: Trade;
@@ -139,9 +180,7 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
         </div>
       </div>
       <div className="flex items-center space-x-3 ml-4">
-        <div className="text-right cursor-pointer" onClick={() => onSelect(trade)} >
-          <span className={`text-lg font-bold ${profitColor}`}>{isWin ? '+' : ''}{formatCurrency(trade.profit)}</span>
-        </div>
+        <ProfitEditor trade={trade} onUpdate={onUpdate} formatCurrency={formatCurrency} profitColor={profitColor} />
         <Button variant="ghost" size="icon" className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors h-8 w-8" onClick={(e) => {e.stopPropagation(); onDelete(trade.id)}} title="Eliminar operación">
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -151,3 +190,5 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 };
 
 export default TradeItem;
+
+    

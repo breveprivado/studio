@@ -277,7 +277,7 @@ export default function DashboardPage() {
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
     toast({
       title: "Operación Actualizada",
-      description: "El par de divisas ha sido modificado."
+      description: "Los detalles de la operación han sido modificados."
     });
   };
 
@@ -553,3 +553,6 @@ export default function DashboardPage() {
 
     
 
+
+
+    
