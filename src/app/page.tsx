@@ -205,6 +205,9 @@ export default function DashboardPage() {
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
+    let xpGained = 0;
+    let toastMessage = "";
+
     if (trade.status === 'loss') {
         if (dailyHealth.lives > 0) {
             handleRemoveLife();
@@ -215,19 +218,9 @@ export default function DashboardPage() {
             })
         }
         
-        // XP Penalty for loss
         const XP_PENALTY_PER_LOSS = 75;
-        setPlayerStats(prevStats => {
-            const newXp = (prevStats.xp || 0) - XP_PENALTY_PER_LOSS;
-            const newPlayerStats = { ...prevStats, xp: newXp };
-            localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-            return newPlayerStats;
-        });
-        toast({
-            title: "¡Penalización de XP!",
-            description: `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`,
-            variant: "destructive"
-        });
+        xpGained -= XP_PENALTY_PER_LOSS;
+        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta operación.`;
     }
 
     if (trade.creatureId) {
@@ -236,7 +229,6 @@ export default function DashboardPage() {
         
         let creatureName = '';
         let oldEncounterCount = 0;
-        let xpGained = 0;
 
         const getXpForCreature = (creatureId: string) => {
           return (parseInt(creatureId, 10) / 17) * 50 + 10;
@@ -260,10 +252,9 @@ export default function DashboardPage() {
         const baseCreatureXp = getXpForCreature(trade.creatureId);
         xpGained += baseCreatureXp;
         
-        toast({
-            title: `¡Bestia Enfrentada!`,
-            description: `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`
-        });
+        if(trade.status !== 'loss') {
+            toastMessage += ` Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`;
+        }
 
         const newEncounterCount = oldEncounterCount + 1;
         const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
@@ -275,13 +266,21 @@ export default function DashboardPage() {
                 description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
             });
         }
+    }
+
+    if (xpGained !== 0) {
+        setPlayerStats(prevStats => {
+            const newXp = (prevStats.xp || 0) + xpGained;
+            const newPlayerStats = { ...prevStats, xp: newXp };
+            localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+            return newPlayerStats;
+        });
         
-        if (xpGained > 0) {
-            setPlayerStats(prevStats => {
-                const newXp = (prevStats.xp || 0) + xpGained;
-                const newPlayerStats = { ...prevStats, xp: newXp };
-                localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-                return newPlayerStats;
+        if (toastMessage) {
+             toast({
+                title: xpGained > 0 ? "¡XP Ganada!" : "¡Penalización de XP!",
+                description: toastMessage.trim(),
+                variant: xpGained > 0 ? "default" : "destructive"
             });
         }
     }
@@ -630,6 +629,8 @@ export default function DashboardPage() {
   );
 }
 
+
+    
 
     
 
