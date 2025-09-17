@@ -8,27 +8,17 @@ import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Awar
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import defaultNavItems from '@/lib/nav-items.json';
+import { type NavItem } from '@/lib/types';
 
-const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutGrid, color: "bg-blue-500 text-white" },
-    { href: "/obligatorio", label: "Obligatorio", icon: ClipboardCheck, color: "bg-red-500 text-white" },
-    { href: "/journal", label: "Bitácora", icon: BookOpen, color: "bg-yellow-400 text-black" },
-    { href: "/bestiario", label: "Bestiario", icon: BookHeart, color: "bg-purple-500 text-white" },
-    { href: "/misiones", label: "Misiones", icon: Gamepad2, color: "bg-orange-500 text-white" },
-    { href: "/bestiario/logros", label: "Panel de Logros", icon: Award, color: "bg-amber-500 text-white" },
-    { href: "/gremio", label: "Gremio", icon: Users, color: "bg-cyan-500 text-white" },
-    { href: "/bot", label: "Bot", icon: Bot, color: "bg-gray-600 text-white" },
-    { href: "/noticias", label: "Noticias", icon: Newspaper, color: "bg-green-600 text-white" },
-    { href: "/curso", label: "Curso", icon: BookCopy, color: "bg-blue-600 text-white" },
-    { href: "/torneos", label: "Torneos", icon: Swords, color: "bg-yellow-500 text-white" },
-    { href: "/purificar", label: "Purificar", icon: Sparkles, color: "bg-pink-500 text-white" },
-    { href: "/olimpos", label: "Olimpos", icon: Landmark, color: "bg-slate-500 text-white" },
-    { href: "/mazmorra", label: "Mazmorra", icon: Dumbbell, color: "bg-zinc-800 text-white" },
-    { href: "/party", label: "Party", icon: PartyPopper, color: "bg-rose-500 text-white" },
-];
+const iconMap: { [key: string]: React.ElementType } = {
+    LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, Store
+};
+
 
 export function SidebarWrapper({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [navItems, setNavItems] = useState<NavItem[]>(defaultNavItems);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -38,6 +28,34 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
     if(darkMode) {
         document.documentElement.classList.add('dark');
     }
+
+    const storedNavItems = localStorage.getItem('navItems');
+    if (storedNavItems) {
+        try {
+            setNavItems(JSON.parse(storedNavItems));
+        } catch (e) {
+            setNavItems(defaultNavItems);
+        }
+    }
+
+     const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'navItems') {
+            const newNavItems = localStorage.getItem('navItems');
+             if (newNavItems) {
+                try {
+                    setNavItems(JSON.parse(newNavItems));
+                } catch (e) {
+                    setNavItems(defaultNavItems);
+                }
+            }
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+
   }, []);
 
   useEffect(() => {
@@ -61,19 +79,22 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                    <Link href={item.href} prefetch={true}>
-                        <SidebarMenuButton 
-                         isActive={pathname === item.href}
-                         className={cn(pathname === item.href && item.color)}
-                        >
-                            <item.icon/>
-                            {item.label}
-                        </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-            ))}
+            {navItems.map((item) => {
+                const Icon = iconMap[item.icon] || LayoutGrid;
+                return (
+                    <SidebarMenuItem key={item.label}>
+                        <Link href={item.href} prefetch={true}>
+                            <SidebarMenuButton 
+                            isActive={pathname === item.href}
+                            className={cn(pathname === item.href && item.color)}
+                            >
+                                <Icon/>
+                                {item.label}
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                )
+            })}
               <SidebarMenuItem>
                 <Link href="/tienda" prefetch={true}>
                   <SidebarMenuButton 

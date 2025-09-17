@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter, NavItem } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
@@ -46,6 +46,7 @@ import PrideVsWorstAnalysis from '@/components/dashboard/pride-vs-worst-analysis
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import ExpirationTimePerformance from '@/components/dashboard/expiration-time-performance';
 import * as XLSX from 'xlsx';
+import defaultNavItems from '@/lib/nav-items.json';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -246,7 +247,7 @@ export default function DashboardPage() {
     loadAllData();
 
      const handleStorageChange = (e: StorageEvent) => {
-        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'adjustments', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated', 'dailyHealth'];
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'adjustments', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated', 'dailyHealth', 'navItems'];
         if (e.key && keysToWatch.includes(e.key)) {
             loadAllData();
         }
@@ -572,9 +573,6 @@ export default function DashboardPage() {
   }
 
   const handleDeleteTrade = (id: string) => {
-      const tradeToDelete = trades.find(t => t.id === id);
-      if (!tradeToDelete) return;
-
       const newTrades = trades.filter(t => t.id !== id);
       setTrades(newTrades);
       localStorage.setItem('trades', JSON.stringify(newTrades));
@@ -674,6 +672,7 @@ export default function DashboardPage() {
       mandatoryItems_trading: JSON.parse(localStorage.getItem('mandatoryItems_trading') || '[]'),
       mandatoryItems_personaje: JSON.parse(localStorage.getItem('mandatoryItems_personaje') || '[]'),
       strategyOptions: JSON.parse(localStorage.getItem('strategyOptions') || '[]'),
+      navItems: JSON.parse(localStorage.getItem('navItems') || JSON.stringify(defaultNavItems)),
     };
 
     for (const [key, value] of Object.entries(dataToExport)) {
@@ -720,6 +719,7 @@ export default function DashboardPage() {
                 mandatoryItems_trading: (d) => localStorage.setItem('mandatoryItems_trading', JSON.stringify(d)),
                 mandatoryItems_personaje: (d) => localStorage.setItem('mandatoryItems_personaje', JSON.stringify(d)),
                 strategyOptions: (d) => localStorage.setItem('strategyOptions', JSON.stringify(d.map(item => item.value))),
+                navItems: (d) => localStorage.setItem('navItems', JSON.stringify(d)),
             };
 
             wb.SheetNames.forEach(sheetName => {
@@ -974,4 +974,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
 

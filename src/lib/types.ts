@@ -3,6 +3,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -56,7 +57,7 @@ export type Activity = { type: 'trade', id: string, date: string } & Partial<Tra
 export interface Encounter {
   id: string;
   date: string;
-  status?: 'win' | 'loss';
+  status: 'win' | 'loss';
 }
 
 export interface Creature {
@@ -101,6 +102,14 @@ export interface HabitTask {
   completed: boolean;
   date: string; // YYYY-MM-DD
 }
+
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: string;
+  color: string;
+}
     
     
+
 

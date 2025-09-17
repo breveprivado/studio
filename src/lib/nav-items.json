@@ -1,0 +1,17 @@
+[
+    { "href": "/", "label": "Dashboard", "icon": "LayoutGrid", "color": "bg-blue-500 text-white" },
+    { "href": "/obligatorio", "label": "Obligatorio", "icon": "ClipboardCheck", "color": "bg-red-500 text-white" },
+    { "href": "/journal", "label": "Bitácora", "icon": "BookOpen", "color": "bg-yellow-400 text-black" },
+    { "href": "/bestiario", "label": "Bestiario", "icon": "BookHeart", "color": "bg-purple-500 text-white" },
+    { "href": "/misiones", "label": "Misiones", "icon": "Gamepad2", "color": "bg-orange-500 text-white" },
+    { "href": "/bestiario/logros", "label": "Panel de Logros", "icon": "Award", "color": "bg-amber-500 text-white" },
+    { "href": "/gremio", "label": "Gremio", "icon": "Users", "color": "bg-cyan-500 text-white" },
+    { "href": "/bot", "label": "Bot", "icon": "Bot", "color": "bg-gray-600 text-white" },
+    { "href": "/noticias", "label": "Noticias", "icon": "Newspaper", "color": "bg-green-600 text-white" },
+    { "href": "/curso", "label": "Curso", "icon": "BookCopy", "color": "bg-blue-600 text-white" },
+    { "href": "/torneos", "label": "Torneos", "icon": "Swords", "color": "bg-yellow-500 text-white" },
+    { "href": "/purificar", "label": "Purificar", "icon": "Sparkles", "color": "bg-pink-500 text-white" },
+    { "href": "/olimpos", "label": "Olimpos", "icon": "Landmark", "color": "bg-slate-500 text-white" },
+    { "href": "/mazmorra", "label": "Mazmorra", "icon": "Dumbbell", "color": "bg-zinc-800 text-white" },
+    { "href": "/party", "label": "Party", "icon": "PartyPopper", "color": "bg-rose-500 text-white" }
+]
