@@ -212,7 +212,7 @@ export default function DashboardPage() {
 
       // 2. Calculate XP from Hunting Missions
       currentCreatures.forEach(creature => {
-        const encounterCount = creature.encounters.length;
+        const encounterCount = (creature.encounters || []).length;
         achievementTiers.forEach(tier => {
           if (encounterCount >= tier) {
             totalXp += XP_PER_HUNTING_MISSION;
@@ -974,3 +974,4 @@ export default function DashboardPage() {
     </>
   );
 }
+
