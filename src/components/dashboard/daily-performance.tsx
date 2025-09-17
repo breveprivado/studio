@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -6,7 +7,6 @@ import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Ba
 import { Trade } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface DailyPerformanceProps {
   trades: Trade[];
@@ -58,57 +58,51 @@ const DailyPerformance: React.FC<DailyPerformanceProps> = ({ trades }) => {
 
   return (
     <Card>
-      <Accordion type="single" collapsible>
-        <AccordionItem value="item-1" className="border-b-0">
-          <AccordionTrigger className="p-6">
-            <div className="flex flex-col items-start text-left">
-              <CardTitle>Ganancias vs. Pérdidas Diarias</CardTitle>
-              <CardDescription>Comparación de tus resultados diarios.</CardDescription>
+        <CardHeader>
+            <CardTitle>Ganancias vs. Pérdidas Diarias</CardTitle>
+            <CardDescription>Comparación de tus resultados diarios.</CardDescription>
+        </CardHeader>
+        <CardContent>
+        {dailyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                    <XAxis 
+                        dataKey="name" 
+                        fontSize={12}
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <YAxis 
+                        fontSize={12} 
+                        tickFormatter={(value) => `$${value}`}
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
+                    <Legend />
+                    <Bar 
+                        dataKey="Ganancias" 
+                        fill="hsl(var(--chart-2))" 
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={40}
+                    />
+                    <Bar 
+                        dataKey="Pérdidas" 
+                        fill="hsl(var(--chart-1))" 
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={40}
+                    />
+                </BarChart>
+            </ResponsiveContainer>
+        ) : (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No hay datos suficientes para mostrar en este período.
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6">
-            {dailyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={dailyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
-                      <XAxis 
-                          dataKey="name" 
-                          fontSize={12}
-                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                          axisLine={{ stroke: 'hsl(var(--border))' }}
-                          tickLine={{ stroke: 'hsl(var(--border))' }}
-                      />
-                      <YAxis 
-                          fontSize={12} 
-                          tickFormatter={(value) => `$${value}`}
-                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                          axisLine={{ stroke: 'hsl(var(--border))' }}
-                          tickLine={{ stroke: 'hsl(var(--border))' }}
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
-                      <Legend />
-                      <Bar 
-                          dataKey="Ganancias" 
-                          fill="hsl(var(--chart-2))" 
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={40}
-                      />
-                      <Bar 
-                          dataKey="Pérdidas" 
-                          fill="hsl(var(--chart-1))" 
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={40}
-                      />
-                  </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  No hay datos suficientes para mostrar en este período.
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+        )}
+        </CardContent>
     </Card>
   );
 };

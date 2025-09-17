@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
@@ -133,6 +133,7 @@ export default function DashboardPage() {
   const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [showBarCharts, setShowBarCharts] = useState(false);
   const { toast } = useToast();
 
   const { level } = useLeveling(playerStats.xp);
@@ -655,6 +656,10 @@ export default function DashboardPage() {
                           />
                         </PopoverContent>
                       </Popover>
+                       <Button onClick={() => setShowBarCharts(!showBarCharts)} size="sm" variant="outline">
+                          <BarChart2 className="mr-2 h-4 w-4" />
+                          {showBarCharts ? 'Ocultar' : 'Mostrar'} Gráficos
+                      </Button>
                   </div>
                   <div className='flex gap-2'>
                       <AlertDialog>
@@ -763,24 +768,28 @@ export default function DashboardPage() {
               
               <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} adjustments={adjustments} />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <StrategyPerformance trades={filteredTrades} />
-                <PairAssertiveness trades={filteredTrades} />
-              </div>
+              {showBarCharts && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <StrategyPerformance trades={filteredTrades} />
+                    <PairAssertiveness trades={filteredTrades} />
+                  </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <WorstStrategyPerformance trades={filteredTrades} />
-                <WorstPairAssertiveness trades={filteredTrades} />
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DailyPerformance trades={filteredTrades} />
-                <PrideVsWorstTrades trades={filteredTrades} />
-              </div>
-              
-              <div className="grid grid-cols-1">
-                 <PrideVsWorstAnalysis trades={filteredTrades} />
-              </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <WorstStrategyPerformance trades={filteredTrades} />
+                    <WorstPairAssertiveness trades={filteredTrades} />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <DailyPerformance trades={filteredTrades} />
+                    <PrideVsWorstTrades trades={filteredTrades} />
+                  </div>
+                  
+                  <div className="grid grid-cols-1">
+                    <PrideVsWorstAnalysis trades={filteredTrades} />
+                  </div>
+                </div>
+              )}
 
               <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onDeleteAdjustment={handleDeleteAdjustment} onUpdateAdjustment={handleUpdateAdjustment} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
@@ -795,5 +804,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

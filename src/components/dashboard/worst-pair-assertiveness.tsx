@@ -1,10 +1,10 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Bar } from 'recharts';
 import { Trade } from '@/lib/types';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface WorstPairAssertivenessProps {
   trades: Trade[];
@@ -46,51 +46,45 @@ const WorstPairAssertiveness: React.FC<WorstPairAssertivenessProps> = ({ trades 
 
   return (
     <Card>
-      <Accordion type="single" collapsible>
-        <AccordionItem value="item-1" className="border-b-0">
-          <AccordionTrigger className="p-6">
-            <div className="flex flex-col items-start text-left">
-              <CardTitle>Divisas con Mayor Pérdida</CardTitle>
-              <CardDescription>Los pares de divisas que te generan mayores pérdidas.</CardDescription>
+      <CardHeader>
+        <CardTitle>Divisas con Mayor Pérdida</CardTitle>
+        <CardDescription>Los pares de divisas que te generan mayores pérdidas.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {assertivenessByPair.length > 0 ? (
+          <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={assertivenessByPair} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                  <XAxis 
+                      dataKey="name" 
+                      fontSize={12}
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <YAxis 
+                      fontSize={12} 
+                      tickFormatter={(value) => `$${Math.abs(value)}`}
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
+                  <Bar 
+                      dataKey="totalLoss" 
+                      fill="hsl(var(--destructive))" 
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                      name="Pérdida Total"
+                  />
+              </BarChart>
+          </ResponsiveContainer>
+        ) : (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+                No se han registrado operaciones perdedoras.
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6">
-            {assertivenessByPair.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={assertivenessByPair} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
-                      <XAxis 
-                          dataKey="name" 
-                          fontSize={12}
-                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                          axisLine={{ stroke: 'hsl(var(--border))' }}
-                          tickLine={{ stroke: 'hsl(var(--border))' }}
-                      />
-                      <YAxis 
-                          fontSize={12} 
-                          tickFormatter={(value) => `$${Math.abs(value)}`}
-                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                          axisLine={{ stroke: 'hsl(var(--border))' }}
-                          tickLine={{ stroke: 'hsl(var(--border))' }}
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
-                      <Bar 
-                          dataKey="totalLoss" 
-                          fill="hsl(var(--destructive))" 
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={40}
-                          name="Pérdida Total"
-                      />
-                  </BarChart>
-              </ResponsiveContainer>
-            ) : (
-                <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    No se han registrado operaciones perdedoras.
-                </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+        )}
+      </CardContent>
     </Card>
   );
 };
