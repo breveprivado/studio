@@ -693,10 +693,6 @@ export default function DashboardPage() {
                 dailyHealth: (d) => localStorage.setItem('dailyHealth', JSON.stringify(d[0])),
                 mandatoryItems_trading: (d) => localStorage.setItem('mandatoryItems_trading', JSON.stringify(d)),
                 mandatoryItems_personaje: (d) => localStorage.setItem('mandatoryItems_personaje', JSON.stringify(d)),
-                strategyOptions: (d) => {
-                    const strategies = d.map(item => item.value);
-                    localStorage.setItem('strategyOptions', JSON.stringify(strategies));
-                },
                 navItems: (d) => localStorage.setItem('navItems', JSON.stringify(d)),
             };
 
@@ -707,9 +703,8 @@ export default function DashboardPage() {
                 const action = sheetActions[sheetName];
                 if (action) {
                     action(jsonData);
-                } else if (sheetName === 'strategyOptions' && jsonData[0] && '0' in jsonData[0]) {
-                    // Handle old strategy format
-                    const strategies = jsonData.map(item => (item as any)[0]);
+                } else if (sheetName === 'strategyOptions' && wb.SheetNames.includes('strategyOptions')) {
+                    const strategies = jsonData.map(item => item.value);
                     localStorage.setItem('strategyOptions', JSON.stringify(strategies));
                 }
             });
@@ -952,6 +947,7 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
 
 
