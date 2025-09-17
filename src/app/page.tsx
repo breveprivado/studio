@@ -123,7 +123,7 @@ export default function DashboardPage() {
   const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
-  const [viewDate, setViewDate] = useState<Date>(new Date());
+  const [viewDate, setViewDate] = useState<Date>();
 
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
@@ -133,6 +133,10 @@ export default function DashboardPage() {
 
   const { level } = useLeveling(playerStats.xp);
   const prevLevel = usePrevious(level);
+  
+  useEffect(() => {
+    setViewDate(new Date());
+  }, []);
 
   useEffect(() => {
     if (prevLevel === undefined) return;
@@ -195,10 +199,10 @@ export default function DashboardPage() {
 
       // 1. Calculate XP from trades
       currentTrades.forEach(trade => {
-        if (trade.status === 'loss') {
-          totalXp -= XP_PENALTY_PER_LOSS;
-        } else if (trade.status === 'win' && trade.creatureId) {
+        if (trade.status === 'win' && trade.creatureId) {
           totalXp += getXpForCreature(trade.creatureId);
+        } else if (trade.status === 'loss') {
+          totalXp -= XP_PENALTY_PER_LOSS;
         }
       });
 
@@ -262,9 +266,10 @@ export default function DashboardPage() {
     let toastMessage = "";
     let finalToastTitle = "";
 
+    // Penalize for a loss
     if (trade.status === 'loss') {
-        xpChange = -XP_PENALTY_PER_LOSS;
-        toastMessage = `Has perdido ${XP_PENALTY_PER_LOSS} XP por esta derrota.`;
+        xpChange -= XP_PENALTY_PER_LOSS;
+        toastMessage += `Has perdido ${XP_PENALTY_PER_LOSS} XP. `;
 
         if (dailyHealth.lives > 0) {
             handleRemoveLife();
@@ -274,14 +279,17 @@ export default function DashboardPage() {
                 variant: "destructive"
             })
         }
-    } else if (trade.status === 'win' && trade.creatureId) {
+    } 
+    // Grant XP for wins if a creature is associated
+    else if (trade.status === 'win' && trade.creatureId) {
         const baseCreatureXp = getXpForCreature(trade.creatureId);
         xpChange += baseCreatureXp;
         
         const creatureName = creatures.find(c => c.id === trade.creatureId)?.name || 'una bestia';
-        toastMessage = `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}.`;
+        toastMessage += `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}. `;
     }
 
+    // Handle creature encounters and hunting mission XP
     if (trade.creatureId) {
         let creatureName = '';
         let oldEncounterCount = 0;
@@ -321,7 +329,7 @@ export default function DashboardPage() {
             return newPlayerStats;
         });
 
-        if (toastMessage) {
+        if (toastMessage.trim()) {
             finalToastTitle = xpChange > 0 ? "¡XP Ganada!" : "¡Penalización de XP!";
             toast({
                 title: finalToastTitle,
@@ -382,6 +390,7 @@ export default function DashboardPage() {
   };
 
   const filteredTrades = useMemo(() => {
+    if (!viewDate) return [];
     return trades.filter(trade => {
       const tradeDate = new Date(trade.date);
       switch (timeRange) {
@@ -522,6 +531,11 @@ export default function DashboardPage() {
       setTimeRange('daily');
     }
   }
+  
+  if (!viewDate) {
+    return null; // or a loading skeleton
+  }
+
 
   return (
     <>
