@@ -164,8 +164,8 @@ const BestiaryPage = () => {
     });
   }
   
-  const defeatedCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'win'));
-  const defeatedByCreatures = creatures.filter(c => c.encounters.some(e => e.status === 'loss'));
+  const defeatedCreatures = creatures.filter(c => (c.encounters || []).some(e => e.status === 'win'));
+  const defeatedByCreatures = creatures.filter(c => (c.encounters || []).some(e => e.status === 'loss'));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -315,8 +315,8 @@ const BestiaryPage = () => {
 };
 
 const CreatureListItem = ({ creature, handleOpenSheet, handleNameSave, getXpForCreature }: { creature: Creature, handleOpenSheet: (creature: Creature) => void, handleNameSave: (id: string, newName: string) => void, getXpForCreature: (id: string) => number }) => {
-    const wins = creature.encounters.filter(e => e.status === 'win').length;
-    const losses = creature.encounters.filter(e => e.status === 'loss').length;
+    const wins = (creature.encounters || []).filter(e => e.status === 'win').length;
+    const losses = (creature.encounters || []).filter(e => e.status === 'loss').length;
     return (
         <div 
             key={creature.id} 
@@ -349,6 +349,8 @@ const CreatureListItem = ({ creature, handleOpenSheet, handleNameSave, getXpForC
 
 
 export default BestiaryPage;
+
+    
 
     
 
