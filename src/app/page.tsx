@@ -44,6 +44,7 @@ import WorstPairAssertiveness from '@/components/dashboard/worst-pair-assertiven
 import PrideVsWorstTrades from '@/components/dashboard/pride-vs-worst-trades';
 import PrideVsWorstAnalysis from '@/components/dashboard/pride-vs-worst-analysis';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import ExpirationTimePerformance from '@/components/dashboard/expiration-time-performance';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -785,8 +786,9 @@ export default function DashboardPage() {
                     <PrideVsWorstTrades trades={filteredTrades} />
                   </div>
                   
-                  <div className="grid grid-cols-1">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <PrideVsWorstAnalysis trades={filteredTrades} />
+                    <ExpirationTimePerformance trades={filteredTrades} />
                   </div>
                 </div>
               )}
