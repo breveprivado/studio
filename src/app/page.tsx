@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2 } from 'lucide-react';
+import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
@@ -45,6 +45,7 @@ import PrideVsWorstTrades from '@/components/dashboard/pride-vs-worst-trades';
 import PrideVsWorstAnalysis from '@/components/dashboard/pride-vs-worst-analysis';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import ExpirationTimePerformance from '@/components/dashboard/expiration-time-performance';
+import * as XLSX from 'xlsx';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -136,6 +137,7 @@ export default function DashboardPage() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [showBarCharts, setShowBarCharts] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { level } = useLeveling(playerStats.xp);
   const prevLevel = usePrevious(level);
@@ -387,7 +389,7 @@ export default function DashboardPage() {
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
-    if ('creatureId' in updatedData) {
+    if ('creatureId' in updatedData || 'status' in updatedData) {
         syncCreatureEncountersFromTrades(updatedTrades);
     }
 
@@ -654,6 +656,102 @@ export default function DashboardPage() {
       setTimeRange('daily');
     }
   }
+
+  const handleExportData = () => {
+    const wb = XLSX.utils.book_new();
+
+    const dataToExport = {
+      trades,
+      withdrawals,
+      balanceAdditions,
+      adjustments,
+      creatures,
+      journalEntries: JSON.parse(localStorage.getItem('journalEntries') || '[]'),
+      habitTasks: JSON.parse(localStorage.getItem('habitTasks') || '[]'),
+      tournamentPosts: JSON.parse(localStorage.getItem('tournamentPosts') || '[]'),
+      playerStats: [playerStats], // wrap in array for worksheet
+      dailyHealth: [dailyHealth],
+      mandatoryItems_trading: JSON.parse(localStorage.getItem('mandatoryItems_trading') || '[]'),
+      mandatoryItems_personaje: JSON.parse(localStorage.getItem('mandatoryItems_personaje') || '[]'),
+      strategyOptions: JSON.parse(localStorage.getItem('strategyOptions') || '[]'),
+    };
+
+    for (const [key, value] of Object.entries(dataToExport)) {
+        if (Array.isArray(value) && value.length > 0) {
+            const ws = XLSX.utils.json_to_sheet(value);
+            XLSX.utils.book_append_sheet(wb, ws, key);
+        } else if (!Array.isArray(value)) {
+             const ws = XLSX.utils.json_to_sheet([value]);
+             XLSX.utils.book_append_sheet(wb, ws, key);
+        }
+    }
+
+    XLSX.writeFile(wb, "olimpo_wallet_backup.xlsx");
+    toast({
+        title: "Datos Exportados",
+        description: "Tu copia de seguridad ha sido descargada como olimpo_wallet_backup.xlsx"
+    });
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se seleccionó ningún archivo.' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = e.target?.result;
+            const wb = XLSX.read(data, { type: 'binary' });
+
+            const sheetActions: { [key: string]: (data: any[]) => void } = {
+                trades: (d) => localStorage.setItem('trades', JSON.stringify(d)),
+                withdrawals: (d) => localStorage.setItem('withdrawals', JSON.stringify(d)),
+                balanceAdditions: (d) => localStorage.setItem('balanceAdditions', JSON.stringify(d)),
+                adjustments: (d) => localStorage.setItem('adjustments', JSON.stringify(d)),
+                creatures: (d) => localStorage.setItem('bestiaryCreatures', JSON.stringify(d)),
+                journalEntries: (d) => localStorage.setItem('journalEntries', JSON.stringify(d)),
+                habitTasks: (d) => localStorage.setItem('habitTasks', JSON.stringify(d)),
+                tournamentPosts: (d) => localStorage.setItem('tournamentPosts', JSON.stringify(d)),
+                playerStats: (d) => localStorage.setItem('playerStats', JSON.stringify(d[0])),
+                dailyHealth: (d) => localStorage.setItem('dailyHealth', JSON.stringify(d[0])),
+                mandatoryItems_trading: (d) => localStorage.setItem('mandatoryItems_trading', JSON.stringify(d)),
+                mandatoryItems_personaje: (d) => localStorage.setItem('mandatoryItems_personaje', JSON.stringify(d)),
+                strategyOptions: (d) => localStorage.setItem('strategyOptions', JSON.stringify(d.map(item => item.value))),
+            };
+
+            wb.SheetNames.forEach(sheetName => {
+                const ws = wb.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(ws);
+                
+                const action = sheetActions[sheetName];
+                if (action) {
+                    action(jsonData);
+                } else if (sheetName === 'strategyOptions' && jsonData[0] && '0' in jsonData[0]) {
+                    // Handle old strategy format
+                    const strategies = jsonData.map(item => (item as any)[0]);
+                    localStorage.setItem('strategyOptions', JSON.stringify(strategies));
+                }
+            });
+
+            toast({
+                title: "Importación Completa",
+                description: "Tus datos han sido restaurados. La página se recargará."
+            });
+
+            setTimeout(() => window.location.reload(), 1500);
+
+        } catch (error) {
+            console.error("Error al importar los datos:", error);
+            toast({ variant: 'destructive', title: 'Error de Importación', description: 'El archivo no es válido o está corrupto.' });
+        }
+    };
+    reader.readAsBinaryString(file);
+    // Reset file input
+    if(fileInputRef.current) fileInputRef.current.value = '';
+  };
   
   if (!viewDate) {
     return null; // or a loading skeleton
@@ -737,6 +835,14 @@ export default function DashboardPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="outline">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Importar
+                      </Button>
+                      <Button onClick={handleExportData} size="sm" variant="outline">
+                          <Download className="mr-2 h-4 w-4" />
+                          Exportar
+                      </Button>
                       <Button onClick={() => setIsAdjustmentOpen(true)} size="sm" variant="outline">
                           Ajustar Saldo
                       </Button>
@@ -851,6 +957,14 @@ export default function DashboardPage() {
 
           </main>
       </div>
+
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleImportData} 
+        className="hidden" 
+        accept=".xlsx"
+      />
       
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} creatures={creatures} />

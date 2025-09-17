@@ -236,5 +236,3 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 };
 
 export default TradeItem;
-
-    
