@@ -163,6 +163,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
     const newTrade: Omit<Trade, 'id'> = {
       ...data,
       creatureId: data.creatureId === 'none' ? undefined : data.creatureId,
+      expirationTime: data.expirationTime || undefined,
       date: tradeDate.toISOString(),
       profit: finalProfit,
       status: data.status,
@@ -573,5 +574,6 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
 };
 
 export default NewTradeDialog;
+    
 
     
