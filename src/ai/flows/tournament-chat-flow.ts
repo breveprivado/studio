@@ -8,7 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { TournamentPost } from '@/lib/types';
+import { type TournamentPost } from '@/lib/types';
 
 const TournamentChatInputSchema = z.object({
   postText: z.string().describe('The text content of the tournament post.'),
@@ -40,8 +40,6 @@ const tournamentChatFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const llm = ai.getModel();
-
     const prompt: any[] = [
         { role: 'system', content: systemPrompt }
     ];
