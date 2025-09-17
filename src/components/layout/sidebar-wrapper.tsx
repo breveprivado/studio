@@ -60,7 +60,7 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch={true}>
                         <SidebarMenuButton 
                          isActive={pathname === item.href}
                          className={cn(pathname === item.href && item.color)}
@@ -72,7 +72,7 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
                 </SidebarMenuItem>
             ))}
               <SidebarMenuItem>
-                <Link href="/tienda">
+                <Link href="/tienda" prefetch={true}>
                   <SidebarMenuButton 
                       isActive={pathname === '/tienda'}
                       className="bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold hover:scale-105 transition-transform shadow-md"
