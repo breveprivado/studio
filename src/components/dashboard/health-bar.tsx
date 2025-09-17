@@ -95,6 +95,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
     });
     return Object.entries(lossesByPair)
         .map(([pair, count]) => ({ pair, count }))
+        .filter(({ count }) => count >= 3)
         .sort((a,b) => b.count - a.count);
   }, [trades]);
 
@@ -298,5 +299,7 @@ const PlayerStatusCard: React.FC<PlayerStatusCardProps> = ({ lives, onReset, onA
 };
 
 export default PlayerStatusCard;
+
+    
 
     
