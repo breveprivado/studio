@@ -16,6 +16,7 @@ export interface Trade {
   discipline?: number;
   emotion?: 'happy' | 'neutral' | 'sad';
   creatureId?: string;
+  encounterId?: string;
   isPrideTrade?: boolean;
   isWorstTrade?: boolean;
   imageUrl?: string | null;

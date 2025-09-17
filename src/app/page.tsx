@@ -258,15 +258,51 @@ export default function DashboardPage() {
 
   }, []);
   
-  const handleAddTrade = (trade: Omit<Trade, 'id'>) => {
-    const newTrade = { ...trade, id: crypto.randomUUID() };
-    const updatedTrades = [newTrade, ...trades];
-    setTrades(updatedTrades);
-    localStorage.setItem('trades', JSON.stringify(updatedTrades));
-
+  const handleAddTrade = (trade: Omit<Trade, 'id' | 'encounterId'>) => {
+    
+    let finalTrade: Trade = { ...trade, id: crypto.randomUUID() };
+    
     let xpChange = 0;
     let toastMessage = "";
     let finalToastTitle = "";
+
+    // Handle creature encounters and hunting mission XP
+    if (trade.creatureId) {
+        let creatureName = '';
+        let oldEncounterCount = 0;
+        const newEncounterId = crypto.randomUUID();
+        finalTrade.encounterId = newEncounterId;
+
+        const updatedCreatures = creatures.map(c => {
+            if (c.id === trade.creatureId) {
+                creatureName = c.name;
+                const newEncounter: Encounter = { id: newEncounterId, date: new Date().toISOString(), status: trade.status };
+                oldEncounterCount = c.encounters.length;
+                return {...c, encounters: [...c.encounters, newEncounter]};
+            }
+            return c;
+        });
+        setCreatures(updatedCreatures);
+        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+
+        // We only grant mission XP for wins
+        if (trade.status === 'win') {
+            const newEncounterCount = oldEncounterCount + 1;
+            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
+
+            if (unlockedTier) {
+                xpChange += XP_PER_HUNTING_MISSION;
+                toast({
+                    title: "¡Misión de Caza Completada!",
+                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
+                });
+            }
+        }
+    }
+    
+    const updatedTrades = [finalTrade, ...trades];
+    setTrades(updatedTrades);
+    localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
     // Penalize for a loss
     if (trade.status === 'loss') {
@@ -291,37 +327,6 @@ export default function DashboardPage() {
         toastMessage += `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}. `;
     }
 
-    // Handle creature encounters and hunting mission XP
-    if (trade.creatureId) {
-        let creatureName = '';
-        let oldEncounterCount = 0;
-
-        const updatedCreatures = creatures.map(c => {
-            if (c.id === trade.creatureId) {
-                creatureName = c.name;
-                const newEncounter = { id: crypto.randomUUID(), date: new Date().toISOString(), status: trade.status };
-                oldEncounterCount = c.encounters.length;
-                return {...c, encounters: [...c.encounters, newEncounter]};
-            }
-            return c;
-        });
-        setCreatures(updatedCreatures);
-        localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
-
-        // We only grant mission XP for wins
-        if (trade.status === 'win') {
-            const newEncounterCount = oldEncounterCount + 1;
-            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
-
-            if (unlockedTier) {
-                xpChange += XP_PER_HUNTING_MISSION;
-                toast({
-                    title: "¡Misión de Caza Completada!",
-                    description: `Has cazado ${unlockedTier} ${creatureName}(s) y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
-                });
-            }
-        }
-    }
 
     if (xpChange !== 0) {
         setPlayerStats(prevStats => {
@@ -528,21 +533,17 @@ export default function DashboardPage() {
 
   const handleDeleteTrade = (id: string) => {
       const tradeToDelete = trades.find(t => t.id === id);
+      if (!tradeToDelete) return;
+
       const newTrades = trades.filter(t => t.id !== id);
       setTrades(newTrades);
       localStorage.setItem('trades', JSON.stringify(newTrades));
 
-      if (tradeToDelete?.creatureId) {
+      if (tradeToDelete.creatureId && tradeToDelete.encounterId) {
           const updatedCreatures = creatures.map(c => {
               if (c.id === tradeToDelete.creatureId) {
-                  // Find the index of the last encounter to remove it
-                  // This assumes the last added encounter corresponds to the deleted trade
-                  const lastEncounterIndex = c.encounters.length -1;
-                  if (lastEncounterIndex >= 0) {
-                      const newEncounters = [...c.encounters];
-                      newEncounters.splice(lastEncounterIndex, 1);
-                      return { ...c, encounters: newEncounters };
-                  }
+                  const newEncounters = c.encounters.filter(e => e.id !== tradeToDelete.encounterId);
+                  return { ...c, encounters: newEncounters };
               }
               return c;
           });
