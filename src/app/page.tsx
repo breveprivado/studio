@@ -184,14 +184,7 @@ export default function DashboardPage() {
             handleResetLives();
         }
     }
-
-    const isDataInitialized = localStorage.getItem('data_initialized');
-    if (!isDataInitialized) {
-        setTrades([]);
-        localStorage.setItem('trades', JSON.stringify([]));
-        localStorage.setItem('data_initialized', 'true');
-    }
-
+    
     recalculateAndSetXp(currentTrades, currentCreatures, stats);
   };
 
@@ -736,4 +729,5 @@ export default function DashboardPage() {
     
 
     
+
 
