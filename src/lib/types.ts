@@ -19,6 +19,7 @@ export interface Trade {
   isPrideTrade?: boolean;
   isWorstTrade?: boolean;
   imageUrl?: string | null;
+  expirationTime?: string;
 }
 
 export type TimeRange = 'daily' | 'monthly' | 'anual';
@@ -78,6 +79,8 @@ export interface TournamentPost {
   date: string;
   text: string;
   imageUrl: string | null;
-  chatHistory?: { role: 'user' | 'model'; content: string }[];
+  chatHistory: { role: 'user' | 'model'; content: string }[];
 }
+    
+
     

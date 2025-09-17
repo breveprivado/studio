@@ -82,6 +82,12 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               <span>{trade.lotSize}</span>
             </div>
           )}
+           {trade.expirationTime && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Expiración</span>
+              <Badge variant="secondary">{trade.expirationTime}</Badge>
+            </div>
+          )}
           {trade.strategy && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Estrategia</span>
@@ -105,3 +111,5 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
 };
 
 export default TradeDetailDialog;
+
+    

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Trade, Creature } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -218,6 +219,7 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
                 </>
             )}
             <CreatureEditor trade={trade} creatures={creatures} onUpdate={onUpdate} />
+            {trade.expirationTime && <><span>•</span><span>Exp: {trade.expirationTime}</span></>}
             {trade.pips != null && <><span>•</span><span>{trade.pips > 0 ? '+' : ''}{trade.pips} pips</span></>}
             {trade.lotSize != null && <><span>•</span><span>Lote: {trade.lotSize}</span></>}
           </div>
@@ -234,3 +236,5 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
 };
 
 export default TradeItem;
+
+    

@@ -45,6 +45,7 @@ const formSchema = z.object({
   isPrideTrade: z.boolean().optional(),
   isWorstTrade: z.boolean().optional(),
   imageUrl: z.string().optional(),
+  expirationTime: z.string().optional(),
 });
 
 type NewTradeFormValues = z.infer<typeof formSchema>;
@@ -53,6 +54,12 @@ const defaultStrategies = [
     '1G', '2G', '3G', '4G', '5G',
     '1C', '2C', '3C', '4C'
 ];
+
+const expirationTimeOptions = [
+    "5seg", "10seg", "15seg", "30seg", "45seg", "1minuto",
+    "2minuto", "3minuto", "4minuto", "5minuto"
+];
+
 
 interface NewTradeDialogProps {
   isOpen: boolean;
@@ -112,6 +119,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       isPrideTrade: false,
       isWorstTrade: false,
       imageUrl: '',
+      expirationTime: '',
     },
   });
   
@@ -171,7 +179,8 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       creatureId: '',
       isPrideTrade: false,
       isWorstTrade: false,
-      imageUrl: ''
+      imageUrl: '',
+      expirationTime: '',
     });
     onOpenChange(false);
   }
@@ -324,6 +333,36 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     )}
                     />
              </div>
+            <div className="space-y-2">
+                <FormField
+                    control={form.control}
+                    name="expirationTime"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Tiempo de Expiración</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-wrap gap-2 pt-2"
+                                >
+                                    {expirationTimeOptions.map(option => (
+                                        <FormItem key={option}>
+                                            <FormControl>
+                                                <Label className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 cursor-pointer", field.value === option && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')}>
+                                                    <RadioGroupItem value={option} className="sr-only" />
+                                                    {option}
+                                                </Label>
+                                            </FormControl>
+                                        </FormItem>
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
              <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
