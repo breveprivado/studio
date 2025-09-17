@@ -6,6 +6,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import DateEditor from './date-editor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface PairEditorProps {
   trade: Trade;
@@ -94,6 +96,44 @@ const ProfitEditor: React.FC<ProfitEditorProps> = ({ trade, onUpdate, formatCurr
     );
 }
 
+interface CreatureEditorProps {
+    trade: Trade;
+    creatures: Creature[];
+    onUpdate: (id: string, updatedData: Partial<Trade>) => void;
+}
+
+const CreatureEditor: React.FC<CreatureEditorProps> = ({ trade, creatures, onUpdate }) => {
+    const huntedCreature = trade.creatureId ? creatures.find(c => c.id === trade.creatureId) : null;
+
+    const handleSelect = (creatureId: string) => {
+        onUpdate(trade.id, { creatureId: creatureId === 'none' ? undefined : creatureId });
+    };
+
+    return (
+        <div onClick={(e) => e.stopPropagation()}>
+            <Select onValueChange={handleSelect} defaultValue={trade.creatureId || 'none'}>
+                <SelectTrigger className="h-auto w-auto text-xs p-1 border-0 bg-transparent text-purple-600 dark:text-purple-400 focus:ring-0 focus:ring-offset-0">
+                     <span className="flex items-center gap-1">
+                        <Target className="h-3 w-3" />
+                        <SelectValue>
+                           {huntedCreature ? huntedCreature.name : 'Asignar Bestia'}
+                        </SelectValue>
+                     </span>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="none">Ninguna</SelectItem>
+                    {creatures.sort((a,b) => parseInt(a.id) - parseInt(b.id)).map(creature => (
+                        <SelectItem key={creature.id} value={creature.id}>
+                            {creature.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    );
+};
+
+
 interface TradeItemProps {
   trade: Trade;
   creatures: Creature[];
@@ -132,8 +172,6 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
     profitColor = 'text-gray-600 dark:text-gray-400';
     icon = <Minus className={`h-5 w-5 ${statusColor}`} />;
   }
-
-  const huntedCreature = trade.creatureId ? creatures.find(c => c.id === trade.creatureId) : null;
   
   const handleDateUpdate = (newDate: Date) => {
     const originalDate = new Date(trade.date);
@@ -179,15 +217,7 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, creatures, onDelete, onUpd
                 <Skull className="h-4 w-4 text-destructive" />
                 </>
             )}
-            {huntedCreature && (
-                <>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400">
-                    <Target className="h-3 w-3" />
-                    {huntedCreature.name}
-                </span>
-                </>
-            )}
+            <CreatureEditor trade={trade} creatures={creatures} onUpdate={onUpdate} />
             {trade.pips != null && <><span>•</span><span>{trade.pips > 0 ? '+' : ''}{trade.pips} pips</span></>}
             {trade.lotSize != null && <><span>•</span><span>Lote: {trade.lotSize}</span></>}
           </div>
