@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
   const [viewDate, setViewDate] = useState<Date | undefined>();
@@ -161,8 +162,7 @@ export default function DashboardPage() {
   
   const loadAllData = () => {
     const storedTrades = localStorage.getItem('trades');
-    const currentTrades = storedTrades ? JSON.parse(storedTrades) : [];
-    setTrades(currentTrades);
+    setTrades(storedTrades ? JSON.parse(storedTrades) : []);
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     const currentCreatures = storedCreatures ? JSON.parse(storedCreatures) : initialCreatures;
@@ -185,6 +185,7 @@ export default function DashboardPage() {
     if (!stats.class) {
         stats.class = 'Nigromante';
     }
+    setPlayerStats(stats);
     
     const storedHealth = localStorage.getItem('dailyHealth');
     if (storedHealth) {
@@ -196,53 +197,10 @@ export default function DashboardPage() {
         }
     }
     
-    recalculateAndSetXp(currentTrades, currentCreatures, stats);
+    const storedJournal = localStorage.getItem('journalEntries');
+    setJournalEntries(storedJournal ? JSON.parse(storedJournal) : []);
   };
-
-  const recalculateAndSetXp = (currentTrades: Trade[], currentCreatures: Creature[], currentStats: PlayerStats) => {
-      let totalXp = 0;
-
-      // 1. Calculate XP from trades
-      currentTrades.forEach(trade => {
-        if (trade.status === 'win' && trade.creatureId) {
-          totalXp += getXpForCreature(trade.creatureId);
-        } else if (trade.status === 'loss') {
-          totalXp -= XP_PENALTY_PER_LOSS;
-        }
-      });
-
-      // 2. Calculate XP from Hunting Missions
-      currentCreatures.forEach(creature => {
-        const encounterCount = (creature.encounters || []).length;
-        achievementTiers.forEach(tier => {
-          if (encounterCount >= tier) {
-            totalXp += XP_PER_HUNTING_MISSION;
-          }
-        });
-      });
-      
-      // 3. Calculate XP from Survival Missions
-      const storedJournal = localStorage.getItem('journalEntries');
-      if (storedJournal) {
-          const entries: JournalEntry[] = JSON.parse(storedJournal);
-          const ratedDays = entries.filter((e) => e.rating === 3 || e.rating === 5);
-          const ratedDaysCount = ratedDays.length;
-
-          totalXp += ratedDaysCount * XP_PER_SURVIVAL_DAY;
-
-          Object.values(levelMilestones).forEach(milestone => {
-            if (ratedDaysCount >= milestone) {
-                totalXp += XP_PER_SURVIVAL_MISSION;
-            }
-          });
-      }
-
-      const newPlayerStats = { ...currentStats, xp: totalXp };
-      setPlayerStats(newPlayerStats);
-      localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-  }
-
-
+  
   useEffect(() => {
     loadAllData();
 
@@ -260,6 +218,50 @@ export default function DashboardPage() {
     };
 
   }, []);
+
+  useEffect(() => {
+    let totalXp = 0;
+
+    // 1. XP from trades
+    trades.forEach(trade => {
+        if (trade.status === 'win' && trade.creatureId) {
+            totalXp += getXpForCreature(trade.creatureId);
+        } else if (trade.status === 'loss') {
+            totalXp -= XP_PENALTY_PER_LOSS;
+        }
+    });
+
+    // 2. XP from Hunting Missions
+    creatures.forEach(creature => {
+        const encounterCount = (creature.encounters || []).length;
+        achievementTiers.forEach(tier => {
+            if (encounterCount >= tier) {
+                totalXp += XP_PER_HUNTING_MISSION;
+            }
+        });
+    });
+
+    // 3. XP from Survival Missions & Daily Survival
+    const ratedDays = journalEntries.filter(e => e.rating === 3 || e.rating === 5);
+    const ratedDaysCount = ratedDays.length;
+    totalXp += ratedDaysCount * XP_PER_SURVIVAL_DAY;
+    
+    Object.values(levelMilestones).forEach(milestone => {
+        if (ratedDaysCount >= milestone) {
+            totalXp += XP_PER_SURVIVAL_MISSION;
+        }
+    });
+    
+    const newXp = Math.max(0, totalXp);
+
+    if (newXp !== playerStats.xp) {
+        setPlayerStats(prevStats => {
+            const newPlayerStats = { ...prevStats, xp: newXp };
+            localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
+            return newPlayerStats;
+        });
+    }
+}, [trades, creatures, journalEntries, playerStats.xp]);
   
   const syncCreatureEncountersFromTrades = (allTrades: Trade[]) => {
     const freshCreatures = initialCreatures.map(c => {
@@ -309,42 +311,16 @@ export default function DashboardPage() {
     
     let finalTrade: Trade = { ...trade, id: crypto.randomUUID() };
     
-    let xpChange = 0;
-    let toastMessage = "";
-    let finalToastTitle = "";
-
     const updatedTrades = [finalTrade, ...trades];
     setTrades(updatedTrades);
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
     // Handle creature encounters and hunting mission XP
     if (trade.creatureId) {
-        let creatureName = '';
-        const oldEncounterCount = creatures.find(c => c.id === trade.creatureId)?.encounters.length || 0;
-        
         syncCreatureEncountersFromTrades(updatedTrades);
-
-        // We only grant mission XP for wins
-        if (trade.status === 'win') {
-            const newEncounterCount = oldEncounterCount + 1;
-            const unlockedTier = achievementTiers.find(tier => newEncounterCount === tier);
-
-            if (unlockedTier) {
-                xpChange += XP_PER_HUNTING_MISSION;
-                const creature = creatures.find(c => c.id === trade.creatureId);
-                toast({
-                    title: "¡Misión de Caza Completada!",
-                    description: `Has cazado ${unlockedTier} ${creature?.name || 'bestias'} y ganado un bono de ${XP_PER_HUNTING_MISSION} XP!`
-                });
-            }
-        }
     }
     
-    // Penalize for a loss
     if (trade.status === 'loss') {
-        xpChange -= XP_PENALTY_PER_LOSS;
-        toastMessage += `Has perdido ${XP_PENALTY_PER_LOSS} XP. `;
-
         if (dailyHealth.lives > 0) {
             handleRemoveLife();
             toast({
@@ -352,33 +328,6 @@ export default function DashboardPage() {
                 description: "Has perdido un corazón. ¡Ten cuidado!",
                 variant: "destructive"
             })
-        }
-    } 
-    // Grant XP for wins if a creature is associated
-    else if (trade.status === 'win' && trade.creatureId) {
-        const baseCreatureXp = getXpForCreature(trade.creatureId);
-        xpChange += baseCreatureXp;
-        
-        const creatureName = creatures.find(c => c.id === trade.creatureId)?.name || 'una bestia';
-        toastMessage += `Has ganado ${baseCreatureXp.toFixed(0)} XP por enfrentarte a ${creatureName}. `;
-    }
-
-
-    if (xpChange !== 0) {
-        setPlayerStats(prevStats => {
-            const newXp = (prevStats.xp || 0) + xpChange;
-            const newPlayerStats = { ...prevStats, xp: newXp };
-            localStorage.setItem('playerStats', JSON.stringify(newPlayerStats));
-            return newPlayerStats;
-        });
-
-        if (toastMessage.trim()) {
-            finalToastTitle = xpChange > 0 ? "¡XP Ganada!" : "¡Penalización de XP!";
-            toast({
-                title: finalToastTitle,
-                description: toastMessage.trim(),
-                variant: xpChange > 0 ? "default" : "destructive"
-            });
         }
     }
   };
@@ -974,5 +923,6 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
 
