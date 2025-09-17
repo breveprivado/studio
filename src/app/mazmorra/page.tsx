@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, Calendar as CalendarIcon, Dumbbell } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -90,7 +90,7 @@ const MazmorraPage = () => {
         if(!taskStatusByDay[task.date]) {
             taskStatusByDay[task.date] = { total: 0, completed: 0 };
         }
-        taskStatus_byDay[task.date].total++;
+        taskStatusByDay[task.date].total++;
         if(task.completed) {
             taskStatusByDay[task.date].completed++;
         }
