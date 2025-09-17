@@ -1,5 +1,6 @@
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -45,7 +46,10 @@ export interface Adjustment {
   notes?: string;
 }
 
-export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'withdrawal' }) | (BalanceAddition & { type: 'balance' }) | (Adjustment & { type: 'adjustment' });
+export type Activity = { type: 'trade', id: string, date: string } & Partial<Trade> | 
+                       { type: 'withdrawal', id: string, date: string } & Partial<Withdrawal> | 
+                       { type: 'balance', id: string, date: string } & Partial<BalanceAddition> | 
+                       { type: 'adjustment', id: string, date: string } & Partial<Adjustment>;
 
 export interface Encounter {
   id: string;
@@ -90,4 +94,5 @@ export interface TournamentPost {
 }
     
 
+    
     

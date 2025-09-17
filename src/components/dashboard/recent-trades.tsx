@@ -51,13 +51,13 @@ const RecentTrades: React.FC<RecentTradesProps> = ({
             activities.map(activity => {
               switch (activity.type) {
                 case 'trade':
-                  return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+                  return <TradeItem key={`trade-${activity.id}`} trade={activity as Trade} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
                 case 'withdrawal':
-                  return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} onUpdate={onUpdateWithdrawal} formatCurrency={formatCurrency} />
+                  return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity as Withdrawal} onDelete={onDeleteWithdrawal} onUpdate={onUpdateWithdrawal} formatCurrency={formatCurrency} />
                 case 'balance':
-                  return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} onUpdate={onUpdateBalance} formatCurrency={formatCurrency} />
+                  return <BalanceItem key={`balance-${activity.id}`} balance={activity as BalanceAddition} onDelete={onDeleteBalance} onUpdate={onUpdateBalance} formatCurrency={formatCurrency} />
                 case 'adjustment':
-                  return <AdjustmentItem key={`adjustment-${activity.id}`} adjustment={activity} onDelete={onDeleteAdjustment} onUpdate={onUpdateAdjustment} formatCurrency={formatCurrency} />
+                  return <AdjustmentItem key={`adjustment-${activity.id}`} adjustment={activity as Adjustment} onDelete={onDeleteAdjustment} onUpdate={onUpdateAdjustment} formatCurrency={formatCurrency} />
                 default:
                   return null;
               }
@@ -71,4 +71,5 @@ const RecentTrades: React.FC<RecentTradesProps> = ({
 
 export default RecentTrades;
 
+    
     

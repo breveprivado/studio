@@ -17,12 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Adjustment } from '@/lib/types';
 
 
 const formSchema = z.object({
-  amount: z.coerce.number(),
-  notes: z.string().optional(),
+  newBalance: z.coerce.number(),
 });
 
 type AdjustmentFormValues = z.infer<typeof formSchema>;
@@ -30,22 +28,29 @@ type AdjustmentFormValues = z.infer<typeof formSchema>;
 interface AdjustmentDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddAdjustment: (adjustment: Omit<Adjustment, 'id' | 'date'>) => void;
+  onAddAdjustment: (newTotalBalance: number) => void;
+  netProfit: number;
 }
 
-const AdjustmentDialog: React.FC<AdjustmentDialogProps> = ({ isOpen, onOpenChange, onAddAdjustment }) => {
+const AdjustmentDialog: React.FC<AdjustmentDialogProps> = ({ isOpen, onOpenChange, onAddAdjustment, netProfit }) => {
 
   const form = useForm<AdjustmentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: 0,
-      notes: 'CORRECCIÓN',
+      newBalance: netProfit,
     },
   });
+  
+  React.useEffect(() => {
+    if (isOpen) {
+      form.setValue('newBalance', netProfit);
+    }
+  }, [isOpen, netProfit, form]);
+
 
   function onSubmit(data: AdjustmentFormValues) {
-    onAddAdjustment(data);
-    form.reset({ amount: 0, notes: 'CORRECCIÓN' });
+    onAddAdjustment(data.newBalance);
+    form.reset({ newBalance: 0 });
     onOpenChange(false);
   }
   
@@ -53,19 +58,19 @@ const AdjustmentDialog: React.FC<AdjustmentDialogProps> = ({ isOpen, onOpenChang
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Ajustar Saldo</DialogTitle>
+          <DialogTitle>Ajustar Saldo Final</DialogTitle>
           <DialogDescription>
-            Registra una corrección manual en tu cuenta. Usa un valor negativo para restar.
+            Introduce el saldo final que deseas tener. El sistema calculará y registrará la diferencia como una corrección.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
               <FormField
                 control={form.control}
-                name="amount"
+                name="newBalance"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Monto del Ajuste (USD)</FormLabel>
+                    <FormLabel>Nuevo Saldo Final (USD)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -73,19 +78,6 @@ const AdjustmentDialog: React.FC<AdjustmentDialogProps> = ({ isOpen, onOpenChang
                   </FormItem>
                 )}
               />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Ej: Corrección de error, etc." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <DialogFooter>
               <Button type="submit">Guardar Ajuste</Button>
             </DialogFooter>
@@ -97,3 +89,5 @@ const AdjustmentDialog: React.FC<AdjustmentDialogProps> = ({ isOpen, onOpenChang
 };
 
 export default AdjustmentDialog;
+
+    

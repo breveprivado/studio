@@ -419,6 +419,48 @@ export default function DashboardPage() {
       }
     });
   }, [trades, timeRange, viewDate]);
+  
+  const netProfit = useMemo(() => {
+    const allActivities: Activity[] = [
+        ...trades.map(t => ({...t, type: 'trade'} as const)),
+        ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const)),
+        ...balanceAdditions.map(b => ({...b, type: 'balance'} as const)),
+        ...adjustments.map(a => ({...a, type: 'adjustment'} as const)),
+    ];
+    
+    return allActivities.reduce((acc, activity) => {
+        if (activity.type === 'trade') return acc + activity.profit;
+        if (activity.type === 'balance') return acc + activity.amount;
+        if (activity.type === 'withdrawal') return acc - activity.amount;
+        if (activity.type === 'adjustment') return acc + activity.amount;
+        return acc;
+    }, 0);
+  }, [trades, withdrawals, balanceAdditions, adjustments]);
+
+  const { gains, losses, filteredNetProfit, totalLossesCount, totalXpLost } = useMemo(() => {
+    const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
+    const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
+    const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
+
+    const relevantWithdrawals = withdrawals.filter(w => isSameDay(new Date(w.date), viewDate!));
+    const relevantBalanceAdditions = balanceAdditions.filter(b => isSameDay(new Date(b.date), viewDate!));
+    const relevantAdjustments = adjustments.filter(a => isSameDay(new Date(a.date), viewDate!));
+
+    // This logic needs to be adapted based on the time range for filteredNetProfit
+    // For simplicity, let's calculate net profit on all data for now.
+    const allTimeGains = trades.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
+    const allTimeLosses = trades.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
+    const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
+    const totalBalanceAdditions = balanceAdditions.reduce((acc, b) => acc + b.amount, 0);
+    const totalAdjustments = adjustments.reduce((acc, a) => acc + a.amount, 0);
+    const filteredNetProfit = totalBalanceAdditions + allTimeGains + allTimeLosses - totalWithdrawals + totalAdjustments;
+    
+    const allLosses = trades.filter(t => t.status === 'loss');
+    const totalLossesCount = allLosses.length;
+    const totalXpLost = totalLossesCount * XP_PENALTY_PER_LOSS;
+
+    return { gains, losses, filteredNetProfit, totalLossesCount, totalXpLost };
+  }, [filteredTrades, trades, withdrawals, balanceAdditions, adjustments, viewDate, timeRange]);
 
   const activities = useMemo((): Activity[] => {
     const combined = [
@@ -429,23 +471,7 @@ export default function DashboardPage() {
     ];
     return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [trades, withdrawals, balanceAdditions, adjustments]);
-
-  const { gains, losses, netProfit, totalLossesCount, totalXpLost } = useMemo(() => {
-    const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
-    const gains = tradesToAnalyze.filter(t => t.status === 'win').reduce((acc, t) => acc + t.profit, 0);
-    const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
-    const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
-    const totalBalanceAdditions = balanceAdditions.reduce((acc, b) => acc + b.amount, 0);
-    const totalAdjustments = adjustments.reduce((acc, a) => acc + a.amount, 0);
-    const netProfit = totalBalanceAdditions + gains + losses - totalWithdrawals + totalAdjustments;
-    
-    // Calculate total losses for the new card
-    const allTimeLosses = trades.filter(t => t.status === 'loss');
-    const totalLossesCount = allTimeLosses.length;
-    const totalXpLost = totalLossesCount * XP_PENALTY_PER_LOSS;
-
-    return { gains, losses, netProfit, totalLossesCount, totalXpLost };
-  }, [filteredTrades, trades, withdrawals, balanceAdditions, adjustments]);
+  
 
   const formatCurrency = (value: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
@@ -479,15 +505,23 @@ export default function DashboardPage() {
     })
   }
 
-   const handleAddAdjustment = (adjustment: Omit<Adjustment, 'id' | 'date'>) => {
-    const newAdjustment = { ...adjustment, id: crypto.randomUUID(), date: new Date().toISOString() };
-    const newAdjustments = [newAdjustment, ...adjustments];
+   const handleAddAdjustment = (newTotalBalance: number) => {
+    const adjustmentAmount = newTotalBalance - netProfit;
+
+    const newAdjustment: Omit<Adjustment, 'id'> = {
+      amount: adjustmentAmount,
+      date: new Date().toISOString(),
+      notes: `Corrección a ${formatCurrency(newTotalBalance)}`,
+    };
+    
+    const newAdjustments = [{...newAdjustment, id: crypto.randomUUID() }, ...adjustments];
     setAdjustments(newAdjustments);
     localStorage.setItem('adjustments', JSON.stringify(newAdjustments));
+    
     toast({
         title: "Ajuste Registrado",
-        description: "La corrección de saldo ha sido guardada."
-    })
+        description: `El saldo ha sido ajustado a ${formatCurrency(newTotalBalance)}.`
+    });
   }
 
   const handleDeleteTrade = (id: string) => {
@@ -676,7 +710,7 @@ export default function DashboardPage() {
                       </CardHeader>
                       <CardContent className="p-4 pt-0">
                           <div className={cn("text-xl font-bold", netProfit >= 0 ? "text-green-500" : "text-red-500")}>{formatCurrency(netProfit)}</div>
-                          <p className="text-xs text-muted-foreground">{filteredTrades.length} operaciones</p>
+                          <p className="text-xs text-muted-foreground">{trades.length} operaciones totales</p>
                       </CardContent>
                   </Card>
                   <Card className="bg-card">
@@ -756,8 +790,10 @@ export default function DashboardPage() {
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} creatures={creatures} />
       <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
-      <AdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onAddAdjustment={handleAddAdjustment} />
+      <AdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onAddAdjustment={handleAddAdjustment} netProfit={netProfit} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
   );
 }
+
+    
