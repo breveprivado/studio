@@ -1,6 +1,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -93,6 +94,10 @@ export interface TournamentPost {
   chatHistory: { role: 'user' | 'model'; content: string }[];
 }
     
-
+export interface HabitTask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
     
     
