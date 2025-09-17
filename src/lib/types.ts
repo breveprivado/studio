@@ -78,5 +78,6 @@ export interface TournamentPost {
   date: string;
   text: string;
   imageUrl: string | null;
+  chatHistory?: { role: 'user' | 'model'; content: string }[];
 }
     
