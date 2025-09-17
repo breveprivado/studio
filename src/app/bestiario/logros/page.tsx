@@ -78,6 +78,19 @@ const AchievementsPage = () => {
     }
   };
 
+  const handleResetSingleCreature = (creatureId: string) => {
+    const updatedCreatures = creatures.map(c => 
+        c.id === creatureId ? { ...c, encounters: [] } : c
+    );
+    setCreatures(updatedCreatures);
+    localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'bestiaryCreatures' }));
+    toast({
+        title: "Bestia Reiniciada",
+        description: `El progreso de caza para esta bestia ha sido restablecido.`,
+    });
+  };
+
   if (!isClient) {
     return null; // or a loading spinner
   }
@@ -139,7 +152,28 @@ const AchievementsPage = () => {
               className="bg-white dark:bg-neutral-900"
             >
               <CardHeader>
-                  <CardTitle>{creature.name}</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>{creature.name}</CardTitle>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>¿Reiniciar progreso de {creature.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            Esta acción restablecerá los encuentros para esta bestia a cero.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleResetSingleCreature(creature.id)} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar</AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                   <CardDescription>Has cazado a esta bestia {encounters} {encounters === 1 ? 'vez' : 'veces'}.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
