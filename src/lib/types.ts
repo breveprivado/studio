@@ -1,6 +1,5 @@
 
 
-
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {

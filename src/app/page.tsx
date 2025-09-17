@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
@@ -527,9 +527,36 @@ export default function DashboardPage() {
   }
 
   const handleDeleteTrade = (id: string) => {
-    const newTrades = trades.filter(t => t.id !== id);
-    setTrades(newTrades);
-    localStorage.setItem('trades', JSON.stringify(newTrades));
+      const tradeToDelete = trades.find(t => t.id === id);
+      const newTrades = trades.filter(t => t.id !== id);
+      setTrades(newTrades);
+      localStorage.setItem('trades', JSON.stringify(newTrades));
+
+      if (tradeToDelete?.creatureId) {
+          const updatedCreatures = creatures.map(c => {
+              if (c.id === tradeToDelete.creatureId) {
+                  // Find the index of the last encounter to remove it
+                  // This assumes the last added encounter corresponds to the deleted trade
+                  const lastEncounterIndex = c.encounters.length -1;
+                  if (lastEncounterIndex >= 0) {
+                      const newEncounters = [...c.encounters];
+                      newEncounters.splice(lastEncounterIndex, 1);
+                      return { ...c, encounters: newEncounters };
+                  }
+              }
+              return c;
+          });
+          setCreatures(updatedCreatures);
+          localStorage.setItem('bestiaryCreatures', JSON.stringify(updatedCreatures));
+           // Dispatch a storage event to notify other components like Missions and Achievements
+          window.dispatchEvent(new StorageEvent('storage', { key: 'bestiaryCreatures' }));
+      }
+
+      toast({
+          title: "Operación Eliminada",
+          description: "La operación ha sido eliminada del historial.",
+          variant: "destructive"
+      });
   };
 
   const handleDeleteWithdrawal = (id: string) => {
