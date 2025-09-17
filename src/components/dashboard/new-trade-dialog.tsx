@@ -64,7 +64,7 @@ const expirationTimeOptions = [
 interface NewTradeDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTrade: (trade: Omit<Trade, 'id' | 'encounterId'>) => void;
+  onAddTrade: (trade: Omit<Trade, 'id'>) => void;
   creatures: Creature[];
 }
 
@@ -160,7 +160,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
       finalProfit = -Math.abs(data.profit);
     }
 
-    const newTrade: Omit<Trade, 'id' | 'encounterId'> = {
+    const newTrade: Omit<Trade, 'id'> = {
       ...data,
       creatureId: data.creatureId === 'none' ? undefined : data.creatureId,
       expirationTime: data.expirationTime || undefined,
