@@ -36,7 +36,7 @@ const RecentTrades: React.FC<RecentTradesProps> = ({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Historial de Actividad</h3>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="space-y-3">
+        <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
           {activities.length === 0 ? (
              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                <p>Aún no has registrado ninguna actividad.</p>
