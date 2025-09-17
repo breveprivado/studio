@@ -72,4 +72,8 @@ export const currencyPairs = [
   { label: "GBP/SEK", value: "GBP/SEK" },
 ];
 
+export const defaultStrategies = [
+    '1G', '2G', '3G', '4G', '5G',
+    '1C', '2C', '3C', '4C'
+];
   

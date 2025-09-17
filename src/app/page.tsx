@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter, NavItem } from '@/lib/types';
-import { initialCreatures } from '@/lib/data';
+import { initialCreatures, defaultStrategies } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
 import { cn } from '@/lib/utils';
@@ -162,7 +162,8 @@ export default function DashboardPage() {
   
   const loadAllData = () => {
     const storedTrades = localStorage.getItem('trades');
-    setTrades(storedTrades ? JSON.parse(storedTrades) : []);
+    const currentTrades = storedTrades ? JSON.parse(storedTrades) : [];
+    setTrades(currentTrades);
     
     const storedCreatures = localStorage.getItem('bestiaryCreatures');
     const currentCreatures = storedCreatures ? JSON.parse(storedCreatures) : initialCreatures;
@@ -199,6 +200,8 @@ export default function DashboardPage() {
     
     const storedJournal = localStorage.getItem('journalEntries');
     setJournalEntries(storedJournal ? JSON.parse(storedJournal) : []);
+
+    syncCreatureEncountersFromTrades(currentTrades, currentCreatures);
   };
   
   useEffect(() => {
@@ -263,10 +266,10 @@ export default function DashboardPage() {
     }
 }, [trades, creatures, journalEntries, playerStats.xp]);
   
-  const syncCreatureEncountersFromTrades = (allTrades: Trade[]) => {
+  const syncCreatureEncountersFromTrades = (allTrades: Trade[], currentCreatures: Creature[]) => {
     const freshCreatures = initialCreatures.map(c => {
         // Find user customizations if they exist
-        const userCreature = creatures.find(uc => uc.id === c.id);
+        const userCreature = currentCreatures.find(uc => uc.id === c.id);
         return { 
             ...c, 
             name: userCreature?.name || c.name,
@@ -317,7 +320,7 @@ export default function DashboardPage() {
 
     // Handle creature encounters and hunting mission XP
     if (trade.creatureId) {
-        syncCreatureEncountersFromTrades(updatedTrades);
+        syncCreatureEncountersFromTrades(updatedTrades, creatures);
     }
     
     if (trade.status === 'loss') {
@@ -340,7 +343,7 @@ export default function DashboardPage() {
     localStorage.setItem('trades', JSON.stringify(updatedTrades));
 
     if ('creatureId' in updatedData || 'status' in updatedData) {
-        syncCreatureEncountersFromTrades(updatedTrades);
+        syncCreatureEncountersFromTrades(updatedTrades, creatures);
     }
 
     toast({
@@ -385,19 +388,35 @@ export default function DashboardPage() {
     });
   };
 
- const handleResetAccountData = () => {
-    setTrades([]);
-    setWithdrawals([]);
-    setBalanceAdditions([]);
-    setAdjustments([]);
+ const handleFullReset = () => {
+    // Clear all relevant localStorage items
     localStorage.removeItem('trades');
     localStorage.removeItem('withdrawals');
     localStorage.removeItem('balanceAdditions');
     localStorage.removeItem('adjustments');
-    toast({
-      title: "Datos de Cuenta Restablecidos",
-      description: "Todas las operaciones, retiros y depósitos han sido eliminados.",
+    localStorage.removeItem('bestiaryCreatures');
+    localStorage.removeItem('journalEntries');
+    localStorage.removeItem('habitTasks');
+    localStorage.removeItem('tournamentPosts');
+    localStorage.removeItem('playerStats');
+    localStorage.removeItem('dailyHealth');
+    localStorage.removeItem('mandatoryItems_trading');
+    localStorage.removeItem('mandatoryItems_personaje');
+    localStorage.removeItem('strategyOptions');
+    
+    // Clear mission-specific XP flags
+    Object.keys(levelMilestones).forEach(level => {
+        const milestone = levelMilestones[parseInt(level, 10)];
+        localStorage.removeItem(`xpEarned_${milestone}`);
     });
+    
+    toast({
+      title: "Reinicio Total Completado",
+      description: "Todos tus datos han sido eliminados. La aplicación se recargará.",
+    });
+
+    // Reload the page to start from a clean state
+    setTimeout(() => window.location.reload(), 1500);
   };
 
   const filteredTrades = useMemo(() => {
@@ -526,7 +545,7 @@ export default function DashboardPage() {
       setTrades(newTrades);
       localStorage.setItem('trades', JSON.stringify(newTrades));
       
-      syncCreatureEncountersFromTrades(newTrades);
+      syncCreatureEncountersFromTrades(newTrades, creatures);
 
       toast({
           title: "Operación Eliminada",
@@ -620,14 +639,21 @@ export default function DashboardPage() {
       dailyHealth: [dailyHealth],
       mandatoryItems_trading: JSON.parse(localStorage.getItem('mandatoryItems_trading') || '[]'),
       mandatoryItems_personaje: JSON.parse(localStorage.getItem('mandatoryItems_personaje') || '[]'),
-      strategyOptions: JSON.parse(localStorage.getItem('strategyOptions') || '[]'),
+      strategyOptions: JSON.parse(localStorage.getItem('strategyOptions') || JSON.stringify(defaultStrategies)),
       navItems: JSON.parse(localStorage.getItem('navItems') || JSON.stringify(defaultNavItems)),
     };
 
     for (const [key, value] of Object.entries(dataToExport)) {
         if (Array.isArray(value) && value.length > 0) {
-            const ws = XLSX.utils.json_to_sheet(value);
-            XLSX.utils.book_append_sheet(wb, ws, key);
+            // For strategyOptions which is just an array of strings, we need to format it for excel
+            if (key === 'strategyOptions') {
+                const formattedStrategies = value.map(strat => ({ value: strat }));
+                const ws = XLSX.utils.json_to_sheet(formattedStrategies);
+                XLSX.utils.book_append_sheet(wb, ws, key);
+            } else {
+                const ws = XLSX.utils.json_to_sheet(value);
+                XLSX.utils.book_append_sheet(wb, ws, key);
+            }
         } else if (!Array.isArray(value)) {
              const ws = XLSX.utils.json_to_sheet([value]);
              XLSX.utils.book_append_sheet(wb, ws, key);
@@ -667,7 +693,10 @@ export default function DashboardPage() {
                 dailyHealth: (d) => localStorage.setItem('dailyHealth', JSON.stringify(d[0])),
                 mandatoryItems_trading: (d) => localStorage.setItem('mandatoryItems_trading', JSON.stringify(d)),
                 mandatoryItems_personaje: (d) => localStorage.setItem('mandatoryItems_personaje', JSON.stringify(d)),
-                strategyOptions: (d) => localStorage.setItem('strategyOptions', JSON.stringify(d.map(item => item.value))),
+                strategyOptions: (d) => {
+                    const strategies = d.map(item => item.value);
+                    localStorage.setItem('strategyOptions', JSON.stringify(strategies));
+                },
                 navItems: (d) => localStorage.setItem('navItems', JSON.stringify(d)),
             };
 
@@ -768,19 +797,19 @@ export default function DashboardPage() {
                         <AlertDialogTrigger asChild>
                            <Button size="sm" variant="destructive">
                               <RotateCcw className="mr-2 h-4 w-4" />
-                              Restablecer Datos
+                              Reinicio Total
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Restablecer Datos de Cuenta?</AlertDialogTitle>
+                            <AlertDialogTitle>¿Realizar Reinicio Total?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta acción es irreversible y eliminará permanentemente todas las operaciones, depósitos y retiros.
+                              Esta acción es irreversible y eliminará permanentemente TODOS tus datos de la aplicación (operaciones, bestiario, bitácora, nivel, XP, etc.). Es como empezar de cero.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleResetAccountData} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, restablecer</AlertDialogAction>
+                            <AlertDialogAction onClick={handleFullReset} className={cn(Button, "bg-destructive hover:bg-destructive/90")}>Sí, reiniciar todo</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -923,6 +952,7 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
 
 
