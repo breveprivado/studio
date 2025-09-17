@@ -1,12 +1,10 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell } from 'lucide-react';
+import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +24,7 @@ const navItems = [
     { href: "/purificar", label: "Purificar", icon: Sparkles, color: "bg-pink-500 text-white" },
     { href: "/olimpos", label: "Olimpos", icon: Landmark, color: "bg-slate-500 text-white" },
     { href: "/mazmorra", label: "Mazmorra", icon: Dumbbell, color: "bg-zinc-800 text-white" },
+    { href: "/party", label: "Party", icon: PartyPopper, color: "bg-rose-500 text-white" },
 ];
 
 export function SidebarWrapper({ children }: { children: React.ReactNode }) {
