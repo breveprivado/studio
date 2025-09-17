@@ -38,7 +38,14 @@ export interface BalanceAddition {
   notes?: string;
 }
 
-export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'withdrawal' }) | (BalanceAddition & { type: 'balance' });
+export interface Adjustment {
+  id: string;
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
+export type Activity = (Trade & { type: 'trade' }) | (Withdrawal & { type: 'withdrawal' }) | (BalanceAddition & { type: 'balance' }) | (Adjustment & { type: 'adjustment' });
 
 export interface Encounter {
   id: string;

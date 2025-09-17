@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trade, Withdrawal, Activity, BalanceAddition, Creature } from '@/lib/types';
+import { Trade, Withdrawal, Activity, BalanceAddition, Creature, Adjustment } from '@/lib/types';
 import TradeItem from './trade-item';
 import WithdrawalItem from './withdrawal-item';
 import BalanceItem from './balance-item';
+import AdjustmentItem from './adjustment-item';
 
 interface RecentTradesProps {
   activities: Activity[];
@@ -14,6 +15,8 @@ interface RecentTradesProps {
   onUpdateWithdrawal: (id: string, updatedData: Partial<Withdrawal>) => void;
   onDeleteBalance: (id: string) => void;
   onUpdateBalance: (id: string, updatedData: Partial<BalanceAddition>) => void;
+  onDeleteAdjustment: (id: string) => void;
+  onUpdateAdjustment: (id: string, updatedData: Partial<Adjustment>) => void;
   onSelectTrade: (trade: Trade) => void;
   formatCurrency: (value: number) => string;
 }
@@ -27,6 +30,8 @@ const RecentTrades: React.FC<RecentTradesProps> = ({
     onUpdateWithdrawal,
     onDeleteBalance, 
     onUpdateBalance,
+    onDeleteAdjustment,
+    onUpdateAdjustment,
     onSelectTrade, 
     formatCurrency 
 }) => {
@@ -44,12 +49,17 @@ const RecentTrades: React.FC<RecentTradesProps> = ({
              </div>
           ) : (
             activities.map(activity => {
-              if (activity.type === 'trade') {
-                return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
-              } else if (activity.type === 'withdrawal') {
-                return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} onUpdate={onUpdateWithdrawal} formatCurrency={formatCurrency} />
-              } else {
-                 return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} onUpdate={onUpdateBalance} formatCurrency={formatCurrency} />
+              switch (activity.type) {
+                case 'trade':
+                  return <TradeItem key={`trade-${activity.id}`} trade={activity} creatures={creatures} onDelete={onDeleteTrade} onUpdate={onUpdateTrade} onSelect={onSelectTrade} formatCurrency={formatCurrency} />
+                case 'withdrawal':
+                  return <WithdrawalItem key={`withdrawal-${activity.id}`} withdrawal={activity} onDelete={onDeleteWithdrawal} onUpdate={onUpdateWithdrawal} formatCurrency={formatCurrency} />
+                case 'balance':
+                  return <BalanceItem key={`balance-${activity.id}`} balance={activity} onDelete={onDeleteBalance} onUpdate={onUpdateBalance} formatCurrency={formatCurrency} />
+                case 'adjustment':
+                  return <AdjustmentItem key={`adjustment-${activity.id}`} adjustment={activity} onDelete={onDeleteAdjustment} onUpdate={onUpdateAdjustment} formatCurrency={formatCurrency} />
+                default:
+                  return null;
               }
             })
           )}

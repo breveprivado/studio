@@ -1,9 +1,10 @@
+
 "use client"
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area, Line, Dot } from 'recharts';
-import { Trade, BalanceAddition, Withdrawal } from '@/lib/types';
+import { Trade, BalanceAddition, Withdrawal, Adjustment } from '@/lib/types';
 import { format, subDays, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -11,6 +12,7 @@ interface PerformanceChartsProps {
   trades: Trade[];
   balanceAdditions: BalanceAddition[];
   withdrawals: Withdrawal[];
+  adjustments: Adjustment[];
 }
 
 const CustomizedDot = (props: any) => {
@@ -27,13 +29,14 @@ const CustomizedDot = (props: any) => {
     return null;
   };
 
-const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAdditions, withdrawals }) => {
+const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAdditions, withdrawals, adjustments }) => {
 
   const performanceData = useMemo(() => {
     const allActivities = [
       ...trades.map(t => ({ date: new Date(t.date), amount: t.profit })),
       ...balanceAdditions.map(b => ({ date: new Date(b.date), amount: b.amount, type: 'balance' as const })),
       ...withdrawals.map(w => ({ date: new Date(w.date), amount: -w.amount })),
+      ...adjustments.map(a => ({ date: new Date(a.date), amount: a.amount })),
     ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
     if (allActivities.length === 0) return [];
@@ -64,7 +67,7 @@ const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ trades, balanceAd
         };
     });
 
-  }, [trades, balanceAdditions, withdrawals]);
+  }, [trades, balanceAdditions, withdrawals, adjustments]);
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

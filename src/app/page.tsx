@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment } from '@/lib/types';
 import { initialCreatures } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import WithdrawalDialog from '@/components/dashboard/withdrawal-dialog';
 import AddBalanceDialog from '@/components/dashboard/add-balance-dialog';
+import AdjustmentDialog from '@/components/dashboard/adjustment-dialog';
 import { useLeveling } from '@/hooks/use-leveling';
 import RecentTrades from '@/components/dashboard/recent-trades';
 import { SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
@@ -120,6 +121,7 @@ export default function DashboardPage() {
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [balanceAdditions, setBalanceAdditions] = useState<BalanceAddition[]>([]);
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats>({ startDate: new Date().toISOString(), class: undefined, xp: 0 });
   const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
 
@@ -129,6 +131,7 @@ export default function DashboardPage() {
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const [isAddBalanceOpen, setIsAddBalanceOpen] = useState(false);
+  const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const { toast } = useToast();
 
@@ -168,6 +171,9 @@ export default function DashboardPage() {
     
     const storedBalanceAdditions = localStorage.getItem('balanceAdditions');
     setBalanceAdditions(storedBalanceAdditions ? JSON.parse(storedBalanceAdditions) : []);
+
+    const storedAdjustments = localStorage.getItem('adjustments');
+    setAdjustments(storedAdjustments ? JSON.parse(storedAdjustments) : []);
     
     const storedPlayerStats = localStorage.getItem('playerStats');
     let stats = storedPlayerStats ? JSON.parse(storedPlayerStats) : { startDate: new Date().toISOString(), class: undefined, xp: 0 };
@@ -236,7 +242,7 @@ export default function DashboardPage() {
     loadAllData();
 
      const handleStorageChange = (e: StorageEvent) => {
-        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated', 'dailyHealth'];
+        const keysToWatch = ['trades', 'withdrawals', 'balanceAdditions', 'adjustments', 'playerStats', 'bestiaryCreatures', 'journalEntries', 'xp_updated', 'dailyHealth'];
         if (e.key && keysToWatch.includes(e.key)) {
             loadAllData();
         }
@@ -370,13 +376,27 @@ export default function DashboardPage() {
     });
   };
 
+  const handleUpdateAdjustment = (adjustmentId: string, updatedData: Partial<Adjustment>) => {
+    const updatedAdjustments = adjustments.map(a => 
+      a.id === adjustmentId ? { ...a, ...updatedData } : a
+    );
+    setAdjustments(updatedAdjustments);
+    localStorage.setItem('adjustments', JSON.stringify(updatedAdjustments));
+    toast({
+      title: "Ajuste Actualizado",
+      description: "La fecha del ajuste ha sido modificada."
+    });
+  };
+
  const handleResetAccountData = () => {
     setTrades([]);
     setWithdrawals([]);
     setBalanceAdditions([]);
+    setAdjustments([]);
     localStorage.removeItem('trades');
     localStorage.removeItem('withdrawals');
     localStorage.removeItem('balanceAdditions');
+    localStorage.removeItem('adjustments');
     toast({
       title: "Datos de Cuenta Restablecidos",
       description: "Todas las operaciones, retiros y depósitos han sido eliminados.",
@@ -405,9 +425,10 @@ export default function DashboardPage() {
         ...trades.map(t => ({...t, type: 'trade'} as const)),
         ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const)),
         ...balanceAdditions.map(b => ({...b, type: 'balance'} as const)),
+        ...adjustments.map(a => ({...a, type: 'adjustment'} as const)),
     ];
     return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [trades, withdrawals, balanceAdditions]);
+  }, [trades, withdrawals, balanceAdditions, adjustments]);
 
   const { gains, losses, netProfit, totalLossesCount, totalXpLost } = useMemo(() => {
     const tradesToAnalyze = filteredTrades.filter(t => t.status === 'win' || t.status === 'loss');
@@ -415,7 +436,8 @@ export default function DashboardPage() {
     const losses = tradesToAnalyze.filter(t => t.status === 'loss').reduce((acc, t) => acc + t.profit, 0);
     const totalWithdrawals = withdrawals.reduce((acc, w) => acc + w.amount, 0);
     const totalBalanceAdditions = balanceAdditions.reduce((acc, b) => acc + b.amount, 0);
-    const netProfit = totalBalanceAdditions + gains + losses - totalWithdrawals;
+    const totalAdjustments = adjustments.reduce((acc, a) => acc + a.amount, 0);
+    const netProfit = totalBalanceAdditions + gains + losses - totalWithdrawals + totalAdjustments;
     
     // Calculate total losses for the new card
     const allTimeLosses = trades.filter(t => t.status === 'loss');
@@ -423,7 +445,7 @@ export default function DashboardPage() {
     const totalXpLost = totalLossesCount * XP_PENALTY_PER_LOSS;
 
     return { gains, losses, netProfit, totalLossesCount, totalXpLost };
-  }, [filteredTrades, trades, withdrawals, balanceAdditions]);
+  }, [filteredTrades, trades, withdrawals, balanceAdditions, adjustments]);
 
   const formatCurrency = (value: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
@@ -457,6 +479,17 @@ export default function DashboardPage() {
     })
   }
 
+   const handleAddAdjustment = (adjustment: Omit<Adjustment, 'id' | 'date'>) => {
+    const newAdjustment = { ...adjustment, id: crypto.randomUUID(), date: new Date().toISOString() };
+    const newAdjustments = [newAdjustment, ...adjustments];
+    setAdjustments(newAdjustments);
+    localStorage.setItem('adjustments', JSON.stringify(newAdjustments));
+    toast({
+        title: "Ajuste Registrado",
+        description: "La corrección de saldo ha sido guardada."
+    })
+  }
+
   const handleDeleteTrade = (id: string) => {
     const newTrades = trades.filter(t => t.id !== id);
     setTrades(newTrades);
@@ -473,6 +506,12 @@ export default function DashboardPage() {
     const newBalanceAdditions = balanceAdditions.filter(b => b.id !== id);
     setBalanceAdditions(newBalanceAdditions);
     localStorage.setItem('balanceAdditions', JSON.stringify(newBalanceAdditions));
+  }
+
+  const handleDeleteAdjustment = (id: string) => {
+    const newAdjustments = adjustments.filter(a => a.id !== id);
+    setAdjustments(newAdjustments);
+    localStorage.setItem('adjustments', JSON.stringify(newAdjustments));
   }
 
   const handleSelectTrade = (trade: Trade) => {
@@ -604,6 +643,9 @@ export default function DashboardPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      <Button onClick={() => setIsAdjustmentOpen(true)} size="sm" variant="outline">
+                          Ajustar Saldo
+                      </Button>
                       <Button onClick={() => setIsAddBalanceOpen(true)} size="sm" variant="outline">
                           Añadir Saldo
                       </Button>
@@ -685,7 +727,7 @@ export default function DashboardPage() {
               </Accordion>
               </Card>
               
-              <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} />
+              <PerformanceCharts trades={trades} balanceAdditions={balanceAdditions} withdrawals={withdrawals} adjustments={adjustments} />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <StrategyPerformance trades={filteredTrades} />
@@ -706,7 +748,7 @@ export default function DashboardPage() {
                  <PrideVsWorstAnalysis trades={filteredTrades} />
               </div>
 
-              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
+              <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onDeleteAdjustment={handleDeleteAdjustment} onUpdateAdjustment={handleUpdateAdjustment} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
           </main>
       </div>
@@ -714,20 +756,8 @@ export default function DashboardPage() {
       <NewTradeDialog isOpen={isNewTradeOpen} onOpenChange={setIsNewTradeOpen} onAddTrade={handleAddTrade} creatures={creatures} />
       <WithdrawalDialog isOpen={isWithdrawalOpen} onOpenChange={setIsWithdrawalOpen} onAddWithdrawal={handleAddWithdrawal} creatures={creatures} />
       <AddBalanceDialog isOpen={isAddBalanceOpen} onOpenChange={setIsAddBalanceOpen} onAddBalance={handleAddBalance} />
+      <AdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onAddAdjustment={handleAddAdjustment} />
       <TradeDetailDialog trade={selectedTrade} isOpen={!!selectedTrade} onOpenChange={() => setSelectedTrade(null)} formatCurrency={formatCurrency} />
     </>
   );
 }
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-
