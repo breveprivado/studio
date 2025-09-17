@@ -41,6 +41,7 @@ import PlayerStatusCard from '@/components/dashboard/health-bar';
 import WorstStrategyPerformance from '@/components/dashboard/worst-strategy-performance';
 import WorstPairAssertiveness from '@/components/dashboard/worst-pair-assertiveness';
 import PrideVsWorstTrades from '@/components/dashboard/pride-vs-worst-trades';
+import PrideVsWorstAnalysis from '@/components/dashboard/pride-vs-worst-analysis';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
@@ -123,7 +124,7 @@ export default function DashboardPage() {
   const [dailyHealth, setDailyHealth] = useState<DailyHealth>({ lives: 3, date: new Date().toISOString() });
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
-  const [viewDate, setViewDate] = useState<Date>();
+  const [viewDate, setViewDate] = useState<Date | undefined>();
 
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
@@ -546,7 +547,7 @@ export default function DashboardPage() {
                   <div>
                       <h1 className="text-3xl font-bold">Dashboard</h1>
                       <p className="text-muted-foreground">
-                        {timeRange === 'daily' ? `Mostrando resultados para ${format(viewDate, "PPP", { locale: es })}` : 'Una vista detallada de tu situación financiera'}
+                        {timeRange === 'daily' && viewDate ? `Mostrando resultados para ${format(viewDate, "PPP", { locale: es })}` : 'Una vista detallada de tu situación financiera'}
                       </p>
                   </div>
               </div>
@@ -707,6 +708,10 @@ export default function DashboardPage() {
                 <DailyPerformance trades={filteredTrades} />
                 <PrideVsWorstTrades trades={filteredTrades} />
               </div>
+              
+              <div className="grid grid-cols-1">
+                 <PrideVsWorstAnalysis trades={filteredTrades} />
+              </div>
 
               <RecentTrades activities={activities} creatures={creatures} onDeleteTrade={handleDeleteTrade} onUpdateTrade={handleUpdateTrade} onDeleteWithdrawal={handleDeleteWithdrawal} onUpdateWithdrawal={handleUpdateWithdrawal} onDeleteBalance={handleDeleteBalance} onUpdateBalance={handleUpdateBalance} onSelectTrade={handleSelectTrade} formatCurrency={formatCurrency} />
 
@@ -731,3 +736,4 @@ export default function DashboardPage() {
     
 
     
+
