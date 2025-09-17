@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Plus, RotateCcw, Trophy, Skull, Calendar as CalendarIcon, Heart, Minus, ShieldOff, BarChart2, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, Encounter, NavItem } from '@/lib/types';
+import { type Trade, type Withdrawal, type Activity, type BalanceAddition, type PlayerStats, type Creature, TimeRange, DailyHealth, JournalEntry, Adjustment, NavItem } from '@/lib/types';
 import { initialCreatures, defaultStrategies } from '@/lib/data';
 import PerformanceCharts from '@/components/dashboard/performance-charts';
 import NewTradeDialog from '@/components/dashboard/new-trade-dialog';
@@ -400,8 +400,6 @@ export default function DashboardPage() {
     localStorage.removeItem('tournamentPosts');
     localStorage.removeItem('playerStats');
     localStorage.removeItem('dailyHealth');
-    localStorage.removeItem('mandatoryItems_trading');
-    localStorage.removeItem('mandatoryItems_personaje');
     localStorage.removeItem('strategyOptions');
     
     // Clear mission-specific XP flags
@@ -704,7 +702,7 @@ export default function DashboardPage() {
                 if (action) {
                     action(jsonData);
                 } else if (sheetName === 'strategyOptions' && wb.SheetNames.includes('strategyOptions')) {
-                    const strategies = jsonData.map(item => item.value);
+                    const strategies = jsonData.map((item: any) => item.value);
                     localStorage.setItem('strategyOptions', JSON.stringify(strategies));
                 }
             });
@@ -799,7 +797,7 @@ export default function DashboardPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Realizar Reinicio Total?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta acción es irreversible y eliminará permanentemente TODOS tus datos de la aplicación (operaciones, bestiario, bitácora, nivel, XP, etc.). Es como empezar de cero.
+                              Esta acción es irreversible y eliminará permanentemente TODOS tus datos de la aplicación (operaciones, bestiario, bitácora, nivel, XP, etc.). Es como empezar de cero. Tus reglas obligatorias y estrategias personalizadas se conservarán.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -947,6 +945,7 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
 
 
