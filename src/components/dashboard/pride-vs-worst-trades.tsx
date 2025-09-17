@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar, Cell } from 'recharts';
 import { Trade } from '@/lib/types';
 import { Trophy, Skull } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface PrideVsWorstTradesProps {
   trades: Trade[];
@@ -41,11 +41,15 @@ const PrideVsWorstTrades: React.FC<PrideVsWorstTradesProps> = ({ trades }) => {
 
   return (
     <Card>
-        <CardHeader>
-            <CardTitle>Operaciones Destacadas</CardTitle>
-            <CardDescription>Comparativa de tus mejores y peores operaciones.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="item-1" className="border-b-0">
+          <AccordionTrigger className="p-6">
+            <div className="flex flex-col items-start text-left">
+              <CardTitle>Operaciones Destacadas</CardTitle>
+              <CardDescription>Comparativa de tus mejores y peores operaciones.</CardDescription>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             {hasData ? (
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
@@ -84,7 +88,9 @@ const PrideVsWorstTrades: React.FC<PrideVsWorstTradesProps> = ({ trades }) => {
                     No hay operaciones orgullosas o peores marcadas.
                 </div>
             )}
-        </CardContent>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 };

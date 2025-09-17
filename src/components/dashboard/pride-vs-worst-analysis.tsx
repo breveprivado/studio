@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from 'react';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar, Legend } from 'recharts';
 import { Trade } from '@/lib/types';
 import { Trophy, Skull } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface PrideVsWorstAnalysisProps {
   trades: Trade[];
@@ -49,11 +49,15 @@ const PrideVsWorstAnalysis: React.FC<PrideVsWorstAnalysisProps> = ({ trades }) =
 
   return (
     <Card>
-        <CardHeader>
-            <CardTitle>Análisis de Operaciones Destacadas</CardTitle>
-            <CardDescription>Resultado de tus operaciones marcadas como "Orgullosas" y "Peores".</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="item-1" className="border-b-0">
+          <AccordionTrigger className="p-6">
+            <div className="flex flex-col items-start text-left">
+              <CardTitle>Análisis de Operaciones Destacadas</CardTitle>
+              <CardDescription>Resultado de tus operaciones marcadas como "Orgullosas" y "Peores".</CardDescription>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             {hasData ? (
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -93,10 +97,11 @@ const PrideVsWorstAnalysis: React.FC<PrideVsWorstAnalysisProps> = ({ trades }) =
                     No hay operaciones marcadas como "Orgullosas" o "Peores".
                 </div>
             )}
-        </CardContent>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 };
 
 export default PrideVsWorstAnalysis;
-

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar } from 'recharts';
 import { Trade } from '@/lib/types';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface StrategyPerformanceProps {
   trades: Trade[];
@@ -49,56 +50,52 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ trades }) => 
 
   }, [trades]);
 
-  if (strategyData.length === 0) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Rendimiento por Estrategia</CardTitle>
-                <CardDescription>Tu tasa de acierto para cada estrategia de trading.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    No hay datos suficientes para mostrar.
-                </div>
-            </CardContent>
-        </Card>
-    );
-  }
-
   return (
     <Card>
-        <CardHeader>
-            <CardTitle>Rendimiento por Estrategia</CardTitle>
-            <CardDescription>Tu tasa de acierto para cada estrategia de trading.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={strategyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
-                    <XAxis 
-                        dataKey="name" 
-                        fontSize={12}
-                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                        axisLine={{ stroke: 'hsl(var(--border))' }}
-                        tickLine={{ stroke: 'hsl(var(--border))' }}
-                    />
-                    <YAxis 
-                        fontSize={12} 
-                        tickFormatter={(value) => `${value}%`}
-                        tick={{ fill: 'hsl(var(--muted-foreground))' }} 
-                        axisLine={{ stroke: 'hsl(var(--border))' }}
-                        tickLine={{ stroke: 'hsl(var(--border))' }}
-                    />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
-                    <Bar 
-                        dataKey="winRate" 
-                        fill="hsl(var(--primary))" 
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={40}
-                    />
-                </BarChart>
-            </ResponsiveContainer>
-        </CardContent>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="item-1" className="border-b-0">
+          <AccordionTrigger className="p-6">
+            <div className="flex flex-col items-start text-left">
+              <CardTitle>Rendimiento por Estrategia</CardTitle>
+              <CardDescription>Tu tasa de acierto para cada estrategia de trading.</CardDescription>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
+            {strategyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={strategyData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                      <XAxis 
+                          dataKey="name" 
+                          fontSize={12}
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis 
+                          fontSize={12} 
+                          tickFormatter={(value) => `${value}%`}
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))', radius: 4 }} />
+                      <Bar 
+                          dataKey="winRate" 
+                          fill="hsl(var(--primary))" 
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={40}
+                      />
+                  </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-muted-foreground">
+                  No hay datos suficientes para mostrar.
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 };
