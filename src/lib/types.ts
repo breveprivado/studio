@@ -2,6 +2,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -98,6 +99,8 @@ export interface HabitTask {
   id: string;
   text: string;
   completed: boolean;
+  date: string; // YYYY-MM-DD
 }
     
     
+
