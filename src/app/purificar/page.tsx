@@ -2,9 +2,37 @@
 "use client";
 
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Droplets, Mountain, Wind, Flame } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+const purificationTypes = [
+    {
+        name: "Agua",
+        description: "Purifica las emociones negativas y la impulsividad.",
+        icon: Droplets,
+        color: "text-blue-500",
+    },
+    {
+        name: "Tierra",
+        description: "Fortalece la disciplina y la paciencia.",
+        icon: Mountain,
+        color: "text-amber-700",
+    },
+    {
+        name: "Aire",
+        description: "Aclara la mente y mejora el análisis.",
+        icon: Wind,
+        color: "text-sky-500",
+    },
+    {
+        name: "Fuego",
+        description: "Transforma las pérdidas en lecciones y coraje.",
+        icon: Flame,
+        color: "text-red-500",
+    }
+]
 
 const PurificarPage = () => {
   return (
@@ -22,18 +50,23 @@ const PurificarPage = () => {
         </div>
       </header>
       
-      <main>
-        <Card>
-            <CardHeader>
-                <CardTitle>Funcionalidad Próximamente</CardTitle>
-                <CardDescription>El Centro de Purificación está en construcción. ¡Vuelve pronto para descubrir cómo puedes purificar tus estadísticas y objetos!</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    <p>Aquí podrás usar objetos especiales para limpiar tu historial.</p>
-                </div>
-            </CardContent>
-        </Card>
+      <main className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {purificationTypes.map((item) => (
+            <Card key={item.name}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <item.icon className={`h-6 w-6 ${item.color}`} />
+                        {item.name}
+                    </CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button className="w-full">
+                        Purificar con {item.name}
+                    </Button>
+                </CardContent>
+            </Card>
+        ))}
       </main>
 
     </div>
