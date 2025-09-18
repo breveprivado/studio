@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 
 const xpForLevel = (level: number): number => {
@@ -6,6 +7,16 @@ const xpForLevel = (level: number): number => {
     if (level <= 1) return 0;
     return Math.floor(100 * Math.pow(level - 1, 1.5));
 }
+
+const getRank = (level: number): string => {
+    if (level >= 150) return 'SS';
+    if (level >= 100) return 'S';
+    if (level >= 75) return 'A';
+    if (level >= 50) return 'B';
+    if (level >= 25) return 'C';
+    if (level >= 10) return 'D';
+    return 'E';
+};
 
 export const useLeveling = (currentXp: number) => {
     const levelData = useMemo(() => {
@@ -20,6 +31,7 @@ export const useLeveling = (currentXp: number) => {
         if (level >= 200) {
             return {
                 level: 200,
+                rank: getRank(200),
                 xpForNextLevel: currentXp,
                 progressPercentage: 100,
             };
@@ -35,6 +47,7 @@ export const useLeveling = (currentXp: number) => {
 
         return {
             level: level,
+            rank: getRank(level),
             xpForNextLevel: xpForNext,
             progressPercentage: progressPercentage,
         };
@@ -42,5 +55,3 @@ export const useLeveling = (currentXp: number) => {
 
     return levelData;
 };
-
-    

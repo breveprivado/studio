@@ -51,6 +51,8 @@ import defaultNavItems from '@/lib/nav-items.json';
 import HourlyPerformance from '@/components/dashboard/hourly-performance';
 import WinningStreakTracker from '@/components/dashboard/winning-streak-tracker';
 import LosingStreakTracker from '@/components/dashboard/losing-streak-tracker';
+import { Badge } from '@/components/ui/badge';
+import PerformanceRankCard from '@/components/dashboard/performance-rank-card';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -77,7 +79,7 @@ const getXpForCreature = (creatureId: string) => {
 };
 
 
-const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => void; level: number }) => {
+const PlayerLevelCard = ({ xp, onReset, level, rank }: { xp: number; onReset: () => void; level: number; rank: string }) => {
     const { xpForNextLevel, progressPercentage } = useLeveling(xp);
 
     return (
@@ -108,7 +110,10 @@ const PlayerLevelCard = ({ xp, onReset, level }: { xp: number; onReset: () => vo
             </CardHeader>
             <CardContent className="p-4 pt-0">
                 <div className="flex items-center gap-4 mb-2">
-                    <Trophy className="h-8 w-8 text-amber-400" />
+                    <div className='flex flex-col items-center'>
+                         <Trophy className="h-8 w-8 text-amber-400" />
+                         <Badge variant="secondary" className="mt-1">{rank}</Badge>
+                    </div>
                     <span className="text-2xl font-bold">Nivel {level}</span>
                 </div>
                 <div className="space-y-1">
@@ -145,7 +150,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { level } = useLeveling(playerStats.xp);
+  const { level, rank } = useLeveling(playerStats.xp);
   const prevLevel = usePrevious(level);
   
   useEffect(() => {
@@ -902,8 +907,9 @@ export default function DashboardPage() {
                 onRemoveLife={handleRemoveLife}
                 trades={filteredTrades}
               />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                  <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                  <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} rank={rank} />
+                  <PerformanceRankCard trades={filteredTrades} />
                   <WinningStreakTracker currentStreak={winningStreak} maxStreak={maxWinningStreak} />
                   <LosingStreakTracker currentStreak={losingStreak} maxStreak={maxLosingStreak} />
               </div>
@@ -1013,6 +1019,7 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
 
 
