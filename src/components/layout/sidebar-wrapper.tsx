@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper } from 'lucide-react';
+import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, BrainCircuit } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import defaultNavItems from '@/lib/nav-items.json';
 import { type NavItem } from '@/lib/types';
 
 const iconMap: { [key: string]: React.ElementType } = {
-    LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, Store
+    LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, Store, BrainCircuit
 };
 
 

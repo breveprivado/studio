@@ -5,6 +5,7 @@
     { "href": "/bestiario", "label": "Bestiario", "icon": "BookHeart", "color": "bg-purple-500 text-white" },
     { "href": "/misiones", "label": "Misiones", "icon": "Gamepad2", "color": "bg-orange-500 text-white" },
     { "href": "/bestiario/logros", "label": "Panel de Logros", "icon": "Award", "color": "bg-amber-500 text-white" },
+    { "href": "/habilidades", "label": "Habilidades", "icon": "BrainCircuit", "color": "bg-teal-500 text-white" },
     { "href": "/gremio", "label": "Gremio", "icon": "Users", "color": "bg-cyan-500 text-white" },
     { "href": "/bot", "label": "Bot", "icon": "Bot", "color": "bg-gray-600 text-white" },
     { "href": "/noticias", "label": "Noticias", "icon": "Newspaper", "color": "bg-green-600 text-white" },
