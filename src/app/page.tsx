@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -48,6 +49,7 @@ import ExpirationTimePerformance from '@/components/dashboard/expiration-time-pe
 import * as XLSX from 'xlsx';
 import defaultNavItems from '@/lib/nav-items.json';
 import HourlyPerformance from '@/components/dashboard/hourly-performance';
+import WinningStreakTracker from '@/components/dashboard/winning-streak-tracker';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -731,6 +733,19 @@ export default function DashboardPage() {
     return null; // or a loading skeleton
   }
 
+  const winningStreak = useMemo(() => {
+    let streak = 0;
+    // Trades are already sorted newest to oldest in the 'activities' memo
+    const sortedTrades = [...trades].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    for(const trade of sortedTrades) {
+        if(trade.status === 'win') {
+            streak++;
+        } else {
+            break; // Streak is broken
+        }
+    }
+    return streak;
+  }, [trades]);
 
   return (
     <>
@@ -843,8 +858,8 @@ export default function DashboardPage() {
                 onRemoveLife={handleRemoveLife}
                 trades={filteredTrades}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                  <Card className="bg-card">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-start">
+                  <Card className="lg:col-span-1">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
                       </CardHeader>
@@ -853,7 +868,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{trades.length} operaciones totales</p>
                       </CardContent>
                   </Card>
-                  <Card className="bg-card">
+                  <Card className="lg:col-span-1">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
                       </CardHeader>
@@ -862,7 +877,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
                       </CardContent>
                   </Card>
-                    <Card className="bg-card">
+                    <Card className="lg:col-span-1">
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
                       </CardHeader>
@@ -873,6 +888,9 @@ export default function DashboardPage() {
                   </Card>
                   <div className="lg:col-span-1">
                       <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
+                  </div>
+                  <div className="lg:col-span-1">
+                      <WinningStreakTracker currentStreak={winningStreak} />
                   </div>
               </div>
 
