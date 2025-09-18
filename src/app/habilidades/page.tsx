@@ -7,6 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { type Trade } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 // --- Helper Functions for Metric Calculation ---
 
@@ -304,5 +305,3 @@ const HabilidadesPage = () => {
 };
 
 export default HabilidadesPage;
-
-    
