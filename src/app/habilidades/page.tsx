@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { BrainCircuit, Dumbbell, Zap, BookOpen, Heart } from 'lucide-react';
+import { BrainCircuit, Dumbbell, Zap, Heart } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ const skillRunes = [
   {
     name: 'Inteligencia',
     description: 'Desbloquea análisis de IA más profundos y consejos avanzados.',
-    icon: BookOpen,
+    icon: BrainCircuit,
     level: 1,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',

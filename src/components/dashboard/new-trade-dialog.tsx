@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Skull, Trophy, Pencil, Trash2, Upload, XCircle } from 'lucide-react';
+import { CalendarIcon, Skull, Trophy, Pencil, Trash2, Upload, XCircle, Dumbbell, Zap, BrainCircuit, Heart } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -306,7 +306,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     render={({ field }) => (
                         <FormItem>
                             <div className="flex items-center gap-2">
-                                <FormLabel>Estrategia</FormLabel>
+                                <FormLabel className="flex items-center gap-2"><Dumbbell className="h-4 w-4 text-red-500" />Estrategia</FormLabel>
                                 <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditStrategiesOpen(true)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
@@ -340,7 +340,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                     name="expirationTime"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Tiempo de Expiración</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-yellow-500" />Tiempo de Expiración</FormLabel>
                             <FormControl>
                                 <RadioGroup
                                     onValueChange={field.onChange}
@@ -425,7 +425,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notas (Opcional)</FormLabel>
+                  <FormLabel className="flex items-center gap-2"><BrainCircuit className="h-4 w-4 text-blue-500" />Notas (Opcional)</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Añade detalles sobre la operación..." {...field} />
                   </FormControl>
@@ -496,7 +496,7 @@ const NewTradeDialog: React.FC<NewTradeDialogProps> = ({ isOpen, onOpenChange, o
                 name="creatureId"
                 render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel>Bestia Asociada (Opcional)</FormLabel>
+                        <FormLabel className="flex items-center gap-2"><Heart className="h-4 w-4 text-green-500" />Bestia Asociada (Opcional)</FormLabel>
                          <FormControl>
                             <RadioGroup
                                 onValueChange={field.onChange}
@@ -577,3 +577,4 @@ export default NewTradeDialog;
     
 
     
+
