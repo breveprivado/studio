@@ -134,7 +134,7 @@ export default function DashboardPage() {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>('anual');
-  const [viewDate, setViewDate] = useState<Date | undefined>();
+  const [viewDate, setViewDate] = useState<Date | undefined>(new Date());
 
   const [isNewTradeOpen, setIsNewTradeOpen] = useState(false);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
@@ -147,10 +147,6 @@ export default function DashboardPage() {
 
   const { level } = useLeveling(playerStats.xp);
   const prevLevel = usePrevious(level);
-  
-  useEffect(() => {
-    setViewDate(new Date());
-  }, []);
   
   useEffect(() => {
     if (prevLevel === undefined) return;
@@ -406,8 +402,6 @@ export default function DashboardPage() {
     localStorage.removeItem('dailyHealth');
     localStorage.removeItem('strategyOptions');
     localStorage.removeItem('navItems');
-    localStorage.removeItem('mandatoryItems_trading');
-    localStorage.removeItem('mandatoryItems_personaje');
     
     // Clear mission-specific XP flags
     Object.values(levelMilestones).forEach(milestone => {
@@ -702,6 +696,14 @@ export default function DashboardPage() {
                 navItems: (d) => localStorage.setItem('navItems', JSON.stringify(d)),
             };
 
+            if (wb.SheetNames.includes('strategyOptions')) {
+                const ws = wb.Sheets['strategyOptions'];
+                const jsonData = XLSX.utils.sheet_to_json(ws);
+                const strategies = jsonData.map((item: any) => item.value);
+                localStorage.setItem('strategyOptions', JSON.stringify(strategies));
+            }
+
+
             wb.SheetNames.forEach(sheetName => {
                 const ws = wb.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(ws);
@@ -709,9 +711,6 @@ export default function DashboardPage() {
                 const action = sheetActions[sheetName];
                 if (action) {
                     action(jsonData);
-                } else if (sheetName === 'strategyOptions' && wb.SheetNames.includes('strategyOptions')) {
-                    const strategies = jsonData.map((item: any) => item.value);
-                    localStorage.setItem('strategyOptions', JSON.stringify(strategies));
                 }
             });
 
@@ -874,8 +873,13 @@ export default function DashboardPage() {
                 onRemoveLife={handleRemoveLife}
                 trades={filteredTrades}
               />
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 items-start">
-                  <Card className="lg:col-span-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                  <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
+                  <WinningStreakTracker currentStreak={winningStreak} />
+                  <LosingStreakTracker currentStreak={losingStreak} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                  <Card>
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Beneficio Neto</CardTitle>
                       </CardHeader>
@@ -884,7 +888,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{trades.length} operaciones totales</p>
                       </CardContent>
                   </Card>
-                  <Card className="lg:col-span-1">
+                  <Card>
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Ganancias</CardTitle>
                       </CardHeader>
@@ -893,7 +897,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'win').length} operaciones ganadas</p>
                       </CardContent>
                   </Card>
-                    <Card className="lg:col-span-1">
+                    <Card>
                       <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-sm font-medium text-muted-foreground">Pérdidas</CardTitle>
                       </CardHeader>
@@ -902,15 +906,6 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{filteredTrades.filter(t => t.status === 'loss').length} operaciones perdidas</p>
                       </CardContent>
                   </Card>
-                  <div className="lg:col-span-1">
-                      <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                  </div>
-                  <div className="lg:col-span-1">
-                      <WinningStreakTracker currentStreak={winningStreak} />
-                  </div>
-                   <div className="lg:col-span-1">
-                      <LosingStreakTracker currentStreak={losingStreak} />
-                  </div>
               </div>
 
               <Card>
@@ -989,3 +984,4 @@ export default function DashboardPage() {
     </>
   );
 }
+
