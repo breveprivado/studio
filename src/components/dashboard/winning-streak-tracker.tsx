@@ -8,11 +8,12 @@ import { cn } from '@/lib/utils';
 
 interface WinningStreakTrackerProps {
     currentStreak: number;
+    maxStreak: number;
 }
 
 const STREAK_GOAL = 10;
 
-const WinningStreakTracker: React.FC<WinningStreakTrackerProps> = ({ currentStreak }) => {
+const WinningStreakTracker: React.FC<WinningStreakTrackerProps> = ({ currentStreak, maxStreak }) => {
     const progressPercentage = (currentStreak / STREAK_GOAL) * 100;
 
     const getFlameColor = () => {
@@ -26,7 +27,7 @@ const WinningStreakTracker: React.FC<WinningStreakTrackerProps> = ({ currentStre
         <Card>
             <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Racha de Victorias
+                    Racha de Victorias (Actual)
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -36,8 +37,9 @@ const WinningStreakTracker: React.FC<WinningStreakTrackerProps> = ({ currentStre
                 </div>
                 <div className="space-y-1">
                     <Progress value={progressPercentage} />
-                    <div className="text-center text-xs text-muted-foreground">
-                        <p>{currentStreak} / {STREAK_GOAL} Victorias Consecutivas</p>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{currentStreak} / {STREAK_GOAL} Victorias</span>
+                        <span>Racha Máxima del Día: {maxStreak}</span>
                     </div>
                 </div>
             </CardContent>

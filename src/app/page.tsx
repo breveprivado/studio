@@ -402,9 +402,12 @@ export default function DashboardPage() {
     localStorage.removeItem('dailyHealth');
     localStorage.removeItem('strategyOptions');
     localStorage.removeItem('navItems');
+    localStorage.removeItem('mandatoryItems_trading');
+    localStorage.removeItem('mandatoryItems_personaje');
     
     // Clear mission-specific XP flags
-    Object.values(levelMilestones).forEach(milestone => {
+    Object.keys(levelMilestones).forEach(level => {
+        const milestone = levelMilestones[parseInt(level)];
         localStorage.removeItem(`xpEarned_${milestone}`);
     });
     
@@ -731,18 +734,34 @@ export default function DashboardPage() {
     if(fileInputRef.current) fileInputRef.current.value = '';
   };
   
-  const winningStreak = useMemo(() => {
-    let streak = 0;
-    // Trades are sorted newest to oldest in the 'activities' memo used by recent trades, but here we need to sort them.
-    const sortedTrades = [...filteredTrades].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const { winningStreak, maxWinningStreak } = useMemo(() => {
+    let currentStreak = 0;
+    let maxStreak = 0;
+    
+    // Sort trades from oldest to newest to calculate streaks correctly
+    const sortedTrades = [...filteredTrades].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
     for(const trade of sortedTrades) {
         if(trade.status === 'win') {
-            streak++;
+            currentStreak++;
         } else {
-            break; // Streak is broken
+            maxStreak = Math.max(maxStreak, currentStreak);
+            currentStreak = 0; // Reset streak
         }
     }
-    return streak;
+    maxStreak = Math.max(maxStreak, currentStreak); // Final check for a streak that goes to the end
+    
+    // Calculate the current streak (at the end of the period)
+    let finalStreak = 0;
+    for(let i = sortedTrades.length - 1; i >= 0; i--) {
+        if (sortedTrades[i].status === 'win') {
+            finalStreak++;
+        } else {
+            break;
+        }
+    }
+
+    return { winningStreak: finalStreak, maxWinningStreak: maxStreak };
   }, [filteredTrades]);
   
   const losingStreak = useMemo(() => {
@@ -875,7 +894,7 @@ export default function DashboardPage() {
               />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                   <PlayerLevelCard xp={playerStats.xp} onReset={handleResetLevel} level={level} />
-                  <WinningStreakTracker currentStreak={winningStreak} />
+                  <WinningStreakTracker currentStreak={winningStreak} maxStreak={maxWinningStreak} />
                   <LosingStreakTracker currentStreak={losingStreak} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -984,4 +1003,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
 
