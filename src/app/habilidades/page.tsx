@@ -1,9 +1,50 @@
 "use client";
 
 import React from 'react';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, Dumbbell, Zap, BookOpen, Heart } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+
+const skillRunes = [
+  {
+    name: 'Fuerza',
+    description: 'Aumenta la efectividad de tus operaciones y la ganancia de XP.',
+    icon: Dumbbell,
+    level: 1,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+  },
+  {
+    name: 'Destreza',
+    description: 'Reduce la penalización de XP por pérdidas y mejora la asertividad.',
+    icon: Zap,
+    level: 1,
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-500/20',
+  },
+  {
+    name: 'Inteligencia',
+    description: 'Desbloquea análisis de IA más profundos y consejos avanzados.',
+    icon: BookOpen,
+    level: 1,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20',
+  },
+  {
+    name: 'Constitución',
+    description: 'Otorga vidas (corazones) adicionales por día para resistir pérdidas.',
+    icon: Heart,
+    level: 1,
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20',
+  }
+];
 
 const HabilidadesPage = () => {
   return (
@@ -21,16 +62,29 @@ const HabilidadesPage = () => {
         </div>
       </header>
       
-      <main>
-        <Card>
-            <CardHeader>
-                <CardTitle>Próximamente</CardTitle>
-                <CardDescription>Esta sección está en construcción. Vuelve pronto para descubrir tu árbol de habilidades.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p>Aquí podrás gastar tus puntos de experiencia para obtener mejoras pasivas y activas.</p>
-            </CardContent>
-        </Card>
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {skillRunes.map((skill) => {
+          const Icon = skill.icon;
+          return (
+            <Card key={skill.name} className="flex flex-col text-center hover:shadow-lg transition-shadow">
+                <CardHeader className="items-center">
+                    <div className={`w-16 h-16 rounded-full ${skill.bgColor} flex items-center justify-center border-4 ${skill.borderColor}`}>
+                        <Icon className={`h-8 w-8 ${skill.color}`} />
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-2">
+                    <CardTitle>{skill.name}</CardTitle>
+                    <CardDescription>{skill.description}</CardDescription>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                    <Badge variant="secondary">Nivel {skill.level}</Badge>
+                    <Button disabled className="w-full">
+                        Mejorar
+                    </Button>
+                </CardFooter>
+            </Card>
+          )
+        })}
       </main>
 
     </div>
