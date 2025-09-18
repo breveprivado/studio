@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { BrainCircuit, Dumbbell, Zap, Heart, Flame, ShieldOff, TrendingUp, Target, Gem } from 'lucide-react';
+import { Flame, TrendingDown, TrendingUp, Target, Gem, Hand, Activity } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { type Trade } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +26,25 @@ const calculateLongestWinningStreak = (trades: Trade[]): number => {
   maxStreak = Math.max(maxStreak, currentStreak);
   return maxStreak;
 };
+
+// Calculates the longest losing streak from a list of trades
+const calculateLongestLosingStreak = (trades: Trade[]): number => {
+  let maxStreak = 0;
+  let currentStreak = 0;
+  const sortedTrades = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
+  for (const trade of sortedTrades) {
+    if (trade.status === 'loss') {
+      currentStreak++;
+    } else {
+      maxStreak = Math.max(maxStreak, currentStreak);
+      currentStreak = 0;
+    }
+  }
+  maxStreak = Math.max(maxStreak, currentStreak);
+  return maxStreak;
+};
+
 
 // Finds the highest number of losses in a single day
 const calculateMaxLossesInADay = (trades: Trade[]): number => {
@@ -73,17 +90,23 @@ const calculateAverageWinningDayProfit = (trades: Trade[]): number => {
     return totalProfit / winningDaysProfits.length;
 };
 
-
 // --- Skill Definitions ---
 
 const getSkillLevel = (metric: string, value: number): number => {
     switch(metric) {
-        case 'streak': // Higher is better
+        case 'winStreak': // Higher is better
             if (value >= 15) return 5;
             if (value >= 10) return 4;
             if (value >= 7) return 3;
             if (value >= 5) return 2;
             if (value >= 3) return 1;
+            return 0;
+        case 'lossStreak': // Lower is better (inverted)
+            if (value <= 2) return 5;
+            if (value <= 4) return 4;
+            if (value <= 6) return 3;
+            if (value <= 8) return 2;
+            if (value <= 10) return 1;
             return 0;
         case 'lossManagement': // Lower is better
             if (value <= 3) return 5;
@@ -105,6 +128,13 @@ const getSkillLevel = (metric: string, value: number): number => {
             if (value >= 100) return 3;
             if (value >= 50) return 2;
             if (value >= 20) return 1;
+            return 0;
+        case 'totalTrades': // Higher is better
+            if (value >= 1000) return 5;
+            if (value >= 500) return 4;
+            if (value >= 250) return 3;
+            if (value >= 100) return 2;
+            if (value >= 50) return 1;
             return 0;
         default:
             return 0;
@@ -133,33 +163,46 @@ const HabilidadesPage = () => {
   }, []);
   
   const skillMetrics = useMemo(() => {
-    const streak = calculateLongestWinningStreak(trades);
+    const winStreak = calculateLongestWinningStreak(trades);
+    const lossStreak = calculateLongestLosingStreak(trades);
     const lossManagement = calculateMaxLossesInADay(trades);
     const peakProfit = calculateMaxProfitInADay(trades);
     const consistency = calculateAverageWinningDayProfit(trades);
+    const totalTrades = trades.length;
 
     return [
       {
         name: 'Racha de Victorias',
         description: 'Mide la consistencia encontrando tu racha de victorias más larga.',
         icon: Flame,
-        value: streak,
-        level: getSkillLevel('streak', streak),
+        value: winStreak,
+        level: getSkillLevel('winStreak', winStreak),
         color: 'text-orange-500',
         bgColor: 'bg-orange-500/10',
         borderColor: 'border-orange-500/20',
         formatter: (val: number) => `${val} victorias`,
       },
       {
+        name: 'Racha de Derrotas',
+        description: 'Evalúa la resiliencia midiendo tu racha de pérdidas consecutivas más larga.',
+        icon: TrendingDown,
+        value: lossStreak,
+        level: getSkillLevel('lossStreak', lossStreak),
+        color: 'text-purple-500',
+        bgColor: 'bg-purple-500/10',
+        borderColor: 'border-purple-500/20',
+        formatter: (val: number) => `${val} derrotas`,
+      },
+      {
         name: 'Gestión de Pérdidas',
-        description: 'Evalúa la disciplina midiendo el máximo de pérdidas en un solo día.',
-        icon: ShieldOff,
+        description: 'Evalúa la disciplina midiendo tu capacidad para detenerte tras varias pérdidas en un día.',
+        icon: Hand,
         value: lossManagement,
         level: getSkillLevel('lossManagement', lossManagement),
         color: 'text-red-500',
         bgColor: 'bg-red-500/10',
         borderColor: 'border-red-500/20',
-        formatter: (val: number) => `${val} pérdidas`,
+        formatter: (val: number) => `Máx. ${val} pérdidas/día`,
       },
       {
         name: 'Pico de Ganancias',
@@ -173,7 +216,7 @@ const HabilidadesPage = () => {
         formatter: (val: number) => `$${val.toFixed(2)}`,
       },
       {
-        name: 'Consistencia de Ganancias',
+        name: 'Consistencia',
         description: 'Calcula tu ganancia promedio en los días con beneficio.',
         icon: Target,
         value: consistency,
@@ -182,6 +225,17 @@ const HabilidadesPage = () => {
         bgColor: 'bg-blue-500/10',
         borderColor: 'border-blue-500/20',
         formatter: (val: number) => `$${val.toFixed(2)} / día`,
+      },
+       {
+        name: 'Experiencia',
+        description: 'Mide la cantidad total de operaciones realizadas. La práctica hace al maestro.',
+        icon: Activity,
+        value: totalTrades,
+        level: getSkillLevel('totalTrades', totalTrades),
+        color: 'text-cyan-500',
+        bgColor: 'bg-cyan-500/10',
+        borderColor: 'border-cyan-500/20',
+        formatter: (val: number) => `${val} trades`,
       }
     ];
   }, [trades]);
@@ -221,7 +275,7 @@ const HabilidadesPage = () => {
             </CardContent>
         </Card>
       
-      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {skillMetrics.map((skill) => {
           const Icon = skill.icon;
           return (
