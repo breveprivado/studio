@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, BrainCircuit } from 'lucide-react';
+import { Shield, LayoutGrid, ClipboardCheck, BookOpen, BookHeart, Gamepad2, Award, Users, Store, Sun, Moon, Bot, Newspaper, BookCopy, Swords, Sparkles, Landmark, Dumbbell, PartyPopper, BrainCircuit, PanelLeft } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -108,7 +108,7 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
               </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className='items-center'>
+        <SidebarFooter className='items-center gap-4'>
             <div className="flex items-center space-x-2">
                 <Sun className="h-5 w-5" />
                 <Switch
@@ -117,6 +117,11 @@ export function SidebarWrapper({ children }: { children: React.ReactNode }) {
                     onCheckedChange={setIsDarkMode}
                     />
                 <Moon className="h-5 w-5" />
+            </div>
+            <div className="hidden md:flex">
+              <SidebarTrigger>
+                <PanelLeft/>
+              </SidebarTrigger>
             </div>
         </SidebarFooter>
       </Sidebar>
