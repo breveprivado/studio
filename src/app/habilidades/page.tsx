@@ -181,7 +181,7 @@ const getRank = (averageLevel: number): { rank: string, color: string } => {
     if (averageLevel >= 2.5) return { rank: 'A', color: 'text-green-500' };
     if (averageLevel >= 1.5) return { rank: 'B', color: 'text-blue-500' };
     if (averageLevel > 0) return { rank: 'C', color: 'text-yellow-500' };
-    if (averageLevel === 0 && averageLevel > -1 ) return { rank: 'D', color: 'text-orange-500' };
+    if (averageLevel === 0) return { rank: 'D', color: 'text-orange-500' };
     return { rank: 'E', color: 'text-red-500' };
 };
 
