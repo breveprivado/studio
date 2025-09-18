@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import { Smile, Meh, Frown, Star } from 'lucide-react';
+import { Smile, Meh, Frown, Star, Trophy, Skull } from 'lucide-react';
 import Image from 'next/image';
 
 interface TradeDetailDialogProps {
@@ -96,6 +96,20 @@ const TradeDetailDialog: React.FC<TradeDetailDialogProps> = ({ isOpen, onOpenCha
               </span>
             </div>
           )}
+           <div className="flex items-center justify-between">
+                {trade.isPrideTrade && (
+                    <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-amber-500"/>
+                        <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Operación de Orgullo</span>
+                    </div>
+                )}
+                 {trade.isWorstTrade && (
+                    <div className="flex items-center gap-2">
+                        <Skull className="h-5 w-5 text-destructive"/>
+                        <span className="text-sm font-medium text-destructive">La Peor Operación</span>
+                    </div>
+                )}
+            </div>
           {trade.notes && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Notas de la Operación</h4>
