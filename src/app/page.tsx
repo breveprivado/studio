@@ -630,7 +630,7 @@ export default function DashboardPage() {
   const handleExportData = () => {
     const wb = XLSX.utils.book_new();
 
-    const dataToExport = {
+    const dataToExport: { [key: string]: any } = {
       trades,
       withdrawals,
       balanceAdditions,
@@ -643,9 +643,11 @@ export default function DashboardPage() {
       dailyHealth: [dailyHealth],
       mandatoryItems_trading: JSON.parse(localStorage.getItem('mandatoryItems_trading') || '[]'),
       mandatoryItems_personaje: JSON.parse(localStorage.getItem('mandatoryItems_personaje') || '[]'),
-      strategyOptions: JSON.parse(localStorage.getItem('strategyOptions') || JSON.stringify(defaultStrategies)),
       navItems: JSON.parse(localStorage.getItem('navItems') || JSON.stringify(defaultNavItems)),
     };
+    
+    const strategies = JSON.parse(localStorage.getItem('strategyOptions') || JSON.stringify(defaultStrategies));
+    dataToExport.strategyOptions = strategies;
 
     for (const [key, value] of Object.entries(dataToExport)) {
         if (Array.isArray(value) && value.length > 0) {
@@ -763,7 +765,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
               <div className="flex items-center gap-4">
                   <SidebarTrigger className="md:hidden"/>
