@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Flame, TrendingDown, TrendingUp, Target, Gem, Hand, Activity } from 'lucide-react';
+import { Flame, TrendingDown, TrendingUp, Target, Gem, Hand, Activity, BrainCircuit } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { type Trade } from '@/lib/types';
@@ -303,3 +304,5 @@ const HabilidadesPage = () => {
 };
 
 export default HabilidadesPage;
+
+    
