@@ -279,7 +279,7 @@ export default function DashboardPage() {
         };
     });
 
-    const encountersByCreature: { [key: string]: Encounter[] } = {};
+    const encountersByCreature: { [key: string]: any[] } = {};
 
     // Sort trades oldest to newest to process encounters in chronological order
     const sortedTrades = [...allTrades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -289,7 +289,7 @@ export default function DashboardPage() {
             if (!encountersByCreature[trade.creatureId]) {
                 encountersByCreature[trade.creatureId] = [];
             }
-            const newEncounter: Encounter = {
+            const newEncounter: { id: string, date: string, status: 'win' | 'loss' } = {
                 id: trade.id, // Use trade id as the unique encounter id
                 date: trade.date,
                 status: trade.status,
@@ -401,10 +401,10 @@ export default function DashboardPage() {
     localStorage.removeItem('playerStats');
     localStorage.removeItem('dailyHealth');
     localStorage.removeItem('strategyOptions');
+    localStorage.removeItem('navItems');
     
     // Clear mission-specific XP flags
-    Object.keys(levelMilestones).forEach(level => {
-        const milestone = levelMilestones[parseInt(level, 10)];
+    Object.values(levelMilestones).forEach(milestone => {
         localStorage.removeItem(`xpEarned_${milestone}`);
     });
     
@@ -443,10 +443,10 @@ export default function DashboardPage() {
     ];
     
     return allActivities.reduce((acc, activity) => {
-        if (activity.type === 'trade') return acc + activity.profit;
-        if (activity.type === 'balance') return acc + activity.amount;
-        if (activity.type === 'withdrawal') return acc - activity.amount;
-        if (activity.type === 'adjustment') return acc + activity.amount;
+        if (activity.type === 'trade') return acc + (activity.profit || 0);
+        if (activity.type === 'balance') return acc + (activity.amount || 0);
+        if (activity.type === 'withdrawal') return acc - (activity.amount || 0);
+        if (activity.type === 'adjustment') return acc + (activity.amount || 0);
         return acc;
     }, 0);
   }, [trades, withdrawals, balanceAdditions, adjustments]);
@@ -477,11 +477,11 @@ export default function DashboardPage() {
   }, [filteredTrades, trades, withdrawals, balanceAdditions, adjustments, viewDate, timeRange]);
 
   const activities = useMemo((): Activity[] => {
-    const combined = [
-        ...trades.map(t => ({...t, type: 'trade'} as const)),
-        ...withdrawals.map(w => ({...w, type: 'withdrawal'} as const)),
-        ...balanceAdditions.map(b => ({...b, type: 'balance'} as const)),
-        ...adjustments.map(a => ({...a, type: 'adjustment'} as const)),
+    const combined: Activity[] = [
+        ...trades.map(t => ({...t, type: 'trade' as const})),
+        ...withdrawals.map(w => ({...w, type: 'withdrawal' as const})),
+        ...balanceAdditions.map(b => ({...b, type: 'balance' as const})),
+        ...adjustments.map(a => ({...a, type: 'adjustment' as const})),
     ];
     return combined.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [trades, withdrawals, balanceAdditions, adjustments]);
@@ -797,7 +797,7 @@ export default function DashboardPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Realizar Reinicio Total?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta acción es irreversible y eliminará permanentemente TODOS tus datos de la aplicación (operaciones, bestiario, bitácora, nivel, XP, etc.). Es como empezar de cero. Tus reglas obligatorias y estrategias personalizadas se conservarán.
+                              Esta acción es irreversible y eliminará permanentemente TODOS tus datos de la aplicación (operaciones, bestiario, bitácora, nivel, XP, etc.). Es como empezar de cero.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -951,3 +951,6 @@ export default function DashboardPage() {
 
 
 
+
+
+    
