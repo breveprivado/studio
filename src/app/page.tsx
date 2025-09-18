@@ -150,7 +150,7 @@ export default function DashboardPage() {
   useEffect(() => {
     setViewDate(new Date());
   }, []);
-
+  
   useEffect(() => {
     if (prevLevel === undefined) return;
     
@@ -729,10 +729,6 @@ export default function DashboardPage() {
     if(fileInputRef.current) fileInputRef.current.value = '';
   };
   
-  if (!viewDate) {
-    return null; // or a loading skeleton
-  }
-
   const winningStreak = useMemo(() => {
     let streak = 0;
     // Trades are already sorted newest to oldest in the 'activities' memo
@@ -746,6 +742,10 @@ export default function DashboardPage() {
     }
     return streak;
   }, [trades]);
+
+  if (!viewDate) {
+    return null; // or a loading skeleton
+  }
 
   return (
     <>
