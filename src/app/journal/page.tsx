@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -157,6 +157,14 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
       </CardContent>
     </Card>
   );
+};
+
+const ratingDescriptions: { [key: number]: { title: string, color: string } } = {
+    5: { title: "¡Decisiones Excelentes!", color: "text-green-500" },
+    4: { title: "Buenas decisiones", color: "text-blue-500" },
+    3: { title: "Decisiones Regulares", color: "text-yellow-500" },
+    2: { title: "Malas decisiones", color: "text-orange-500" },
+    1: { title: "¡Decisiones Terribles!", color: "text-red-500" },
 };
 
 
@@ -471,7 +479,10 @@ export default function JournalPage() {
                               </div>
                               )}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Calificación del día</label>
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    {editingRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
+                                    Decisiones del Día
+                                </label>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map((rating) => (
                                         <Star
@@ -484,9 +495,14 @@ export default function JournalPage() {
                                         />
                                     ))}
                                 </div>
+                                {editingRating > 0 && ratingDescriptions[editingRating] && (
+                                    <p className={cn("text-sm font-semibold", ratingDescriptions[editingRating].color)}>
+                                        {ratingDescriptions[editingRating].title}
+                                    </p>
+                                )}
                             </div>
                             <Input
-                                placeholder="Comentario sobre tu calificación..."
+                                placeholder="Comentario sobre tus decisiones..."
                                 value={editingRatingComment}
                                 onChange={(e) => setEditingRatingComment(e.target.value)}
                             />
@@ -509,15 +525,20 @@ export default function JournalPage() {
                               {entryForSelectedDate.rating > 0 && (
                                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                                   <div className="flex items-center gap-2">
-                                    <p className="font-semibold">Calificación:</p>
+                                    <p className="font-semibold">Decisiones:</p>
                                     <div className="flex">
                                       {[1,2,3,4,5].map(star => (
                                         <Star key={star} className={cn("h-5 w-5", entryForSelectedDate.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
                                       ))}
                                     </div>
                                   </div>
+                                  {entryForSelectedDate.rating > 0 && ratingDescriptions[entryForSelectedDate.rating] && (
+                                      <p className={cn("text-sm font-semibold mt-2", ratingDescriptions[entryForSelectedDate.rating].color)}>
+                                          {ratingDescriptions[entryForSelectedDate.rating].title}
+                                      </p>
+                                  )}
                                   {entryForSelectedDate.ratingComment && (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">"{entryForSelectedDate.ratingComment}"</p>
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">"{entryForSelectedDate.ratingComment}"</p>
                                   )}
                                 </div>
                               )}
@@ -547,7 +568,10 @@ export default function JournalPage() {
                               </div>
                               )}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Calificación del día</label>
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    {currentRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
+                                    Decisiones del Día
+                                </label>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map((rating) => (
                                         <Star
@@ -560,9 +584,14 @@ export default function JournalPage() {
                                         />
                                     ))}
                                 </div>
+                                {currentRating > 0 && ratingDescriptions[currentRating] && (
+                                    <p className={cn("text-sm font-semibold", ratingDescriptions[currentRating].color)}>
+                                        {ratingDescriptions[currentRating].title}
+                                    </p>
+                                )}
                             </div>
                             <Input
-                                placeholder="Comentario sobre tu calificación..."
+                                placeholder="Comentario sobre tus decisiones..."
                                 value={currentRatingComment}
                                 onChange={(e) => setCurrentRatingComment(e.target.value)}
                             />
