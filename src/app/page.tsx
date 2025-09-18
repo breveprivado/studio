@@ -47,6 +47,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import ExpirationTimePerformance from '@/components/dashboard/expiration-time-performance';
 import * as XLSX from 'xlsx';
 import defaultNavItems from '@/lib/nav-items.json';
+import HourlyPerformance from '@/components/dashboard/hourly-performance';
 
 
 // Custom hook to get the previous value of a prop or state
@@ -402,6 +403,8 @@ export default function DashboardPage() {
     localStorage.removeItem('dailyHealth');
     localStorage.removeItem('strategyOptions');
     localStorage.removeItem('navItems');
+    localStorage.removeItem('mandatoryItems_trading');
+    localStorage.removeItem('mandatoryItems_personaje');
     
     // Clear mission-specific XP flags
     Object.values(levelMilestones).forEach(milestone => {
@@ -914,11 +917,15 @@ export default function DashboardPage() {
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <DailyPerformance trades={filteredTrades} />
+                    <HourlyPerformance trades={filteredTrades} />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <PrideVsWorstTrades trades={filteredTrades} />
+                    <PrideVsWorstAnalysis trades={filteredTrades} />
                   </div>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <PrideVsWorstAnalysis trades={filteredTrades} />
                     <ExpirationTimePerformance trades={filteredTrades} />
                   </div>
                 </div>
@@ -945,12 +952,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-
-
-
-
-
-
-
-    
