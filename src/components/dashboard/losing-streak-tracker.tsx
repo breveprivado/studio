@@ -8,11 +8,12 @@ import { cn } from '@/lib/utils';
 
 interface LosingStreakTrackerProps {
     currentStreak: number;
+    maxStreak: number;
 }
 
 const STREAK_GOAL = 10;
 
-const LosingStreakTracker: React.FC<LosingStreakTrackerProps> = ({ currentStreak }) => {
+const LosingStreakTracker: React.FC<LosingStreakTrackerProps> = ({ currentStreak, maxStreak }) => {
     const progressPercentage = (currentStreak / STREAK_GOAL) * 100;
 
     const getIconColor = () => {
@@ -26,7 +27,7 @@ const LosingStreakTracker: React.FC<LosingStreakTrackerProps> = ({ currentStreak
         <Card>
             <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Racha de Derrotas
+                    Racha de Derrotas (Actual)
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -36,8 +37,9 @@ const LosingStreakTracker: React.FC<LosingStreakTrackerProps> = ({ currentStreak
                 </div>
                 <div className="space-y-1">
                     <Progress value={progressPercentage} className="[&>div]:bg-destructive" />
-                    <div className="text-center text-xs text-muted-foreground">
-                        <p>{currentStreak} / {STREAK_GOAL} Derrotas Consecutivas</p>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{currentStreak} / {STREAK_GOAL} Derrotas</span>
+                        <span>Racha Máxima del Día: {maxStreak}</span>
                     </div>
                 </div>
             </CardContent>
