@@ -26,18 +26,51 @@ const getRank = (winRate: number): { rank: string, color: string } => {
 
 const PerformanceRankCard: React.FC<PerformanceRankCardProps> = ({ trades }) => {
 
-    const { rank, winRate, totalTrades, color } = useMemo(() => {
+    const { rank, winRate, totalTrades, color, reason } = useMemo(() => {
         const relevantTrades = trades.filter(t => t.status === 'win' || t.status === 'loss');
         const total = relevantTrades.length;
+
+        // Check for "poisoned hearts" condition first
+        const lossesByPair: { [key: string]: number } = {};
+        trades.forEach(trade => {
+            if (trade.status === 'loss') {
+                lossesByPair[trade.pair] = (lossesByPair[trade.pair] || 0) + 1;
+            }
+        });
+        
+        const hasPoisonedPair = Object.values(lossesByPair).some(count => count >= 3);
+
+        if (hasPoisonedPair) {
+            return { 
+                rank: 'E', 
+                winRate: 0, 
+                totalTrades: total, 
+                color: 'text-red-500', 
+                reason: 'Rango E por 3+ pérdidas en el mismo par.' 
+            };
+        }
+
         if (total < MIN_TRADES_FOR_RANK) {
-            return { rank: 'N/A', winRate: 0, totalTrades: total, color: 'text-muted-foreground' };
+            return { 
+                rank: 'N/A', 
+                winRate: 0, 
+                totalTrades: total, 
+                color: 'text-muted-foreground',
+                reason: `${total} / ${MIN_TRADES_FOR_RANK} operaciones para un rango`
+            };
         }
         
         const wins = relevantTrades.filter(t => t.status === 'win').length;
         const currentWinRate = (wins / total) * 100;
         const { rank: rankLetter, color: rankColor } = getRank(currentWinRate);
         
-        return { rank: rankLetter, winRate: currentWinRate, totalTrades: total, color: rankColor };
+        return { 
+            rank: rankLetter, 
+            winRate: currentWinRate, 
+            totalTrades: total, 
+            color: rankColor,
+            reason: `${currentWinRate.toFixed(1)}% de acierto en ${total} operaciones`
+        };
     }, [trades]);
 
     const isRanked = rank !== 'N/A';
@@ -55,11 +88,7 @@ const PerformanceRankCard: React.FC<PerformanceRankCardProps> = ({ trades }) => 
                     <span className={cn("text-4xl font-bold", color)}>{rank}</span>
                 </div>
                  <div className="space-y-1 text-xs text-muted-foreground text-center">
-                    {isRanked ? (
-                        <p>{winRate.toFixed(1)}% de acierto en {totalTrades} operaciones</p>
-                    ) : (
-                        <p>{totalTrades} / {MIN_TRADES_FOR_RANK} operaciones para un rango</p>
-                    )}
+                    <p>{reason}</p>
                 </div>
             </CardContent>
         </Card>
