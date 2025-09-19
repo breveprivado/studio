@@ -6,16 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth, addDays, subDays, startOfDay } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth, addDays, subDays, startOfDay, getISOWeek, getWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown, ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { JournalEntry, PlayerStats, DailyLedgerData } from '@/lib/types';
+import { JournalEntry, PlayerStats, DailyLedgerData, GainPhase } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DisciplineSpells from '@/components/journal/discipline-spells';
@@ -24,31 +24,33 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 
 const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
-    const [ledgerData, setLedgerData] = useState<DailyLedgerData>({
-        initialBalance: 100,
-        weeklyGainPercentage: 15,
-        balances: {},
-    });
+    const [initialBalance, setInitialBalance] = useState(100);
+    const [gainPhases, setGainPhases] = useState<GainPhase[]>([
+        { startWeek: 1, endWeek: 52, weeklyGainPercentage: 15, id: crypto.randomUUID() }
+    ]);
+    const [balances, setBalances] = useState<{ [date: string]: number }>({});
     const [editingBalance, setEditingBalance] = useState<{ date: string; value: string } | null>(null);
 
     useEffect(() => {
-        const storedData = localStorage.getItem('dailyLedger');
-        if (storedData) {
-            setLedgerData(JSON.parse(storedData));
-        }
+        const storedInitialBalance = localStorage.getItem('dailyLedger_initialBalance');
+        if (storedInitialBalance) setInitialBalance(JSON.parse(storedInitialBalance));
+
+        const storedGainPhases = localStorage.getItem('dailyLedger_gainPhases');
+        if (storedGainPhases) setGainPhases(JSON.parse(storedGainPhases));
+
+        const storedBalances = localStorage.getItem('dailyLedger_balances');
+        if (storedBalances) setBalances(JSON.parse(storedBalances));
     }, []);
     
     useEffect(() => {
-        localStorage.setItem('dailyLedger', JSON.stringify(ledgerData));
-    }, [ledgerData]);
-
-
-    const handleConfigChange = (key: 'initialBalance' | 'weeklyGainPercentage', value: string) => {
-        const numericValue = parseFloat(value);
-        if (!isNaN(numericValue)) {
-            setLedgerData(prev => ({ ...prev, [key]: numericValue }));
-        }
-    };
+        localStorage.setItem('dailyLedger_initialBalance', JSON.stringify(initialBalance));
+    }, [initialBalance]);
+     useEffect(() => {
+        localStorage.setItem('dailyLedger_gainPhases', JSON.stringify(gainPhases));
+    }, [gainPhases]);
+    useEffect(() => {
+        localStorage.setItem('dailyLedger_balances', JSON.stringify(balances));
+    }, [balances]);
 
     const handleBalanceChange = (date: string, value: string) => {
         setEditingBalance({ date, value });
@@ -57,116 +59,138 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     const handleBalanceBlur = (date: string) => {
         if (editingBalance && editingBalance.date === date) {
             const newBalanceValue = editingBalance.value;
-
-            setLedgerData(prev => {
-                const newBalances = { ...prev.balances };
-
-                if (newBalanceValue === '') {
-                    // If the input is empty, delete the key
+            setBalances(prev => {
+                const newBalances = { ...prev };
+                if (newBalanceValue === '' || newBalanceValue === null) {
                     delete newBalances[date];
                 } else {
                     const newBalance = parseFloat(newBalanceValue);
                     if (!isNaN(newBalance)) {
-                        // If it's a valid number, update it
                         newBalances[date] = newBalance;
                     }
                 }
-                
-                return { ...prev, balances: newBalances };
+                return newBalances;
             });
         }
         setEditingBalance(null);
     };
 
+    const handlePhaseChange = (id: string, field: keyof Omit<GainPhase, 'id'>, value: string) => {
+        const numericValue = parseInt(value);
+        if (!isNaN(numericValue)) {
+            setGainPhases(prevPhases =>
+                prevPhases.map(phase =>
+                    phase.id === id ? { ...phase, [field]: numericValue } : phase
+                )
+            );
+        }
+    };
+
+    const addPhase = () => {
+        const lastWeek = gainPhases.reduce((max, p) => Math.max(max, p.endWeek), 0);
+        setGainPhases(prev => [
+            ...prev,
+            { id: crypto.randomUUID(), startWeek: lastWeek + 1, endWeek: lastWeek + 1, weeklyGainPercentage: 15 }
+        ]);
+    };
+
+    const removePhase = (id: string) => {
+        setGainPhases(prev => prev.filter(p => p.id !== id));
+    };
+
+    const getWeeklyGainPercentageForWeek = (weekNumber: number) => {
+        const applicablePhase = gainPhases.find(p => weekNumber >= p.startWeek && weekNumber <= p.endWeek);
+        // Fallback to the first phase's percentage if no specific phase is found (e.g. for weeks before phase 1 starts)
+        return applicablePhase?.weeklyGainPercentage ?? gainPhases[0]?.weeklyGainPercentage ?? 0;
+    };
+
+
     const fullYearData = useMemo(() => {
         const data = [];
         const startDate = new Date(new Date().getFullYear(), 8, 13); // September 13 of current year
-        let currentBalance = ledgerData.initialBalance;
-
-        // Apply historical balances to get the true starting balance for the projection
-        const sortedBalances = Object.entries(ledgerData.balances)
+        let currentBalance = initialBalance;
+        
+        const sortedBalances = Object.entries(balances)
             .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
             .sort((a, b) => a.date.getTime() - b.date.getTime());
 
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
-            
-            // On Monday (or first day of the week), calculate the daily goal for the week
-            let weeklyDailyGoal = 0;
-            if (currentDate.getDay() === 1) { // Monday
-                 weeklyDailyGoal = (currentBalance * (ledgerData.weeklyGainPercentage / 100)) / 5;
-            }
+            const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4});
 
-            // Find goal for current day by looking for the last Monday
-            let dayOfWeek = currentDate.getDay();
-            let lastMonday = subDays(currentDate, dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-            
-            let projectedBalanceAtStartOfWeek = ledgerData.initialBalance;
-            // Iterate from start date up to last Monday to find the correct starting balance for the week's projection
-            let tempDate = startOfDay(startDate);
-            let tempBalance = ledgerData.initialBalance;
-            while(tempDate < lastMonday) {
-                const historicBalanceForDay = sortedBalances.find(b => isSameDay(b.date, tempDate));
-                if (historicBalanceForDay) {
-                    tempBalance = historicBalanceForDay.balance;
-                } else {
-                     if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) { // Weekday
-                        const weekStartOfTempDate = startOfWeek(tempDate, { weekStartsOn: 1 });
-                        
-                        let balanceAtWeekStart = ledgerData.initialBalance;
-                        // Find the last recorded balance on or before the start of this week
-                        const relevantBalances = sortedBalances.filter(b => b.date <= weekStartOfTempDate);
-                        if(relevantBalances.length > 0) {
-                            balanceAtWeekStart = relevantBalances[relevantBalances.length - 1].balance;
+            let balanceAtStartOfWeek = initialBalance;
+            // Find the last recorded balance on or before the start of the current week
+             const currentWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+             const relevantHistoricBalances = sortedBalances.filter(b => b.date < currentWeekStart);
+             if (relevantHistoricBalances.length > 0) {
+                 balanceAtStartOfWeek = relevantHistoricBalances[relevantHistoricBalances.length - 1].balance;
+             } else {
+                // If no historic balance, we need to calculate it based on projections
+                let tempBalance = initialBalance;
+                let tempDate = startOfDay(startDate);
+                while(tempDate < currentWeekStart) {
+                     const historicBalanceForDay = sortedBalances.find(b => isSameDay(b.date, tempDate));
+                     if(historicBalanceForDay){
+                        tempBalance = historicBalanceForDay.balance;
+                     } else {
+                        if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) { // Weekday
+                            const tempWeekNumber = getWeek(tempDate, { weekStartsOn: 1, firstWeekContainsDate: 4});
+                            const tempWeeklyPercentage = getWeeklyGainPercentageForWeek(tempWeekNumber);
+                            const dailyGoalForTempWeek = (tempBalance * (tempWeeklyPercentage / 100)) / 5;
+                            tempBalance += dailyGoalForTempWeek;
                         }
-
-                        const dailyGoalForThisWeek = (balanceAtWeekStart * (ledgerData.weeklyGainPercentage / 100)) / 5;
-                        tempBalance += dailyGoalForThisWeek;
-                    }
+                     }
+                    tempDate = addDays(tempDate, 1);
                 }
-                tempDate = addDays(tempDate, 1);
+                balanceAtStartOfWeek = tempBalance;
+             }
+
+            const weeklyGainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
+            const dailyGoal = (balanceAtStartOfWeek * (weeklyGainPercentage / 100)) / 5;
+            
+            let projectedBalance;
+            if(i === 0) {
+                projectedBalance = initialBalance;
+            } else {
+                const previousDayData = data[i - 1];
+                projectedBalance = previousDayData.actualBalance !== undefined ? previousDayData.actualBalance : previousDayData.projectedBalance;
             }
-            projectedBalanceAtStartOfWeek = tempBalance;
 
-            const dailyGoal = (projectedBalanceAtStartOfWeek * (ledgerData.weeklyGainPercentage / 100)) / 5;
-
-
-            let projectedBalance = currentBalance;
             if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) { // Skip weekends for projection
                 projectedBalance += dailyGoal;
             }
 
-            const actualBalance = ledgerData.balances[dateKey];
+            const actualBalance = balances[dateKey];
             
             data.push({
                 date: currentDate,
                 dateKey: dateKey,
+                weekNumber,
                 dailyGoal: dailyGoal,
                 projectedBalance: projectedBalance,
                 actualBalance: actualBalance,
             });
-
-            // Update currentBalance for the next iteration
-            currentBalance = actualBalance !== undefined ? actualBalance : projectedBalance;
         }
         return data;
-    }, [ledgerData]);
+    }, [initialBalance, gainPhases, balances]);
 
     const { todayProjected, todayActual, performanceDifference, chartData } = useMemo(() => {
         const today = startOfDay(new Date());
-        const todayData = fullYearData.find(d => isSameDay(d.date, today));
         
         // Find the last available actual balance
-        const balancesWithValues = Object.entries(ledgerData.balances).filter(([_, value]) => value != null);
-        const lastActualBalanceEntry = balancesWithValues.length > 0
-            ? balancesWithValues[balancesWithValues.length - 1]
-            : null;
+        const balancesWithValues = Object.entries(balances)
+          .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
+          .filter(item => item.balance != null && !isNaN(item.balance))
+          .sort((a,b) => b.date.getTime() - a.date.getTime());
         
-        const todayActualValue = lastActualBalanceEntry ? lastActualBalanceEntry[1] : ledgerData.initialBalance;
-        const todayProjectedValue = todayData?.projectedBalance ?? ledgerData.initialBalance;
+        const lastActualBalance = balancesWithValues.length > 0 ? balancesWithValues[0].balance : initialBalance;
+
+        // Find today's data from the full year projection
+        const todayData = fullYearData.find(d => isSameDay(d.date, today));
+        const todayProjectedValue = todayData?.projectedBalance ?? initialBalance;
         
-        const difference = todayActualValue - todayProjectedValue;
+        const difference = lastActualBalance - todayProjectedValue;
 
         const chartDataFormatted = fullYearData.map(d => ({
             name: format(d.date, 'dd MMM'),
@@ -176,11 +200,11 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         
         return {
             todayProjected: todayProjectedValue,
-            todayActual: todayActualValue,
+            todayActual: lastActualBalance,
             performanceDifference: difference,
             chartData: chartDataFormatted,
         };
-    }, [fullYearData, ledgerData.balances, ledgerData.initialBalance]);
+    }, [fullYearData, balances, initialBalance]);
 
 
     const formatCurrency = (value: number) => {
@@ -202,26 +226,56 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
                             <div>
                                 <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
                                 <Input
                                     id="initial-balance"
                                     type="number"
-                                    value={ledgerData.initialBalance}
-                                    onChange={(e) => handleConfigChange('initialBalance', e.target.value)}
-                                    className="w-full"
+                                    value={initialBalance}
+                                    onChange={(e) => setInitialBalance(parseFloat(e.target.value))}
+                                    className="w-full md:w-1/3"
                                 />
                             </div>
-                            <div>
-                                <Label htmlFor="weekly-gain">Porcentaje de Ganancia Semanal (%)</Label>
-                                <Input
-                                    id="weekly-gain"
-                                    type="number"
-                                    value={ledgerData.weeklyGainPercentage}
-                                    onChange={(e) => handleConfigChange('weeklyGainPercentage', e.target.value)}
-                                    className="w-full"
-                                />
+                            <div className="space-y-2">
+                                <Label>Fases de Ganancia</Label>
+                                {gainPhases.map((phase) => (
+                                <div key={phase.id} className="flex flex-col md:flex-row items-center gap-2 p-2 border rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <Label>Semanas</Label>
+                                        <Input
+                                            type="number"
+                                            value={phase.startWeek}
+                                            onChange={(e) => handlePhaseChange(phase.id, 'startWeek', e.target.value)}
+                                            className="w-20 h-8"
+                                        />
+                                        <span>-</span>
+                                        <Input
+                                            type="number"
+                                            value={phase.endWeek}
+                                            onChange={(e) => handlePhaseChange(phase.id, 'endWeek', e.target.value)}
+                                            className="w-20 h-8"
+                                        />
+                                    </div>
+                                     <div className="flex items-center gap-2">
+                                        <Label>Ganancia</Label>
+                                        <Input
+                                            type="number"
+                                            value={phase.weeklyGainPercentage}
+                                            onChange={(e) => handlePhaseChange(phase.id, 'weeklyGainPercentage', e.target.value)}
+                                            className="w-20 h-8"
+                                        />
+                                        <span>%</span>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removePhase(phase.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                ))}
+                                <Button onClick={addPhase} variant="outline" size="sm">
+                                    <Plus className="h-4 w-4 mr-2"/>
+                                    Añadir Fase
+                                </Button>
                             </div>
                         </div>
 
@@ -281,10 +335,9 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {fullYearData.map(({ date, dateKey, dailyGoal, projectedBalance, actualBalance }, index) => {
+                                    {fullYearData.map(({ date, dateKey, weekNumber, dailyGoal, projectedBalance, actualBalance }, index) => {
                                         const difference = actualBalance !== undefined ? actualBalance - projectedBalance : undefined;
                                         const isNewWeek = date.getDay() === 1 || index === 0;
-                                        const weekNumber = Math.ceil((index + 1) / 7);
                                         
                                         return (
                                             <React.Fragment key={dateKey}>
@@ -583,27 +636,33 @@ export default function JournalPage() {
     if (typeof storedPlayerStats.xp !== 'number') storedPlayerStats.xp = 0;
 
     // --- 1. Grant XP for the single day of survival ---
-    storedPlayerStats.xp += XP_PER_SURVIVAL_DAY;
-    totalXpGained += XP_PER_SURVIVAL_DAY;
+    storedPlayerStats.xp += 100; //XP_PER_SURVIVAL_DAY;
+    totalXpGained += 100; //XP_PER_SURVIVAL_DAY;
     toast({
         title: `¡Día Sobrevivido!`,
-        description: `Has ganado ${XP_PER_SURVIVAL_DAY} XP por tu disciplina de hoy.`
+        description: `Has ganado ${100} XP por tu disciplina de hoy.`
     });
 
     // --- 2. Check for milestone missions ---
     const currentRatedDays = newEntriesList.filter(e => e.rating === 3 || e.rating === 5).length;
     let milestoneUnlocked = false;
+    
+    const levelMilestones: { [key: number]: number } = {
+        1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
+        9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
+    };
+
 
     Object.entries(levelMilestones).forEach(([level, milestone]) => {
         const xpEarnedForMilestone = JSON.parse(localStorage.getItem(`xpEarned_${milestone}`) || 'false');
 
         if (currentRatedDays >= milestone && !xpEarnedForMilestone) {
-            storedPlayerStats.xp += XP_PER_SURVIVAL_MISSION;
-            totalXpGained += XP_PER_SURVIVAL_MISSION;
+            storedPlayerStats.xp += 500; //XP_PER_SURVIVAL_MISSION;
+            totalXpGained += 500; //XP_PER_SURVIVAL_MISSION;
             localStorage.setItem(`xpEarned_${milestone}`, 'true');
             toast({
                 title: `¡Misión de Supervivencia Completa!`,
-                description: `Has sobrevivido ${milestone} día(s) y ganado ${XP_PER_SURVIVAL_MISSION} XP!`
+                description: `Has sobrevivido ${milestone} día(s) y ganado ${500} XP!`
             });
             milestoneUnlocked = true;
         }

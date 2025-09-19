@@ -6,6 +6,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -85,9 +86,16 @@ export interface JournalEntry {
   imageUrl?: string | null;
 }
 
+export interface GainPhase {
+  id: string;
+  startWeek: number;
+  endWeek: number;
+  weeklyGainPercentage: number;
+}
+
 export interface DailyLedgerData {
   initialBalance: number;
-  weeklyGainPercentage: number;
+  gainPhases: GainPhase[];
   balances: { [date: string]: number }; // Key is 'YYYY-MM-DD'
 }
 
@@ -120,6 +128,7 @@ export interface NavItem {
 }
     
     
+
 
 
 
