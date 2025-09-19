@@ -204,20 +204,28 @@ const BestiaryPage = () => {
         </div>
       </header>
 
-      <Card className="mb-8">
-        <CardHeader>
-            <CardTitle className="flex items-center">
-                <DollarSign className="h-6 w-6 mr-3 text-green-500" />
-                Tabla de Interés Compuesto
-            </CardTitle>
-            <CardDescription>
-                Proyecta tu crecimiento de capital paso a paso, asociando cada nivel con una bestia.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
-        </CardContent>
-      </Card>
+      <Accordion type="single" collapsible className="w-full mb-8" defaultValue="item-1">
+        <AccordionItem value="item-1" className="border-b-0">
+            <Card>
+                <AccordionTrigger className="w-full p-6 text-left hover:no-underline">
+                     <CardHeader className="p-0 text-left">
+                        <CardTitle className="flex items-center">
+                            <DollarSign className="h-6 w-6 mr-3 text-green-500" />
+                            Tabla de Interés Compuesto
+                        </CardTitle>
+                        <CardDescription>
+                            Proyecta tu crecimiento de capital paso a paso, asociando cada nivel con una bestia.
+                        </CardDescription>
+                    </CardHeader>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CardContent>
+                        <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
+                    </CardContent>
+                </AccordionContent>
+            </Card>
+        </AccordionItem>
+      </Accordion>
 
 
       <Card>
@@ -357,4 +365,3 @@ export default BestiaryPage;
     
 
     
-
