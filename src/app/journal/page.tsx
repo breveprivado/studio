@@ -101,13 +101,10 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         return applicablePhase?.weeklyGainPercentage ?? gainPhases[0]?.weeklyGainPercentage ?? 0;
     };
 
-
     const fullYearData = useMemo(() => {
         const data = [];
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
-        let weeklyGoal = 0;
-        let lastWeekNumber = -1;
         
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
@@ -119,14 +116,11 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 ? initialBalance 
                 : data[i-1].projectedBalance;
 
-            if(weekNumber !== lastWeekNumber) {
+            let dailyGoal = 0;
+            if (isWeekday) {
                 const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
-                const weeklyGain = lastProjectedBalance * (gainPercentage / 100);
-                weeklyGoal = weeklyGain / 5;
-                lastWeekNumber = weekNumber;
+                dailyGoal = lastProjectedBalance * (gainPercentage / 100);
             }
-            
-            const dailyGoal = isWeekday ? weeklyGoal : 0;
             
             const projectedBalance = lastProjectedBalance + dailyGoal;
             
@@ -143,6 +137,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         }
         return data;
     }, [initialBalance, gainPhases, balances]);
+
 
     const { todayProjected, todayActual, performanceDifference, chartData } = useMemo(() => {
         const today = startOfDay(new Date());
