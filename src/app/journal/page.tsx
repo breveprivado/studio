@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth, addDays, subDays, startOfDay, getISOWeek, getWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown, ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown, ArrowDown, ArrowUp, Plus, Trash2, Percent } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -26,10 +26,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     const [initialBalance, setInitialBalance] = useState(100);
     const [gainPhases, setGainPhases] = useState<GainPhase[]>([
-        { startWeek: 1, endWeek: 52, weeklyGainPercentage: 15, id: crypto.randomUUID() }
+        { startWeek: 1, endWeek: 52, weeklyGain: 100, id: crypto.randomUUID() }
     ]);
     const [balances, setBalances] = useState<{ [date: string]: number }>({});
     const [editingBalance, setEditingBalance] = useState<{ date: string; value: string } | null>(null);
+    const [percentageToCalculate, setPercentageToCalculate] = useState(10);
 
     useEffect(() => {
         const storedInitialBalance = localStorage.getItem('dailyLedger_initialBalance');
@@ -40,6 +41,9 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
 
         const storedBalances = localStorage.getItem('dailyLedger_balances');
         if (storedBalances) setBalances(JSON.parse(storedBalances));
+        
+        const storedPercentage = localStorage.getItem('dailyLedger_percentageToCalculate');
+        if (storedPercentage) setPercentageToCalculate(JSON.parse(storedPercentage));
     }, []);
     
     useEffect(() => {
@@ -51,6 +55,10 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     useEffect(() => {
         localStorage.setItem('dailyLedger_balances', JSON.stringify(balances));
     }, [balances]);
+     useEffect(() => {
+        localStorage.setItem('dailyLedger_percentageToCalculate', JSON.stringify(percentageToCalculate));
+    }, [percentageToCalculate]);
+
 
     const handleBalanceChange = (date: string, value: string) => {
         setEditingBalance({ date, value });
@@ -88,17 +96,25 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const lastWeek = gainPhases.reduce((max, p) => Math.max(max, p.endWeek), 0);
         setGainPhases(prev => [
             ...prev,
-            { id: crypto.randomUUID(), startWeek: lastWeek + 1, endWeek: lastWeek + 1, weeklyGainPercentage: 15 }
+            { id: crypto.randomUUID(), startWeek: lastWeek + 1, endWeek: lastWeek + 1, weeklyGain: 100 }
         ]);
     };
 
     const removePhase = (id: string) => {
         setGainPhases(prev => prev.filter(p => p.id !== id));
     };
+    
+    const formatCurrency = (value: number) => {
+        if (isNaN(value)) return '$0.00';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(value);
+    }
 
-    const getWeeklyGainPercentageForWeek = (weekNumber: number) => {
+    const getWeeklyGainForWeek = (weekNumber: number) => {
         const applicablePhase = gainPhases.find(p => weekNumber >= p.startWeek && weekNumber <= p.endWeek);
-        return applicablePhase?.weeklyGainPercentage ?? gainPhases[0]?.weeklyGainPercentage ?? 0;
+        return applicablePhase?.weeklyGain ?? gainPhases[0]?.weeklyGain ?? 0;
     };
 
     const fullYearData = useMemo(() => {
@@ -108,6 +124,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         
         let lastKnownBalance = initialBalance;
         let weeklyGoal = 0;
+        let dailyGoal = 0;
 
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
@@ -117,11 +134,11 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             const isMonday = currentDate.getDay() === 1;
 
             if (isMonday) {
-                 const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
-                 weeklyGoal = lastKnownBalance * (gainPercentage / 100);
+                 const weeklyGain = getWeeklyGainForWeek(weekNumber);
+                 dailyGoal = weeklyGain / 5;
+            } else if (!isWeekday) {
+                dailyGoal = 0;
             }
-
-            let dailyGoal = isWeekday ? weeklyGoal : 0;
             
             let projectedBalance = lastKnownBalance + dailyGoal;
             
@@ -141,7 +158,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     }, [initialBalance, gainPhases, balances]);
 
 
-    const { todayProjected, todayActual, performanceDifference, chartData } = useMemo(() => {
+    const { todayProjected, todayActual, performanceDifference, chartData, percentageValue } = useMemo(() => {
         const today = startOfDay(new Date());
         
         const balancesWithValues = Object.entries(balances)
@@ -162,23 +179,18 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             'Saldo Real': d.actualBalance,
         }));
         
+        const calculatedPercentageValue = todayProjectedValue * (percentageToCalculate / 100);
+        
         return {
             todayProjected: todayProjectedValue,
             todayActual: lastActualBalance,
             performanceDifference: difference,
             chartData: chartDataFormatted,
+            percentageValue: calculatedPercentageValue,
         };
-    }, [fullYearData, balances, initialBalance]);
+    }, [fullYearData, balances, initialBalance, percentageToCalculate]);
 
 
-    const formatCurrency = (value: number) => {
-        if (isNaN(value)) return '$0.00';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(value);
-    }
-    
     return (
         <Accordion type="single" collapsible className="w-full" defaultValue="ledger">
             <AccordionItem value="ledger">
@@ -190,7 +202,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="space-y-6">
-                        <div className="space-y-4">
+                        <div className="space-y-4 p-4 border rounded-lg">
                             <div>
                                 <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
                                 <Input
@@ -222,14 +234,13 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                         />
                                     </div>
                                      <div className="flex items-center gap-2">
-                                        <Label>Ganancia</Label>
+                                        <Label>Meta Semanal (USD)</Label>
                                         <Input
                                             type="number"
-                                            value={phase.weeklyGainPercentage}
-                                            onChange={(e) => handlePhaseChange(phase.id, 'weeklyGainPercentage', e.target.value)}
-                                            className="w-20 h-8"
+                                            value={phase.weeklyGain}
+                                            onChange={(e) => handlePhaseChange(phase.id, 'weeklyGain', e.target.value)}
+                                            className="w-24 h-8"
                                         />
-                                        <span>%</span>
                                     </div>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removePhase(phase.id)}>
                                         <Trash2 className="h-4 w-4" />
@@ -240,6 +251,23 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                     <Plus className="h-4 w-4 mr-2"/>
                                     Añadir Fase
                                 </Button>
+                            </div>
+                            <div className="pt-4 space-y-2">
+                                <Label>Calculadora de Porcentaje</Label>
+                                <div className="flex flex-col md:flex-row items-center gap-4 p-2 border rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            value={percentageToCalculate}
+                                            onChange={(e) => setPercentageToCalculate(parseFloat(e.target.value))}
+                                            className="w-24 h-8"
+                                        />
+                                        <Percent className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                        del saldo proyectado de hoy ({formatCurrency(todayProjected)}) es = <span className="font-bold text-foreground">{formatCurrency(percentageValue)}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -252,13 +280,13 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                             </Card>
                             <Card>
                                 <CardHeader className="pb-2">
-                                    <CardDescription>Saldo Actual</CardDescription>
+                                    <CardDescription>Último Saldo Real</CardDescription>
                                     <CardTitle className="text-2xl">{formatCurrency(todayActual)}</CardTitle>
                                 </CardHeader>
                             </Card>
                             <Card className={cn(performanceDifference >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20")}>
                                 <CardHeader className="pb-2">
-                                    <CardDescription>Rendimiento General</CardDescription>
+                                    <CardDescription>Rendimiento vs. Proyectado</CardDescription>
                                     <CardTitle className={cn("text-2xl flex items-center gap-2", performanceDifference >= 0 ? "text-green-600" : "text-red-600")}>
                                        {performanceDifference >= 0 ? <ArrowUp/> : <ArrowDown/>}
                                        {formatCurrency(performanceDifference)}
@@ -314,8 +342,8 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                                 )}
                                                 <TableRow className={cn(isSameDay(date, selectedDate) && "bg-muted/50")}>
                                                     <TableCell>{format(date, "EEE, dd MMM", { locale: es })}</TableCell>
-                                                    <TableCell>${dailyGoal.toFixed(2)}</TableCell>
-                                                    <TableCell>${projectedBalance.toFixed(2)}</TableCell>
+                                                    <TableCell>{formatCurrency(dailyGoal)}</TableCell>
+                                                    <TableCell>{formatCurrency(projectedBalance)}</TableCell>
                                                     <TableCell>
                                                         <Input
                                                             type="number"

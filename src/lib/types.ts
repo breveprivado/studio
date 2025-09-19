@@ -7,6 +7,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -90,7 +91,7 @@ export interface GainPhase {
   id: string;
   startWeek: number;
   endWeek: number;
-  weeklyGainPercentage: number;
+  weeklyGain: number; // Changed from weeklyGainPercentage
 }
 
 export interface DailyLedgerData {
@@ -128,6 +129,7 @@ export interface NavItem {
 }
     
     
+
 
 
 
