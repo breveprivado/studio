@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth, addDays, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown, ArrowDown, ArrowUp } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -20,13 +20,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DisciplineSpells from '@/components/journal/discipline-spells';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const levelMilestones: { [key: number]: number } = {
-    1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
-    9: 180, 10: 210, 11: 240, 12: 270, 13: 300, 14: 330, 15: 365,
-};
-const XP_PER_SURVIVAL_MISSION = 500;
-const XP_PER_SURVIVAL_DAY = 100;
 
 const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     const [ledgerData, setLedgerData] = useState<DailyLedgerData>({
@@ -73,7 +68,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         setEditingBalance(null);
     };
 
-    const tableData = useMemo(() => {
+    const fullYearData = useMemo(() => {
         const data = [];
         const startDate = new Date(new Date().getFullYear(), 8, 13); // September 13 of current year
         let currentBalance = ledgerData.initialBalance;
@@ -96,26 +91,30 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             // Find goal for current day by looking for the last Monday
             let dayOfWeek = currentDate.getDay();
             let lastMonday = subDays(currentDate, dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-            let projectedBalanceAtStartOfWeek = ledgerData.initialBalance;
             
+            let projectedBalanceAtStartOfWeek = ledgerData.initialBalance;
+            // Iterate from start date up to last Monday to find the correct starting balance for the week's projection
             let tempDate = startOfDay(startDate);
             let tempBalance = ledgerData.initialBalance;
             while(tempDate < lastMonday) {
-                 const historicBalance = sortedBalances.find(b => isSameDay(b.date, tempDate));
-                 if (historicBalance) {
-                     tempBalance = historicBalance.balance;
-                 } else if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) { // Weekday
-                     const weekStart = startOfWeek(tempDate, { weekStartsOn: 1 });
-                     
-                     let balanceAtWeekStart = ledgerData.initialBalance;
-                     const weekStartSortedBalances = sortedBalances.filter(b => b.date <= weekStart);
-                     if(weekStartSortedBalances.length > 0) {
-                         balanceAtWeekStart = weekStartSortedBalances[weekStartSortedBalances.length - 1].balance;
-                     }
+                const historicBalanceForDay = sortedBalances.find(b => isSameDay(b.date, tempDate));
+                if (historicBalanceForDay) {
+                    tempBalance = historicBalanceForDay.balance;
+                } else {
+                     if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) { // Weekday
+                        const weekStartOfTempDate = startOfWeek(tempDate, { weekStartsOn: 1 });
+                        
+                        let balanceAtWeekStart = ledgerData.initialBalance;
+                        // Find the last recorded balance on or before the start of this week
+                        const relevantBalances = sortedBalances.filter(b => b.date <= weekStartOfTempDate);
+                        if(relevantBalances.length > 0) {
+                            balanceAtWeekStart = relevantBalances[relevantBalances.length - 1].balance;
+                        }
 
-                     const dailyGoalForWeek = (balanceAtWeekStart * (ledgerData.weeklyGainPercentage / 100)) / 5;
-                     tempBalance += dailyGoalForWeek;
-                 }
+                        const dailyGoalForThisWeek = (balanceAtWeekStart * (ledgerData.weeklyGainPercentage / 100)) / 5;
+                        tempBalance += dailyGoalForThisWeek;
+                    }
+                }
                 tempDate = addDays(tempDate, 1);
             }
             projectedBalanceAtStartOfWeek = tempBalance;
@@ -144,6 +143,44 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         return data;
     }, [ledgerData]);
 
+    const { todayProjected, todayActual, performanceDifference, chartData } = useMemo(() => {
+        const today = startOfDay(new Date());
+        const todayData = fullYearData.find(d => isSameDay(d.date, today));
+        
+        // Find the last available actual balance
+        const balancesWithValues = Object.entries(ledgerData.balances).filter(([_, value]) => value != null);
+        const lastActualBalanceEntry = balancesWithValues.length > 0
+            ? balancesWithValues[balancesWithValues.length - 1]
+            : null;
+        
+        const todayActualValue = lastActualBalanceEntry ? lastActualBalanceEntry[1] : ledgerData.initialBalance;
+        const todayProjectedValue = todayData?.projectedBalance ?? ledgerData.initialBalance;
+        
+        const difference = todayActualValue - todayProjectedValue;
+
+        const chartDataFormatted = fullYearData.map(d => ({
+            name: format(d.date, 'dd MMM'),
+            'Saldo Proyectado': d.projectedBalance,
+            'Saldo Real': d.actualBalance,
+        }));
+        
+        return {
+            todayProjected: todayProjectedValue,
+            todayActual: todayActualValue,
+            performanceDifference: difference,
+            chartData: chartDataFormatted,
+        };
+    }, [fullYearData, ledgerData.balances, ledgerData.initialBalance]);
+
+
+    const formatCurrency = (value: number) => {
+        if (isNaN(value)) return '$0.00';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(value);
+    }
+    
     return (
         <Accordion type="single" collapsible className="w-full" defaultValue="ledger">
             <AccordionItem value="ledger">
@@ -154,7 +191,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
@@ -177,6 +214,51 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                 />
                             </div>
                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardDescription>Saldo Proyectado Hoy</CardDescription>
+                                    <CardTitle className="text-2xl">{formatCurrency(todayProjected)}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardDescription>Saldo Actual</CardDescription>
+                                    <CardTitle className="text-2xl">{formatCurrency(todayActual)}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                            <Card className={cn(performanceDifference >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20")}>
+                                <CardHeader className="pb-2">
+                                    <CardDescription>Rendimiento General</CardDescription>
+                                    <CardTitle className={cn("text-2xl flex items-center gap-2", performanceDifference >= 0 ? "text-green-600" : "text-red-600")}>
+                                       {performanceDifference >= 0 ? <ArrowUp/> : <ArrowDown/>}
+                                       {formatCurrency(performanceDifference)}
+                                    </CardTitle>
+                                </CardHeader>
+                            </Card>
+                        </div>
+                        
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Gráfico de Progreso</CardTitle>
+                                <CardDescription>Comparación visual de tu saldo real contra el proyectado.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => `$${value/1000}k`} />
+                                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                        <Area type="monotone" dataKey="Saldo Proyectado" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                                        <Area type="monotone" dataKey="Saldo Real" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </CardContent>
+                        </Card>
+
+
                         <Card className="max-h-[500px] overflow-y-auto">
                             <Table>
                                 <TableHeader>
@@ -189,7 +271,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {tableData.map(({ date, dateKey, dailyGoal, projectedBalance, actualBalance }, index) => {
+                                    {fullYearData.map(({ date, dateKey, dailyGoal, projectedBalance, actualBalance }, index) => {
                                         const difference = actualBalance !== undefined ? actualBalance - projectedBalance : undefined;
                                         const isNewWeek = date.getDay() === 1 || index === 0;
                                         const weekNumber = Math.ceil((index + 1) / 7);
@@ -222,7 +304,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                                                         difference === undefined ? "" :
                                                         difference >= 0 ? "text-green-500" : "text-red-500"
                                                     )}>
-                                                        {difference !== undefined ? `${difference >= 0 ? '+' : ''}$${difference.toFixed(2)}` : '-'}
+                                                        {difference !== undefined ? `${difference >= 0 ? '+' : ''}${formatCurrency(difference)}` : '-'}
                                                     </TableCell>
                                                 </TableRow>
                                             </React.Fragment>
