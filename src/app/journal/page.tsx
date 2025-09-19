@@ -49,7 +49,7 @@ const RatingRules = () => (
 );
 
 
-const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], viewDate: Date }) => {
+const RatingsDashboard = ({ entries, viewDate, onDateChange }: { entries: JournalEntry[], viewDate: Date, onDateChange: (date: Date) => void }) => {
   const startOfThisWeek = startOfWeek(viewDate, { locale: es });
   const endOfThisWeek = endOfWeek(viewDate, { locale: es });
   const startOfThisMonth = startOfMonth(viewDate);
@@ -100,6 +100,11 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
   const [selectedYear, setSelectedYear] = useState(getYear(viewDate));
   const [selectedMonth, setSelectedMonth] = useState(getMonth(viewDate));
   
+  useEffect(() => {
+    setSelectedYear(getYear(viewDate));
+    setSelectedMonth(getMonth(viewDate));
+  }, [viewDate]);
+
   const years = useMemo(() => {
     const allYears = entries.map(e => getYear(new Date(e.date)));
     const uniqueYears = [...new Set(allYears), getYear(new Date())];
@@ -112,9 +117,10 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
   ];
   
   const handleDateChange = (year: number, month: number) => {
+      setSelectedYear(year);
+      setSelectedMonth(month);
       const newDate = setMonth(setYear(new Date(), year), month);
-      // This part is tricky as we can't directly set the state of the parent.
-      // The parent will handle the date change and pass the new `viewDate` prop.
+      onDateChange(newDate);
   }
 
   return (
@@ -124,6 +130,30 @@ const RatingsDashboard = ({ entries, viewDate }: { entries: JournalEntry[], view
         <CardDescription>Revisa tu rendimiento pasado.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+             <div>
+                <Label>Año</Label>
+                <Select value={selectedYear.toString()} onValueChange={(v) => handleDateChange(parseInt(v), selectedMonth)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Año" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {years.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <Label>Mes</Label>
+                <Select value={selectedMonth.toString()} onValueChange={(v) => handleDateChange(selectedYear, parseInt(v))}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Mes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map((month, index) => <SelectItem key={month} value={index.toString()}>{month}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
         <div>
             <h3 className="font-semibold mb-2">Rendimiento Semanal <span className="text-sm text-gray-500">({format(startOfThisWeek, 'dd MMM')} - {format(endOfThisWeek, 'dd MMM')})</span></h3>
             <div className="p-3 bg-gray-50 dark:bg-neutral-800/50 rounded-lg space-y-2">
@@ -407,7 +437,7 @@ export default function JournalPage() {
   const ratedDays = useMemo(() => entries.filter(e => e.rating === 3 || e.rating === 5).map(e => new Date(e.date)), [entries]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <SidebarTrigger className="md:hidden"/>
@@ -421,18 +451,19 @@ export default function JournalPage() {
         </div>
       </header>
 
-      <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-1 space-y-8">
+      <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div className="md:col-span-1 space-y-6">
                 <Card className="bg-white dark:bg-neutral-900">
                   <CardHeader>
-                      <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Calendario</CardTitle>
+                      <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Navegación del Diario</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-2">
-                        <Calendar
+                  <CardContent className="space-y-4">
+                      <RatingsDashboard entries={entries} viewDate={selectedDate} onDateChange={setSelectedDate} />
+                       <Calendar
                           mode="single"
                           selected={selectedDate}
                           onSelect={(date) => date && setSelectedDate(date)}
-                          className="p-0"
+                          className="p-0 border rounded-md"
                           locale={es}
                           modifiers={{ rated: ratedDays }}
                           modifiersStyles={{ rated: {
@@ -444,14 +475,7 @@ export default function JournalPage() {
                             } }}
                       />
                   </CardContent>
-              </Card>
-              <div className="space-y-4">
-                  <DisciplineSpells />
-                  <RatingRules />
-                  <RatingsDashboard entries={entries} viewDate={selectedDate} />
-              </div>
-          </div>
-          <div className="md:col-span-2 space-y-6">
+                </Card>
               <Card className="bg-white dark:bg-neutral-900">
                 <CardHeader>
                     <CardTitle>Entrada para {format(selectedDate, "PPP", { locale: es })}</CardTitle>
@@ -607,6 +631,10 @@ export default function JournalPage() {
                     </div>
                 </CardContent>
               </Card>
+          </div>
+          <div className="md:col-span-1 space-y-4">
+              <DisciplineSpells />
+              <RatingRules />
           </div>
       </div>
       <input 
