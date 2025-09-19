@@ -61,13 +61,11 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             const newBalanceValue = editingBalance.value;
             setBalances(prev => {
                 const newBalances = { ...prev };
-                if (newBalanceValue === '' || newBalanceValue === null) {
+                if (newBalanceValue === '' || newBalanceValue === null || isNaN(parseFloat(newBalanceValue))) {
                     delete newBalances[date];
                 } else {
                     const newBalance = parseFloat(newBalanceValue);
-                    if (!isNaN(newBalance)) {
-                        newBalances[date] = newBalance;
-                    }
+                    newBalances[date] = newBalance;
                 }
                 return newBalances;
             });
@@ -108,6 +106,8 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const data = [];
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
+        let weeklyGoal = 0;
+        let lastWeekNumber = -1;
         
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
@@ -115,18 +115,20 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
             const isWeekday = currentDate.getDay() >= 1 && currentDate.getDay() <= 5;
             
-            const lastKnownBalance = i === 0 
+            const lastProjectedBalance = i === 0 
                 ? initialBalance 
                 : data[i-1].projectedBalance;
 
-            const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
-            const dailyGainRate = gainPercentage / 100;
+            if(weekNumber !== lastWeekNumber) {
+                const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
+                const weeklyGain = lastProjectedBalance * (gainPercentage / 100);
+                weeklyGoal = weeklyGain / 5;
+                lastWeekNumber = weekNumber;
+            }
             
-            const dailyGoal = isWeekday
-                ? lastKnownBalance * dailyGainRate
-                : 0;
+            const dailyGoal = isWeekday ? weeklyGoal : 0;
             
-            const projectedBalance = lastKnownBalance + dailyGoal;
+            const projectedBalance = lastProjectedBalance + dailyGoal;
             
             const actualBalance = balances[dateKey];
             
