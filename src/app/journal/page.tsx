@@ -118,8 +118,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
 
             if (isMonday) {
                  const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
-                 const weeklyProfitGoal = lastKnownBalance * (gainPercentage / 100);
-                 weeklyGoal = weeklyProfitGoal / 5;
+                 weeklyGoal = lastKnownBalance * (gainPercentage / 100);
             }
 
             let dailyGoal = isWeekday ? weeklyGoal : 0;
