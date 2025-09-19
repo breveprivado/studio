@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star, RotateCcw, Trophy, Skull } from 'lucide-react';
+import { ArrowLeft, BookHeart, Plus, Minus, X, Upload, Pencil, Save, Award, Star, RotateCcw, Trophy, Skull, DollarSign } from 'lucide-react';
 import { type Creature, type PlayerStats } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CompoundInterestTable from '@/components/bestiary/compound-interest-table';
 
 
 const CreatureNameEditor = ({ creature, onSave }: { creature: Creature, onSave: (id: string, newName: string) => void }) => {
@@ -68,6 +69,7 @@ const BestiaryPage = () => {
   const [editDescription, setEditDescription] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
 
   const { toast } = useToast();
   
@@ -78,13 +80,18 @@ const BestiaryPage = () => {
     } else {
       setCreatures(initialCreatures);
     }
+
+    const storedBalance = localStorage.getItem('ci_initialBalance');
+    if (storedBalance) {
+        setCompoundInterestBalance(parseFloat(storedBalance));
+    }
   }
 
   useEffect(() => {
     loadData();
 
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'bestiaryCreatures') {
+        if (e.key === 'bestiaryCreatures' || e.key === 'ci_initialBalance') {
             loadData();
         }
     };
@@ -100,6 +107,10 @@ const BestiaryPage = () => {
         localStorage.setItem('bestiaryCreatures', JSON.stringify(creatures));
     }
   }, [creatures]);
+
+  useEffect(() => {
+    localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
+  }, [compoundInterestBalance]);
 
   
   const handleNameSave = (id: string, newName: string) => {
@@ -157,7 +168,7 @@ const BestiaryPage = () => {
   const defeatedByCreatures = creatures.filter(c => (c.encounters || []).some(e => e.status === 'loss'));
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <SidebarTrigger className="md:hidden"/>
@@ -192,6 +203,22 @@ const BestiaryPage = () => {
           </AlertDialog>
         </div>
       </header>
+
+      <Card className="mb-8">
+        <CardHeader>
+            <CardTitle className="flex items-center">
+                <DollarSign className="h-6 w-6 mr-3 text-green-500" />
+                Tabla de Interés Compuesto
+            </CardTitle>
+            <CardDescription>
+                Proyecta tu crecimiento de capital paso a paso, asociando cada nivel con una bestia.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
+        </CardContent>
+      </Card>
+
 
       <Card>
           <CardHeader>
@@ -330,3 +357,4 @@ export default BestiaryPage;
     
 
     
+
