@@ -123,20 +123,17 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
         let lastKnownBalance = initialBalance;
-        let dailyGoal = 0;
 
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
             const isWeekday = currentDate.getDay() >= 1 && currentDate.getDay() <= 5;
-            const isMonday = currentDate.getDay() === 1;
-
-            if (isMonday) {
-                 const weeklyGain = getWeeklyGainForWeek(weekNumber);
-                 dailyGoal = weeklyGain / 5;
-            } else if (!isWeekday) {
-                dailyGoal = 0;
+            
+            let dailyGoal = 0;
+            if(isWeekday){
+                const weeklyGain = getWeeklyGainForWeek(weekNumber);
+                dailyGoal = weeklyGain;
             }
             
             let projectedBalance = lastKnownBalance;
@@ -145,16 +142,17 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             }
             
             const actualBalance = balances[dateKey];
-            lastKnownBalance = projectedBalance;
             
             data.push({
                 date: currentDate,
                 dateKey: dateKey,
                 weekNumber,
-                dailyGoal: isWeekday ? dailyGoal : 0,
+                dailyGoal: dailyGoal,
                 projectedBalance: projectedBalance,
                 actualBalance: actualBalance,
             });
+            
+            lastKnownBalance = projectedBalance;
         }
         return data;
     }, [initialBalance, gainPhases, balances]);
