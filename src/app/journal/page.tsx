@@ -123,17 +123,23 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
         let lastKnownBalance = initialBalance;
+        let weeklyGainForCurrentWeek = 0;
 
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
-            const isWeekday = currentDate.getDay() >= 1 && currentDate.getDay() <= 5;
+            const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday
+            const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
             
+            // Recalculate the goal at the beginning of each week
+            if (dayOfWeek === 1) { // It's Monday
+                 weeklyGainForCurrentWeek = getWeeklyGainForWeek(weekNumber);
+            }
+
             let dailyGoal = 0;
             if(isWeekday){
-                const weeklyGain = getWeeklyGainForWeek(weekNumber);
-                dailyGoal = weeklyGain;
+                dailyGoal = weeklyGainForCurrentWeek;
             }
             
             let projectedBalance = lastKnownBalance;
