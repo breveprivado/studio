@@ -29,7 +29,11 @@ const XP_PER_SURVIVAL_MISSION = 500;
 const XP_PER_SURVIVAL_DAY = 100;
 
 const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
-    const [ledgerData, setLedgerData] = useState<DailyLedgerData>({ dailyGoal: 50, balances: {} });
+    const [ledgerData, setLedgerData] = useState<DailyLedgerData>({
+        initialBalance: 100,
+        weeklyGainPercentage: 15,
+        balances: {},
+    });
     const [editingBalance, setEditingBalance] = useState<{ date: string; value: string } | null>(null);
 
     useEffect(() => {
@@ -38,14 +42,17 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
             setLedgerData(JSON.parse(storedData));
         }
     }, []);
+    
+    useEffect(() => {
+        localStorage.setItem('dailyLedger', JSON.stringify(ledgerData));
+    }, [ledgerData]);
 
-    const handleGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newGoal = Number(e.target.value);
-        setLedgerData(prev => {
-            const newData = { ...prev, dailyGoal: newGoal };
-            localStorage.setItem('dailyLedger', JSON.stringify(newData));
-            return newData;
-        });
+
+    const handleConfigChange = (key: 'initialBalance' | 'weeklyGainPercentage', value: string) => {
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+            setLedgerData(prev => ({ ...prev, [key]: numericValue }));
+        }
     };
 
     const handleBalanceChange = (date: string, value: string) => {
@@ -59,7 +66,6 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 setLedgerData(prev => {
                     const newBalances = { ...prev.balances, [date]: newBalance };
                     const newData = { ...prev, balances: newBalances };
-                    localStorage.setItem('dailyLedger', JSON.stringify(newData));
                     return newData;
                 });
             }
@@ -67,67 +73,76 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         setEditingBalance(null);
     };
 
-
     const tableData = useMemo(() => {
         const data = [];
-        let lastKnownBalance = { date: startOfDay(subDays(selectedDate, 31)), balance: 0 };
-        
+        const startDate = new Date(new Date().getFullYear(), 8, 13); // September 13 of current year
+        let currentBalance = ledgerData.initialBalance;
+
+        // Apply historical balances to get the true starting balance for the projection
         const sortedBalances = Object.entries(ledgerData.balances)
-            .map(([date, balance]) => ({ date: new Date(date), balance }))
-            .sort((a,b) => a.date.getTime() - b.date.getTime());
-        
-        const latestBalanceBeforeWindow = sortedBalances.filter(b => b.date < subDays(selectedDate, 7)).pop();
-        if (latestBalanceBeforeWindow) {
-            lastKnownBalance = { date: latestBalanceBeforeWindow.date, balance: latestBalanceBeforeWindow.balance };
-        }
-        
-        let projectedBalance = lastKnownBalance.balance;
-        for (let i = 0; i <= 30; i++){
-            const currentDate = startOfDay(addDays(lastKnownBalance.date, i + 1));
-            if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) { // Skip weekends
-                projectedBalance += ledgerData.dailyGoal;
-            }
+            .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
 
+        for (let i = 0; i < 365; i++) {
+            const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
-            if (ledgerData.balances[dateKey] !== undefined) {
-                 projectedBalance = ledgerData.balances[dateKey];
-            }
-        }
-
-        for (let i = -7; i <= 7; i++) {
-            const day = addDays(selectedDate, i);
-            const dateKey = format(day, 'yyyy-MM-dd');
             
-            let currentProjected = 0;
-            const previousDays = sortedBalances.filter(b => startOfDay(b.date) < startOfDay(day));
-            let baseBalance = 0;
-            let startDate = new Date('2000-01-01');
-
-            if(previousDays.length > 0){
-                const lastBalanceEntry = previousDays[previousDays.length - 1];
-                baseBalance = lastBalanceEntry.balance;
-                startDate = lastBalanceEntry.date;
+            // On Monday (or first day of the week), calculate the daily goal for the week
+            let weeklyDailyGoal = 0;
+            if (currentDate.getDay() === 1) { // Monday
+                 weeklyDailyGoal = (currentBalance * (ledgerData.weeklyGainPercentage / 100)) / 5;
             }
 
-            currentProjected = baseBalance;
+            // Find goal for current day by looking for the last Monday
+            let dayOfWeek = currentDate.getDay();
+            let lastMonday = subDays(currentDate, dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+            let projectedBalanceAtStartOfWeek = ledgerData.initialBalance;
+            
             let tempDate = startOfDay(startDate);
-            while(tempDate < startOfDay(day)){
+            let tempBalance = ledgerData.initialBalance;
+            while(tempDate < lastMonday) {
+                 const historicBalance = sortedBalances.find(b => isSameDay(b.date, tempDate));
+                 if (historicBalance) {
+                     tempBalance = historicBalance.balance;
+                 } else if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) { // Weekday
+                     const weekStart = startOfWeek(tempDate, { weekStartsOn: 1 });
+                     
+                     let balanceAtWeekStart = ledgerData.initialBalance;
+                     const weekStartSortedBalances = sortedBalances.filter(b => b.date <= weekStart);
+                     if(weekStartSortedBalances.length > 0) {
+                         balanceAtWeekStart = weekStartSortedBalances[weekStartSortedBalances.length - 1].balance;
+                     }
+
+                     const dailyGoalForWeek = (balanceAtWeekStart * (ledgerData.weeklyGainPercentage / 100)) / 5;
+                     tempBalance += dailyGoalForWeek;
+                 }
                 tempDate = addDays(tempDate, 1);
-                 if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) {
-                    currentProjected += ledgerData.dailyGoal;
-                }
+            }
+            projectedBalanceAtStartOfWeek = tempBalance;
+
+            const dailyGoal = (projectedBalanceAtStartOfWeek * (ledgerData.weeklyGainPercentage / 100)) / 5;
+
+
+            let projectedBalance = currentBalance;
+            if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) { // Skip weekends for projection
+                projectedBalance += dailyGoal;
             }
 
-
+            const actualBalance = ledgerData.balances[dateKey];
+            
             data.push({
-                date: day,
+                date: currentDate,
                 dateKey: dateKey,
-                projectedBalance: currentProjected,
-                actualBalance: ledgerData.balances[dateKey],
+                dailyGoal: dailyGoal,
+                projectedBalance: projectedBalance,
+                actualBalance: actualBalance,
             });
+
+            // Update currentBalance for the next iteration
+            currentBalance = actualBalance !== undefined ? actualBalance : projectedBalance;
         }
         return data;
-    }, [selectedDate, ledgerData]);
+    }, [ledgerData]);
 
     return (
         <Accordion type="single" collapsible className="w-full">
@@ -140,51 +155,77 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <Label htmlFor="daily-goal">Objetivo de Ganancia Diaria (USD):</Label>
-                            <Input
-                                id="daily-goal"
-                                type="number"
-                                value={ledgerData.dailyGoal}
-                                onChange={handleGoalChange}
-                                className="w-32"
-                            />
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="initial-balance">Saldo Inicial (USD)</Label>
+                                <Input
+                                    id="initial-balance"
+                                    type="number"
+                                    value={ledgerData.initialBalance}
+                                    onChange={(e) => handleConfigChange('initialBalance', e.target.value)}
+                                    className="w-full"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="weekly-gain">Porcentaje de Ganancia Semanal (%)</Label>
+                                <Input
+                                    id="weekly-gain"
+                                    type="number"
+                                    value={ledgerData.weeklyGainPercentage}
+                                    onChange={(e) => handleConfigChange('weeklyGainPercentage', e.target.value)}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
-                        <Card>
+                        <Card className="max-h-[500px] overflow-y-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Fecha</TableHead>
+                                        <TableHead>Semana / Fecha</TableHead>
+                                        <TableHead>Meta Diaria (USD)</TableHead>
                                         <TableHead>Saldo Proyectado</TableHead>
                                         <TableHead>Saldo Real</TableHead>
                                         <TableHead>Diferencia</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {tableData.map(({ date, dateKey, projectedBalance, actualBalance }) => {
+                                    {tableData.map(({ date, dateKey, dailyGoal, projectedBalance, actualBalance }, index) => {
                                         const difference = actualBalance !== undefined ? actualBalance - projectedBalance : undefined;
+                                        const isNewWeek = date.getDay() === 1 || index === 0;
+                                        const weekNumber = Math.ceil((index + 1) / 7);
+                                        
                                         return (
-                                            <TableRow key={dateKey} className={cn(isSameDay(date, selectedDate) && "bg-muted/50")}>
-                                                <TableCell>{format(date, "EEE, dd MMM", { locale: es })}</TableCell>
-                                                <TableCell>${projectedBalance.toFixed(2)}</TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        value={editingBalance?.date === dateKey ? editingBalance.value : (actualBalance ?? '')}
-                                                        onChange={(e) => handleBalanceChange(dateKey, e.target.value)}
-                                                        onBlur={() => handleBalanceBlur(dateKey)}
-                                                        placeholder="-"
-                                                        className="h-8"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className={cn(
-                                                    "font-bold",
-                                                    difference === undefined ? "" :
-                                                    difference >= 0 ? "text-green-500" : "text-red-500"
-                                                )}>
-                                                    {difference !== undefined ? `${difference >= 0 ? '+' : ''}$${difference.toFixed(2)}` : '-'}
-                                                </TableCell>
-                                            </TableRow>
+                                            <React.Fragment key={dateKey}>
+                                                {isNewWeek && (
+                                                    <TableRow className="bg-muted/30">
+                                                        <TableCell colSpan={5} className="font-bold text-center">
+                                                            Semana {weekNumber}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                                <TableRow className={cn(isSameDay(date, selectedDate) && "bg-muted/50")}>
+                                                    <TableCell>{format(date, "EEE, dd MMM", { locale: es })}</TableCell>
+                                                    <TableCell>${dailyGoal.toFixed(2)}</TableCell>
+                                                    <TableCell>${projectedBalance.toFixed(2)}</TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="number"
+                                                            value={editingBalance?.date === dateKey ? editingBalance.value : (actualBalance ?? '')}
+                                                            onChange={(e) => handleBalanceChange(dateKey, e.target.value)}
+                                                            onBlur={() => handleBalanceBlur(dateKey)}
+                                                            placeholder="-"
+                                                            className="h-8 w-32"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className={cn(
+                                                        "font-bold",
+                                                        difference === undefined ? "" :
+                                                        difference >= 0 ? "text-green-500" : "text-red-500"
+                                                    )}>
+                                                        {difference !== undefined ? `${difference >= 0 ? '+' : ''}$${difference.toFixed(2)}` : '-'}
+                                                    </TableCell>
+                                                </TableRow>
+                                            </React.Fragment>
                                         )
                                     })}
                                 </TableBody>
