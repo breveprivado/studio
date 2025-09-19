@@ -109,37 +109,34 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
-        let lastKnownBalance = initialBalance;
+        let balanceAtWeekStart = initialBalance;
+        let projectedBalance = initialBalance;
 
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
             
-            const isWeekday = currentDate.getDay() !== 0 && currentDate.getDay() !== 6;
+            const isWeekday = currentDate.getDay() >= 1 && currentDate.getDay() <= 5;
             
-            // At the start of a new week, determine the base balance for calculation
-            if (currentDate.getDay() === 1) { // It's Monday
-                const previousDayKey = format(subDays(currentDate, 1), 'yyyy-MM-dd');
-                const previousDayData = data.find(d => d.dateKey === previousDayKey);
-                
-                // If there's an actual balance from Sunday, use it. Otherwise, use Sunday's projected balance.
-                lastKnownBalance = balances[previousDayKey] ?? previousDayData?.projectedBalance ?? lastKnownBalance;
+            if (currentDate.getDay() === 1) { // It's Monday, a new week starts
+                 const previousDayKey = format(subDays(currentDate, 1), 'yyyy-MM-dd');
+                 // Use the last known actual balance if available, otherwise the last projected balance
+                 const lastDayData = data[data.length - 1];
+                 balanceAtWeekStart = balances[previousDayKey] ?? lastDayData?.projectedBalance ?? balanceAtWeekStart;
+                 projectedBalance = balanceAtWeekStart; // Reset projection at the start of the week
+            } else if (i === 0) { // First day of the whole period
+                balanceAtWeekStart = initialBalance;
+                projectedBalance = initialBalance;
             }
 
             const weeklyGainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
             
             const dailyGoal = isWeekday
-                ? (lastKnownBalance * (weeklyGainPercentage / 100)) / 5
+                ? (balanceAtWeekStart * (weeklyGainPercentage / 100)) / 5
                 : 0;
             
-            const previousDayData = i > 0 ? data[i-1] : null;
-            const previousProjectedBalance = previousDayData ? previousDayData.projectedBalance : initialBalance;
-            
-            // For the very first day, projected is initial + goal.
-            const projectedBalance = (i === 0 && isWeekday) 
-                ? initialBalance + dailyGoal 
-                : previousProjectedBalance + dailyGoal;
+            projectedBalance += dailyGoal;
             
             const actualBalance = balances[dateKey];
             
