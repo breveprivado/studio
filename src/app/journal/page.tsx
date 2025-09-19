@@ -100,7 +100,6 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
 
     const getWeeklyGainPercentageForWeek = (weekNumber: number) => {
         const applicablePhase = gainPhases.find(p => weekNumber >= p.startWeek && weekNumber <= p.endWeek);
-        // Fallback to the first phase's percentage if no specific phase is found (e.g. for weeks before phase 1 starts)
         return applicablePhase?.weeklyGainPercentage ?? gainPhases[0]?.weeklyGainPercentage ?? 0;
     };
 
@@ -110,64 +109,51 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
-        let lastProjectedBalance = initialBalance;
-
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
             
-            // Find the last recorded balance on or before the start of the current week to calculate goal
-            let balanceAtStartOfWeek = initialBalance;
+            // Find the balance at start of the week for goal calculation
             const currentWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+            let balanceAtStartOfWeek = initialBalance;
             
-            let tempDateForGoal = startOfDay(startDate);
-            let tempBalanceForGoal = initialBalance;
+            // Find the last recorded balance before the start of the current week
+            const relevantBalances = Object.entries(balances)
+              .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
+              .filter(item => item.date < currentWeekStart)
+              .sort((a,b) => b.date.getTime() - a.date.getTime());
 
-            while (tempDateForGoal < currentWeekStart) {
-                const tempDateKey = format(tempDateForGoal, 'yyyy-MM-dd');
-                const actualBalanceForDay = balances[tempDateKey];
-
-                if (actualBalanceForDay !== undefined) {
-                    tempBalanceForGoal = actualBalanceForDay;
-                } else {
-                     if (tempDateForGoal.getDay() !== 0 && tempDateForGoal.getDay() !== 6) { // Is weekday
-                        const tempWeekNumber = getWeek(tempDateForGoal, { weekStartsOn: 1, firstWeekContainsDate: 4 });
-                        const tempWeeklyPercentage = getWeeklyGainPercentageForWeek(tempWeekNumber);
-                        
-                        // To calculate dailyGoal, we need balance at start of its week
-                        let tempBalanceAtStartOfWeekForGoal = initialBalance;
-                         const tempWeekStartForGoal = startOfWeek(tempDateForGoal, { weekStartsOn: 1 });
-                         
-                         // This is a heavy calculation, can be optimized if performance is an issue
-                         // For now, it recalculates the start-of-week balance for each day's goal calculation
-                         let a = startOfDay(startDate);
-                         let b = initialBalance;
-                         while(a < tempWeekStartForGoal) {
-                            const aKey = format(a, 'yyyy-MM-dd');
-                            b = balances[aKey] !== undefined ? balances[aKey] : b; // Simplified for goal calculation
-                            a = addDays(a,1);
-                         }
-                        tempBalanceAtStartOfWeekForGoal = b;
-
-                        const dailyGoalForTempWeek = (tempBalanceAtStartOfWeekForGoal * (tempWeeklyPercentage / 100)) / 5;
-                        tempBalanceForGoal += dailyGoalForTempWeek;
-                    }
-                }
-                tempDateForGoal = addDays(tempDateForGoal, 1);
+            if (relevantBalances.length > 0) {
+                 balanceAtStartOfWeek = relevantBalances[0].balance;
+            } else {
+                // If no actual balances, we need to calculate projected balance up to start of week
+                 let lastProjected = initialBalance;
+                 let tempDate = startOfDay(startDate);
+                 while(tempDate < currentWeekStart) {
+                     const isWeekday = tempDate.getDay() !== 0 && tempDate.getDay() !== 6;
+                     if (isWeekday) {
+                        const tempWeek = getWeek(tempDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
+                        const tempPercentage = getWeeklyGainPercentageForWeek(tempWeek);
+                        // This calculation for past weeks is simplified and assumes it compounds on the initial balance
+                        // A more accurate (but much heavier) calculation would be needed for true past projection
+                        const tempGoal = (initialBalance * (tempPercentage / 100)) / 5;
+                        lastProjected += tempGoal;
+                     }
+                     tempDate = addDays(tempDate, 1);
+                 }
+                 balanceAtStartOfWeek = lastProjected;
             }
-            balanceAtStartOfWeek = tempBalanceForGoal;
 
             const weeklyGainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
             const dailyGoal = (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) 
                 ? (balanceAtStartOfWeek * (weeklyGainPercentage / 100)) / 5
                 : 0;
             
-            // Determine the base for today's projection
             const previousDayData = i > 0 ? data[i-1] : null;
-            const previousBalance = previousDayData ? (previousDayData.actualBalance !== undefined ? previousDayData.actualBalance : previousDayData.projectedBalance) : initialBalance;
+            const previousProjectedBalance = previousDayData ? previousDayData.projectedBalance : initialBalance;
 
-            const projectedBalance = previousBalance + dailyGoal;
+            const projectedBalance = previousProjectedBalance + dailyGoal;
             
             const actualBalance = balances[dateKey];
             
@@ -186,7 +172,6 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     const { todayProjected, todayActual, performanceDifference, chartData } = useMemo(() => {
         const today = startOfDay(new Date());
         
-        // Find the last available actual balance
         const balancesWithValues = Object.entries(balances)
           .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
           .filter(item => item.balance != null && !isNaN(item.balance))
@@ -194,7 +179,6 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         
         const lastActualBalance = balancesWithValues.length > 0 ? balancesWithValues[0].balance : initialBalance;
 
-        // Find today's data from the full year projection
         const todayData = fullYearData.find(d => isSameDay(d.date, today));
         const todayProjectedValue = todayData?.projectedBalance ?? initialBalance;
         
