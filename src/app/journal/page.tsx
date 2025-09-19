@@ -56,14 +56,24 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
 
     const handleBalanceBlur = (date: string) => {
         if (editingBalance && editingBalance.date === date) {
-            const newBalance = parseFloat(editingBalance.value);
-            if (!isNaN(newBalance)) {
-                setLedgerData(prev => {
-                    const newBalances = { ...prev.balances, [date]: newBalance };
-                    const newData = { ...prev, balances: newBalances };
-                    return newData;
-                });
-            }
+            const newBalanceValue = editingBalance.value;
+
+            setLedgerData(prev => {
+                const newBalances = { ...prev.balances };
+
+                if (newBalanceValue === '') {
+                    // If the input is empty, delete the key
+                    delete newBalances[date];
+                } else {
+                    const newBalance = parseFloat(newBalanceValue);
+                    if (!isNaN(newBalance)) {
+                        // If it's a valid number, update it
+                        newBalances[date] = newBalance;
+                    }
+                }
+                
+                return { ...prev, balances: newBalances };
+            });
         }
         setEditingBalance(null);
     };
