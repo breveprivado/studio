@@ -109,51 +109,37 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
+        let lastKnownBalance = initialBalance;
+
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
             
-            // Find the balance at start of the week for goal calculation
-            const currentWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-            let balanceAtStartOfWeek = initialBalance;
+            const isWeekday = currentDate.getDay() !== 0 && currentDate.getDay() !== 6;
             
-            // Find the last recorded balance before the start of the current week
-            const relevantBalances = Object.entries(balances)
-              .map(([date, balance]) => ({ date: startOfDay(new Date(date)), balance }))
-              .filter(item => item.date < currentWeekStart)
-              .sort((a,b) => b.date.getTime() - a.date.getTime());
-
-            if (relevantBalances.length > 0) {
-                 balanceAtStartOfWeek = relevantBalances[0].balance;
-            } else {
-                // If no actual balances, we need to calculate projected balance up to start of week
-                 let lastProjected = initialBalance;
-                 let tempDate = startOfDay(startDate);
-                 while(tempDate < currentWeekStart) {
-                     const isWeekday = tempDate.getDay() !== 0 && tempDate.getDay() !== 6;
-                     if (isWeekday) {
-                        const tempWeek = getWeek(tempDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
-                        const tempPercentage = getWeeklyGainPercentageForWeek(tempWeek);
-                        // This calculation for past weeks is simplified and assumes it compounds on the initial balance
-                        // A more accurate (but much heavier) calculation would be needed for true past projection
-                        const tempGoal = (initialBalance * (tempPercentage / 100)) / 5;
-                        lastProjected += tempGoal;
-                     }
-                     tempDate = addDays(tempDate, 1);
-                 }
-                 balanceAtStartOfWeek = lastProjected;
+            // At the start of a new week, determine the base balance for calculation
+            if (currentDate.getDay() === 1) { // It's Monday
+                const previousDayKey = format(subDays(currentDate, 1), 'yyyy-MM-dd');
+                const previousDayData = data.find(d => d.dateKey === previousDayKey);
+                
+                // If there's an actual balance from Sunday, use it. Otherwise, use Sunday's projected balance.
+                lastKnownBalance = balances[previousDayKey] ?? previousDayData?.projectedBalance ?? lastKnownBalance;
             }
 
             const weeklyGainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
-            const dailyGoal = (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) 
-                ? (balanceAtStartOfWeek * (weeklyGainPercentage / 100)) / 5
+            
+            const dailyGoal = isWeekday
+                ? (lastKnownBalance * (weeklyGainPercentage / 100)) / 5
                 : 0;
             
             const previousDayData = i > 0 ? data[i-1] : null;
             const previousProjectedBalance = previousDayData ? previousDayData.projectedBalance : initialBalance;
-
-            const projectedBalance = previousProjectedBalance + dailyGoal;
+            
+            // For the very first day, projected is initial + goal.
+            const projectedBalance = (i === 0 && isWeekday) 
+                ? initialBalance + dailyGoal 
+                : previousProjectedBalance + dailyGoal;
             
             const actualBalance = balances[dateKey];
             
