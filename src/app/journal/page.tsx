@@ -123,7 +123,6 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
         let lastKnownBalance = initialBalance;
-        let weeklyGoal = 0;
         let dailyGoal = 0;
 
         for (let i = 0; i < 365; i++) {
@@ -140,7 +139,10 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 dailyGoal = 0;
             }
             
-            let projectedBalance = lastKnownBalance + dailyGoal;
+            let projectedBalance = lastKnownBalance;
+            if (isWeekday) {
+                projectedBalance += dailyGoal;
+            }
             
             const actualBalance = balances[dateKey];
             lastKnownBalance = projectedBalance;
@@ -149,7 +151,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
                 date: currentDate,
                 dateKey: dateKey,
                 weekNumber,
-                dailyGoal: dailyGoal,
+                dailyGoal: isWeekday ? dailyGoal : 0,
                 projectedBalance: projectedBalance,
                 actualBalance: actualBalance,
             });
