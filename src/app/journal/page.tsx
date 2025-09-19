@@ -6,19 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, getYear, getMonth, setYear, setMonth, addDays, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Star, XCircle, Calendar as CalendarIconLucide, Upload, Shield, HelpCircle, CheckCircle, Book, TrendingUp, TrendingDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { JournalEntry, PlayerStats } from '@/lib/types';
+import { JournalEntry, PlayerStats, DailyLedgerData } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DisciplineSpells from '@/components/journal/discipline-spells';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const levelMilestones: { [key: number]: number } = {
     1: 1, 2: 7, 3: 21, 4: 30, 5: 60, 6: 90, 7: 120, 8: 150,
@@ -26,6 +27,176 @@ const levelMilestones: { [key: number]: number } = {
 };
 const XP_PER_SURVIVAL_MISSION = 500;
 const XP_PER_SURVIVAL_DAY = 100;
+
+const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
+    const [ledgerData, setLedgerData] = useState<DailyLedgerData>({ dailyGoal: 50, balances: {} });
+    const [editingBalance, setEditingBalance] = useState<{ date: string; value: string } | null>(null);
+
+    useEffect(() => {
+        const storedData = localStorage.getItem('dailyLedger');
+        if (storedData) {
+            setLedgerData(JSON.parse(storedData));
+        }
+    }, []);
+
+    const handleGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newGoal = Number(e.target.value);
+        setLedgerData(prev => {
+            const newData = { ...prev, dailyGoal: newGoal };
+            localStorage.setItem('dailyLedger', JSON.stringify(newData));
+            return newData;
+        });
+    };
+
+    const handleBalanceChange = (date: string, value: string) => {
+        setEditingBalance({ date, value });
+    };
+
+    const handleBalanceBlur = (date: string) => {
+        if (editingBalance && editingBalance.date === date) {
+            const newBalance = parseFloat(editingBalance.value);
+            if (!isNaN(newBalance)) {
+                setLedgerData(prev => {
+                    const newBalances = { ...prev.balances, [date]: newBalance };
+                    const newData = { ...prev, balances: newBalances };
+                    localStorage.setItem('dailyLedger', JSON.stringify(newData));
+                    return newData;
+                });
+            }
+        }
+        setEditingBalance(null);
+    };
+
+
+    const tableData = useMemo(() => {
+        const data = [];
+        let lastKnownBalance = { date: startOfDay(subDays(selectedDate, 31)), balance: 0 };
+        
+        const sortedBalances = Object.entries(ledgerData.balances)
+            .map(([date, balance]) => ({ date: new Date(date), balance }))
+            .sort((a,b) => a.date.getTime() - b.date.getTime());
+        
+        const latestBalanceBeforeWindow = sortedBalances.filter(b => b.date < subDays(selectedDate, 7)).pop();
+        if (latestBalanceBeforeWindow) {
+            lastKnownBalance = { date: latestBalanceBeforeWindow.date, balance: latestBalanceBeforeWindow.balance };
+        }
+        
+        let projectedBalance = lastKnownBalance.balance;
+        for (let i = 0; i <= 30; i++){
+            const currentDate = startOfDay(addDays(lastKnownBalance.date, i + 1));
+            if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) { // Skip weekends
+                projectedBalance += ledgerData.dailyGoal;
+            }
+
+            const dateKey = format(currentDate, 'yyyy-MM-dd');
+            if (ledgerData.balances[dateKey] !== undefined) {
+                 projectedBalance = ledgerData.balances[dateKey];
+            }
+        }
+
+        for (let i = -7; i <= 7; i++) {
+            const day = addDays(selectedDate, i);
+            const dateKey = format(day, 'yyyy-MM-dd');
+            
+            let currentProjected = 0;
+            const previousDays = sortedBalances.filter(b => startOfDay(b.date) < startOfDay(day));
+            let baseBalance = 0;
+            let startDate = new Date('2000-01-01');
+
+            if(previousDays.length > 0){
+                const lastBalanceEntry = previousDays[previousDays.length - 1];
+                baseBalance = lastBalanceEntry.balance;
+                startDate = lastBalanceEntry.date;
+            }
+
+            currentProjected = baseBalance;
+            let tempDate = startOfDay(startDate);
+            while(tempDate < startOfDay(day)){
+                tempDate = addDays(tempDate, 1);
+                 if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) {
+                    currentProjected += ledgerData.dailyGoal;
+                }
+            }
+
+
+            data.push({
+                date: day,
+                dateKey: dateKey,
+                projectedBalance: currentProjected,
+                actualBalance: ledgerData.balances[dateKey],
+            });
+        }
+        return data;
+    }, [selectedDate, ledgerData]);
+
+    return (
+        <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="ledger">
+                <AccordionTrigger>
+                    <div className="flex items-center">
+                        <Book className="h-5 w-5 mr-2 text-primary" />
+                        <h3 className="font-semibold">Libro Mayor Diario</h3>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Label htmlFor="daily-goal">Objetivo de Ganancia Diaria (USD):</Label>
+                            <Input
+                                id="daily-goal"
+                                type="number"
+                                value={ledgerData.dailyGoal}
+                                onChange={handleGoalChange}
+                                className="w-32"
+                            />
+                        </div>
+                        <Card>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Fecha</TableHead>
+                                        <TableHead>Saldo Proyectado</TableHead>
+                                        <TableHead>Saldo Real</TableHead>
+                                        <TableHead>Diferencia</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {tableData.map(({ date, dateKey, projectedBalance, actualBalance }) => {
+                                        const difference = actualBalance !== undefined ? actualBalance - projectedBalance : undefined;
+                                        return (
+                                            <TableRow key={dateKey} className={cn(isSameDay(date, selectedDate) && "bg-muted/50")}>
+                                                <TableCell>{format(date, "EEE, dd MMM", { locale: es })}</TableCell>
+                                                <TableCell>${projectedBalance.toFixed(2)}</TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="number"
+                                                        value={editingBalance?.date === dateKey ? editingBalance.value : (actualBalance ?? '')}
+                                                        onChange={(e) => handleBalanceChange(dateKey, e.target.value)}
+                                                        onBlur={() => handleBalanceBlur(dateKey)}
+                                                        placeholder="-"
+                                                        className="h-8"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className={cn(
+                                                    "font-bold",
+                                                    difference === undefined ? "" :
+                                                    difference >= 0 ? "text-green-500" : "text-red-500"
+                                                )}>
+                                                    {difference !== undefined ? `${difference >= 0 ? '+' : ''}$${difference.toFixed(2)}` : '-'}
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+    );
+};
+
 
 const RatingRules = () => (
     <Accordion type="single" collapsible className="w-full">
@@ -452,190 +623,194 @@ export default function JournalPage() {
         </div>
       </header>
 
-      <div className="grid md:grid-cols-2 gap-8 items-start">
-          <div className="md:col-span-1 space-y-6">
-                <Card className="bg-white dark:bg-neutral-900">
-                  <CardHeader>
-                      <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Navegación del Diario</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                      <RatingsDashboard entries={entries} viewDate={selectedDate} onDateChange={setSelectedDate} />
-                       <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => date && setSelectedDate(date)}
-                          className="p-0 border rounded-md"
-                          locale={es}
-                          modifiers={{ rated: ratedDays }}
-                          modifiersStyles={{ rated: {
-                              // @ts-ignore
-                              '--day-border-color': 'hsl(var(--primary))',
-                              'borderWidth': '2px',
-                              'borderColor': 'var(--day-border-color)',
-                              'borderRadius': '50%',
-                            } }}
-                      />
-                  </CardContent>
-                </Card>
-              <Card className="bg-white dark:bg-neutral-900">
-                <CardHeader>
-                    <CardTitle>Entrada para {format(selectedDate, "PPP", { locale: es })}</CardTitle>
-                    {!entryForSelectedDate ? (
-                        <CardDescription>Añade una nueva entrada para este día.</CardDescription>
-                    ) : (
-                        <CardDescription>Aquí puedes ver o editar tu entrada.</CardDescription>
-                    )}
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4">
-                        {editingEntryId && entryForSelectedDate && editingEntryId === entryForSelectedDate.id ? (
-                          // Editing view
-                          <>
-                            <Textarea
-                                value={editingContent}
-                                onChange={(e) => setEditingContent(e.target.value)}
-                                rows={4}
-                                className="resize-none"
-                            />
-                              {editingImage && (
-                              <div className="relative">
-                                  <Image src={editingImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
-                                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditingImage(null)}><XCircle className="h-4 w-4"/></Button>
-                              </div>
-                              )}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center gap-2">
-                                    {editingRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
-                                    Decisiones del Día
-                                </label>
-                                <div className="flex items-center gap-1">
-                                    {[1, 2, 3, 4, 5].map((rating) => (
-                                        <Star
-                                            key={rating}
-                                            className={cn(
-                                                "h-6 w-6 cursor-pointer",
-                                                editingRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
-                                            )}
-                                            onClick={() => setEditingRating(rating)}
-                                        />
-                                    ))}
-                                </div>
-                                {editingRating > 0 && ratingDescriptions[editingRating] && (
-                                    <p className={cn("text-sm font-semibold", ratingDescriptions[editingRating].color)}>
-                                        {ratingDescriptions[editingRating].title}
-                                    </p>
-                                )}
-                            </div>
-                            <Input
-                                placeholder="Comentario sobre tus decisiones..."
-                                value={editingRatingComment}
-                                onChange={(e) => setEditingRatingComment(e.target.value)}
-                            />
-                            <div className="flex gap-2 flex-wrap">
-                              <Button onClick={handleUpdateEntry}>Guardar Cambios</Button>
-                              <Button variant="ghost" onClick={handleCancelEdit}>Cancelar</Button>
-                              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  {editingImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
-                              </Button>
-                            </div>
-                          </>
-                        ) : entryForSelectedDate ? (
-                          // Display view
-                          <div>
-                              {entryForSelectedDate.imageUrl && (
-                                <Image src={entryForSelectedDate.imageUrl} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full mb-4" />
-                              )}
-                              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">{entryForSelectedDate.content}</p>
-                              {entryForSelectedDate.rating > 0 && (
-                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-semibold">Decisiones:</p>
-                                    <div className="flex">
-                                      {[1,2,3,4,5].map(star => (
-                                        <Star key={star} className={cn("h-5 w-5", entryForSelectedDate.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
-                                      ))}
-                                    </div>
-                                  </div>
-                                  {entryForSelectedDate.rating > 0 && ratingDescriptions[entryForSelectedDate.rating] && (
-                                      <p className={cn("text-sm font-semibold mt-2", ratingDescriptions[entryForSelectedDate.rating].color)}>
-                                          {ratingDescriptions[entryForSelectedDate.rating].title}
-                                      </p>
-                                  )}
-                                  {entryForSelectedDate.ratingComment && (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">"{entryForSelectedDate.ratingComment}"</p>
-                                  )}
-                                </div>
-                              )}
-                              <div className="flex gap-2 mt-4">
-                              <Button onClick={() => handleEditEntry(entryForSelectedDate)}>
-                                <Edit className="h-4 w-4 mr-2" /> Editar
-                              </Button>
-                              <Button variant="destructive" onClick={() => handleDeleteEntry(entryForSelectedDate.id)}>
-                                <XCircle className="h-4 w-4 mr-2" /> Eliminar
-                              </Button>
-                            </div>
-                          </div>
+      <div className="space-y-8">
+          <DailyLedger selectedDate={selectedDate} />
+
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+              <div className="md:col-span-1 space-y-6">
+                    <Card className="bg-white dark:bg-neutral-900">
+                      <CardHeader>
+                          <CardTitle className="flex items-center"><CalendarIconLucide className="h-5 w-5 mr-2" />Navegación del Diario</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                          <RatingsDashboard entries={entries} viewDate={selectedDate} onDateChange={setSelectedDate} />
+                           <Calendar
+                              mode="single"
+                              selected={selectedDate}
+                              onSelect={(date) => date && setSelectedDate(date)}
+                              className="p-0 border rounded-md"
+                              locale={es}
+                              modifiers={{ rated: ratedDays }}
+                              modifiersStyles={{ rated: {
+                                  // @ts-ignore
+                                  '--day-border-color': 'hsl(var(--primary))',
+                                  'borderWidth': '2px',
+                                  'borderColor': 'var(--day-border-color)',
+                                  'borderRadius': '50%',
+                                } }}
+                          />
+                      </CardContent>
+                    </Card>
+                  <Card className="bg-white dark:bg-neutral-900">
+                    <CardHeader>
+                        <CardTitle>Entrada para {format(selectedDate, "PPP", { locale: es })}</CardTitle>
+                        {!entryForSelectedDate ? (
+                            <CardDescription>Añade una nueva entrada para este día.</CardDescription>
                         ) : (
-                            // New entry view
-                          <>
-                            <Textarea
-                                placeholder="Escribe aquí tu entrada del día..."
-                                value={currentEntry}
-                                onChange={(e) => setCurrentEntry(e.target.value)}
-                                rows={4}
-                                className="resize-none"
-                            />
-                              {currentImage && (
-                              <div className="relative">
-                                  <Image src={currentImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
-                                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCurrentImage(null)}><XCircle className="h-4 w-4"/></Button>
-                              </div>
-                              )}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center gap-2">
-                                    {currentRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
-                                    Decisiones del Día
-                                </label>
-                                <div className="flex items-center gap-1">
-                                    {[1, 2, 3, 4, 5].map((rating) => (
-                                        <Star
-                                            key={rating}
-                                            className={cn(
-                                                "h-6 w-6 cursor-pointer",
-                                                currentRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
-                                            )}
-                                            onClick={() => setCurrentRating(rating)}
-                                        />
-                                    ))}
-                                </div>
-                                {currentRating > 0 && ratingDescriptions[currentRating] && (
-                                    <p className={cn("text-sm font-semibold", ratingDescriptions[currentRating].color)}>
-                                        {ratingDescriptions[currentRating].title}
-                                    </p>
-                                )}
-                            </div>
-                            <Input
-                                placeholder="Comentario sobre tus decisiones..."
-                                value={currentRatingComment}
-                                onChange={(e) => setCurrentRatingComment(e.target.value)}
-                            />
-                            <div className="flex gap-2 flex-wrap">
-                              <Button onClick={handleSaveEntry} className="md:w-auto self-end">Guardar Entrada</Button>
-                                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  {currentImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
-                              </Button>
-                            </div>
-                          </>
+                            <CardDescription>Aquí puedes ver o editar tu entrada.</CardDescription>
                         )}
-                    </div>
-                </CardContent>
-              </Card>
-          </div>
-          <div className="md:col-span-1 space-y-4">
-              <DisciplineSpells />
-              <RatingRules />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4">
+                            {editingEntryId && entryForSelectedDate && editingEntryId === entryForSelectedDate.id ? (
+                              // Editing view
+                              <>
+                                <Textarea
+                                    value={editingContent}
+                                    onChange={(e) => setEditingContent(e.target.value)}
+                                    rows={4}
+                                    className="resize-none"
+                                />
+                                  {editingImage && (
+                                  <div className="relative">
+                                      <Image src={editingImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                      <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setEditingImage(null)}><XCircle className="h-4 w-4"/></Button>
+                                  </div>
+                                  )}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium flex items-center gap-2">
+                                        {editingRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
+                                        Decisiones del Día
+                                    </label>
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((rating) => (
+                                            <Star
+                                                key={rating}
+                                                className={cn(
+                                                    "h-6 w-6 cursor-pointer",
+                                                    editingRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                                                )}
+                                                onClick={() => setEditingRating(rating)}
+                                            />
+                                        ))}
+                                    </div>
+                                    {editingRating > 0 && ratingDescriptions[editingRating] && (
+                                        <p className={cn("text-sm font-semibold", ratingDescriptions[editingRating].color)}>
+                                            {ratingDescriptions[editingRating].title}
+                                        </p>
+                                    )}
+                                </div>
+                                <Input
+                                    placeholder="Comentario sobre tus decisiones..."
+                                    value={editingRatingComment}
+                                    onChange={(e) => setEditingRatingComment(e.target.value)}
+                                />
+                                <div className="flex gap-2 flex-wrap">
+                                  <Button onClick={handleUpdateEntry}>Guardar Cambios</Button>
+                                  <Button variant="ghost" onClick={handleCancelEdit}>Cancelar</Button>
+                                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                      <Upload className="h-4 w-4 mr-2" />
+                                      {editingImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                                  </Button>
+                                </div>
+                              </>
+                            ) : entryForSelectedDate ? (
+                              // Display view
+                              <div>
+                                  {entryForSelectedDate.imageUrl && (
+                                    <Image src={entryForSelectedDate.imageUrl} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full mb-4" />
+                                  )}
+                                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">{entryForSelectedDate.content}</p>
+                                  {entryForSelectedDate.rating > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-semibold">Decisiones:</p>
+                                        <div className="flex">
+                                          {[1,2,3,4,5].map(star => (
+                                            <Star key={star} className={cn("h-5 w-5", entryForSelectedDate.rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600')} />
+                                          ))}
+                                        </div>
+                                      </div>
+                                      {entryForSelectedDate.rating > 0 && ratingDescriptions[entryForSelectedDate.rating] && (
+                                          <p className={cn("text-sm font-semibold mt-2", ratingDescriptions[entryForSelectedDate.rating].color)}>
+                                              {ratingDescriptions[entryForSelectedDate.rating].title}
+                                          </p>
+                                      )}
+                                      {entryForSelectedDate.ratingComment && (
+                                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">"{entryForSelectedDate.ratingComment}"</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2 mt-4">
+                                  <Button onClick={() => handleEditEntry(entryForSelectedDate)}>
+                                    <Edit className="h-4 w-4 mr-2" /> Editar
+                                  </Button>
+                                  <Button variant="destructive" onClick={() => handleDeleteEntry(entryForSelectedDate.id)}>
+                                    <XCircle className="h-4 w-4 mr-2" /> Eliminar
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                                // New entry view
+                              <>
+                                <Textarea
+                                    placeholder="Escribe aquí tu entrada del día..."
+                                    value={currentEntry}
+                                    onChange={(e) => setCurrentEntry(e.target.value)}
+                                    rows={4}
+                                    className="resize-none"
+                                />
+                                  {currentImage && (
+                                  <div className="relative">
+                                      <Image src={currentImage} alt="Imagen de la entrada" width={400} height={250} className="rounded-lg object-cover w-full" />
+                                      <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCurrentImage(null)}><XCircle className="h-4 w-4"/></Button>
+                                  </div>
+                                  )}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium flex items-center gap-2">
+                                        {currentRating >= 4 ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
+                                        Decisiones del Día
+                                    </label>
+                                    <div className="flex items-center gap-1">
+                                        {[1, 2, 3, 4, 5].map((rating) => (
+                                            <Star
+                                                key={rating}
+                                                className={cn(
+                                                    "h-6 w-6 cursor-pointer",
+                                                    currentRating >= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                                                )}
+                                                onClick={() => setCurrentRating(rating)}
+                                            />
+                                        ))}
+                                    </div>
+                                    {currentRating > 0 && ratingDescriptions[currentRating] && (
+                                        <p className={cn("text-sm font-semibold", ratingDescriptions[currentRating].color)}>
+                                            {ratingDescriptions[currentRating].title}
+                                        </p>
+                                    )}
+                                </div>
+                                <Input
+                                    placeholder="Comentario sobre tus decisiones..."
+                                    value={currentRatingComment}
+                                    onChange={(e) => setCurrentRatingComment(e.target.value)}
+                                />
+                                <div className="flex gap-2 flex-wrap">
+                                  <Button onClick={handleSaveEntry} className="md:w-auto self-end">Guardar Entrada</Button>
+                                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                      <Upload className="h-4 w-4 mr-2" />
+                                      {currentImage ? 'Cambiar Imagen' : 'Adjuntar Imagen'}
+                                  </Button>
+                                </div>
+                              </>
+                            )}
+                        </div>
+                    </CardContent>
+                  </Card>
+              </div>
+              <div className="md:col-span-1 space-y-4">
+                  <DisciplineSpells />
+                  <RatingRules />
+              </div>
           </div>
       </div>
       <input 

@@ -4,6 +4,7 @@
 
 
 
+
 export type TradeStatus = 'win' | 'loss' | 'doji';
 
 export interface Trade {
@@ -83,6 +84,12 @@ export interface JournalEntry {
   imageUrl?: string | null;
 }
 
+export interface DailyLedgerData {
+  dailyGoal: number;
+  balances: { [date: string]: number }; // Key is 'YYYY-MM-DD'
+}
+
+
 export interface DailyHealth {
     lives: number;
     date: string;
@@ -111,5 +118,6 @@ export interface NavItem {
 }
     
     
+
 
 
