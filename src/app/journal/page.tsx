@@ -109,34 +109,24 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
         const year = new Date().getFullYear();
         const startDate = new Date(year, 8, 13); // September 13 of current year
         
-        let balanceAtWeekStart = initialBalance;
-        let projectedBalance = initialBalance;
-
         for (let i = 0; i < 365; i++) {
             const currentDate = startOfDay(addDays(startDate, i));
             const dateKey = format(currentDate, 'yyyy-MM-dd');
             const weekNumber = getWeek(currentDate, { weekStartsOn: 1, firstWeekContainsDate: 4 });
-            
             const isWeekday = currentDate.getDay() >= 1 && currentDate.getDay() <= 5;
             
-            if (currentDate.getDay() === 1) { // It's Monday, a new week starts
-                 const previousDayKey = format(subDays(currentDate, 1), 'yyyy-MM-dd');
-                 // Use the last known actual balance if available, otherwise the last projected balance
-                 const lastDayData = data[data.length - 1];
-                 balanceAtWeekStart = balances[previousDayKey] ?? lastDayData?.projectedBalance ?? balanceAtWeekStart;
-                 projectedBalance = balanceAtWeekStart; // Reset projection at the start of the week
-            } else if (i === 0) { // First day of the whole period
-                balanceAtWeekStart = initialBalance;
-                projectedBalance = initialBalance;
-            }
+            const lastKnownBalance = i === 0 
+                ? initialBalance 
+                : data[i-1].projectedBalance;
 
-            const weeklyGainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
+            const gainPercentage = getWeeklyGainPercentageForWeek(weekNumber);
+            const dailyGainRate = gainPercentage / 100;
             
             const dailyGoal = isWeekday
-                ? (balanceAtWeekStart * (weeklyGainPercentage / 100)) / 5
+                ? lastKnownBalance * dailyGainRate
                 : 0;
             
-            projectedBalance += dailyGoal;
+            const projectedBalance = lastKnownBalance + dailyGoal;
             
             const actualBalance = balances[dateKey];
             
