@@ -1,5 +1,6 @@
 [
     { "href": "/", "label": "Dashboard", "icon": "LayoutGrid", "color": "bg-blue-500 text-white" },
+    { "href": "/interes-compuesto", "label": "Interés Compuesto", "icon": "DollarSign", "color": "bg-green-500 text-white" },
     { "href": "/obligatorio", "label": "Obligatorio", "icon": "ClipboardCheck", "color": "bg-red-500 text-white" },
     { "href": "/journal", "label": "Bitácora de Trading", "icon": "BookOpen", "color": "bg-yellow-400 text-black" },
     { "href": "/bestiario", "label": "Bestiario", "icon": "BookHeart", "color": "bg-purple-500 text-white" },

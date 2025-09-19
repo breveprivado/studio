@@ -14,9 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import CompoundInterestTable from '@/components/bestiary/compound-interest-table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { DollarSign } from 'lucide-react';
 import { initialCreatures } from '@/lib/data';
 import {
   AlertDialog,
@@ -66,7 +64,6 @@ const BestiaryPage = () => {
   const [creatures, setCreatures] = useState<Creature[]>([]);
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [compoundInterestBalance, setCompoundInterestBalance] = useState(100);
   
   const [editDescription, setEditDescription] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
@@ -81,18 +78,13 @@ const BestiaryPage = () => {
     } else {
       setCreatures(initialCreatures);
     }
-    
-    const storedBalance = localStorage.getItem('ci_initialBalance');
-    if (storedBalance) {
-        setCompoundInterestBalance(parseFloat(storedBalance));
-    }
   }
 
   useEffect(() => {
     loadData();
 
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'bestiaryCreatures' || e.key === 'ci_initialBalance') {
+        if (e.key === 'bestiaryCreatures') {
             loadData();
         }
     };
@@ -109,9 +101,6 @@ const BestiaryPage = () => {
     }
   }, [creatures]);
 
-  useEffect(() => {
-      localStorage.setItem('ci_initialBalance', compoundInterestBalance.toString());
-  }, [compoundInterestBalance]);
   
   const handleNameSave = (id: string, newName: string) => {
     setCreatures(creatures.map(c => c.id === id ? { ...c, name: newName } : c));
@@ -203,20 +192,6 @@ const BestiaryPage = () => {
           </AlertDialog>
         </div>
       </header>
-
-        <Accordion type="single" collapsible className="w-full mb-8">
-          <AccordionItem value="item-1">
-              <AccordionTrigger>
-                  <div className="flex items-center">
-                      <DollarSign className="h-6 w-6 text-primary mr-3" />
-                      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Tabla de Interés Compuesto</h2>
-                  </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                  <CompoundInterestTable creatures={creatures} initialBalance={compoundInterestBalance} onBalanceChange={setCompoundInterestBalance} />
-              </AccordionContent>
-          </AccordionItem>
-      </Accordion>
 
       <Card>
           <CardHeader>
