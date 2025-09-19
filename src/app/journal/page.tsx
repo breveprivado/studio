@@ -145,7 +145,7 @@ const DailyLedger = ({ selectedDate }: { selectedDate: Date }) => {
     }, [ledgerData]);
 
     return (
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" defaultValue="ledger">
             <AccordionItem value="ledger">
                 <AccordionTrigger>
                     <div className="flex items-center">
